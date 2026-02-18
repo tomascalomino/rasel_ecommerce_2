@@ -37,6 +37,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+if DEBUG and not os.getenv("MP_ACCESS_TOKEN"):
+    print("[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará).")
 
 # Application definition
 

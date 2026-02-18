@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Resultado del pago: {{ result|title }}</h2>
+
+{% if order %}
+  <p>Pedido: #{{ order.id }}</p>
+  <p>Estado MP: {{ order.mp_status|default:"(sin estado)" }}</p>
+  <p>Payment ID: {{ order.mp_payment_id|default:"(sin id)" }}</p>
+  <p>Estado interno: {{ order.status }}</p>
+
+  {% if order.status != "paid" %}
+    <p>
+      <a href="{% url 'payments:start' order_id=order.id %}">
+        <button>Reintentar pago</button>
+      </a>
+    </p>
+  {% endif %}
+{% else %}
+  <p>No pudimos vincular el retorno a un pedido (external_reference faltante).</p>
+{% endif %}
+
+<p><a href="/">Volver a tienda</a></p>
+{% endblock %}

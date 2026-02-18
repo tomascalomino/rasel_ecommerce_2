@@ -13,3 +13,20 @@
 [ ] Modelos Category/Product/Variant
 [ ] Admin para carga rápida
 [ ] Tienda (listado) + detalle de producto
+
+## Hito 3 – Carrito
+[ ] Carrito por sesión (add/update/remove)
+[ ] Página carrito
+[ ] Integración desde tienda/detalle
+
+## Hito 4 – Checkout
+[ ] Modelo Order
+[ ] Crear Order desde carrito
+[ ] Página confirmación
+
+## Hito 5 – Pagos (MercadoPago)
+[x] Token y env vars
+[x] back_urls correctos
+[ ] Redirección a checkout (debería quedar con este fix)
+[ ] Retornos success/pending/failure
+[ ] Webhook con túnel (cloudflared/ngrok) + actualización de estado

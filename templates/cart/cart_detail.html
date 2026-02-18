@@ -48,8 +48,9 @@
     <p><strong>Total: ${{ cart.total }}</strong></p>
 
     <p>
-      <!-- checkout vendrá en el siguiente paso -->
-      <em>Siguiente: Checkout</em>
+      <a href="{% url 'orders:checkout' %}">
+        <button>Ir al Checkout</button>
+      </a>
     </p>
   {% else %}
     <p>Tu carrito está vacío.</p>

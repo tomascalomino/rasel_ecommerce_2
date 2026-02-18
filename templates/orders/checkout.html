@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Checkout</h2>
+
+<h3>Resumen</h3>
+<ul>
+  {% for item in cart.items %}
+    <li>{{ item.variant.product.name }} - {{ item.variant.name }} x {{ item.qty }} — ${{ item.line_total }}</li>
+  {% endfor %}
+</ul>
+
+<p><strong>Total: ${{ cart.total }}</strong></p>
+
+<h3>Datos de envío</h3>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Confirmar pedido</button>
+</form>
+{% endblock %}
