@@ -11,6 +11,7 @@ from django.views.decorators.http import require_GET, require_POST
 from orders.models import Order
 from .mercadopago import create_preference, get_payment, MercadoPagoError
 from urllib.parse import urlparse
+from .models import PaymentEvent
 
 
 def _site_url() -> str:
@@ -167,69 +168,143 @@ def _verify_webhook_signature(request, event_id: str) -> bool:
     return hmac.compare_digest(digest, v1)
 
 
+# @csrf_exempt
+# @require_POST
+# def webhook(request):
+#     """
+#     Webhook puede llegar como:
+#     - Webhooks: body con type + data.id
+#     - IPN: query params topic + id
+#     Luego consultamos /v1/payments/{id} para estado y external_reference.
+#     """
+#     # Intento 1: Webhooks (body JSON)
+#     try:
+#         payload = request.json if hasattr(request, "json") else None  # no siempre existe
+#     except Exception:
+#         payload = None
+
+#     if payload is None:
+#         import json
+#         try:
+#             payload = json.loads(request.body.decode("utf-8") or "{}")
+#         except Exception:
+#             payload = {}
+
+#     event_type = payload.get("type") or payload.get("topic")
+#     data = payload.get("data") or {}
+#     event_id = str(data.get("id") or request.GET.get("id") or request.GET.get("data.id") or "")
+
+#     # Validar firma si está configurada
+#     if event_id and not _verify_webhook_signature(request, event_id):
+#         return HttpResponse(status=401)
+
+#     # Solo manejamos pagos en MVP
+#     if event_type not in ("payment", "payments"):
+#         return JsonResponse({"ok": True, "ignored": True})
+
+#     if not event_id:
+#         return JsonResponse({"ok": False, "error": "missing payment id"}, status=400)
+
+#     try:
+#         p = get_payment(event_id)
+#     except MercadoPagoError as e:
+#         return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
+#     external_reference = str(p.get("external_reference") or "")
+#     status = str(p.get("status") or "")
+#     payment_id = str(p.get("id") or event_id)
+
+#     if not external_reference.isdigit():
+#         return JsonResponse({"ok": True, "warning": "no external_reference to map order"})
+
+#     order = Order.objects.filter(id=int(external_reference)).first()
+#     if not order:
+#         return JsonResponse({"ok": True, "warning": "order not found"})
+
+#     order.mp_payment_id = payment_id
+#     order.mp_status = status
+
+#     if status == "approved":
+#         order.status = "paid"
+#     elif status in ("cancelled", "rejected"):
+#         order.status = "cancelled"
+#     else:
+#         order.status = "pending"
+
+#     order.save(update_fields=["mp_payment_id", "mp_status", "status"])
+
+#     return JsonResponse({"ok": True})
+
+def _mark_order_paid(order_id: str, notes: str = "") -> None:
+    """
+    MVP: marcamos como pagado.
+    Ajustá el campo real de tu modelo (paid/status/etc).
+    """
+    try:
+        order = Order.objects.get(id=int(order_id))
+    except Exception:
+        return
+
+    # Ajustá según tu Order model:
+    if hasattr(order, "status"):
+        order.status = "paid"
+    if hasattr(order, "is_paid"):
+        order.is_paid = True
+    if hasattr(order, "paid_at"):
+        from django.utils import timezone
+        order.paid_at = timezone.now()
+
+    order.save()
+
+
 @csrf_exempt
-@require_POST
 def webhook(request):
     """
-    Webhook puede llegar como:
-    - Webhooks: body con type + data.id
-    - IPN: query params topic + id
-    Luego consultamos /v1/payments/{id} para estado y external_reference.
+    Webhook MercadoPago.
+    - En local, podés testear con túnel (cloudflared/ngrok)
+    - Guardamos evento crudo para auditoría.
     """
-    # Intento 1: Webhooks (body JSON)
     try:
-        payload = request.json if hasattr(request, "json") else None  # no siempre existe
+        body = request.body.decode("utf-8") if request.body else ""
+        data = json.loads(body) if body else {}
     except Exception:
-        payload = None
+        data = {}
 
-    if payload is None:
-        import json
-        try:
-            payload = json.loads(request.body.decode("utf-8") or "{}")
-        except Exception:
-            payload = {}
+    # MercadoPago puede enviar también parámetros por query.
+    topic = request.GET.get("topic") or request.GET.get("type") or data.get("type", "")
+    event_id = request.GET.get("id") or data.get("id", "")
+    resource = request.GET.get("resource") or data.get("resource", "")
 
-    event_type = payload.get("type") or payload.get("topic")
-    data = payload.get("data") or {}
-    event_id = str(data.get("id") or request.GET.get("id") or request.GET.get("data.id") or "")
+    ev = PaymentEvent.objects.create(
+        topic=str(topic or ""),
+        event_id=str(event_id or ""),
+        resource=str(resource or ""),
+        raw=data or {},
+        processed_ok=False,
+    )
 
-    # Validar firma si está configurada
-    if event_id and not _verify_webhook_signature(request, event_id):
-        return HttpResponse(status=401)
-
-    # Solo manejamos pagos en MVP
-    if event_type not in ("payment", "payments"):
-        return JsonResponse({"ok": True, "ignored": True})
-
-    if not event_id:
-        return JsonResponse({"ok": False, "error": "missing payment id"}, status=400)
-
+    # MVP: si no podemos resolver pago, igual respondemos 200 para que MP no reintente infinito.
+    # (Luego lo refinamos).
     try:
-        p = get_payment(event_id)
-    except MercadoPagoError as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+        # Para pagos, MP suele notificar con topic/type = "payment"
+        if str(topic).lower() in {"payment", "payments"} and event_id:
+            payment = get_payment(str(event_id))
 
-    external_reference = str(p.get("external_reference") or "")
-    status = str(p.get("status") or "")
-    payment_id = str(p.get("id") or event_id)
+            status = payment.get("status", "")
+            external_ref = payment.get("external_reference", "")
 
-    if not external_reference.isdigit():
-        return JsonResponse({"ok": True, "warning": "no external_reference to map order"})
+            # Aprobado => marcar pedido pagado
+            if status == "approved" and external_ref:
+                _mark_order_paid(external_ref, notes=f"MP payment_id={event_id}")
+                ev.processed_ok = True
+                ev.notes = f"approved payment_id={event_id} order={external_ref}"
+                ev.save(update_fields=["processed_ok", "notes"])
+                return JsonResponse({"ok": True})
 
-    order = Order.objects.filter(id=int(external_reference)).first()
-    if not order:
-        return JsonResponse({"ok": True, "warning": "order not found"})
-
-    order.mp_payment_id = payment_id
-    order.mp_status = status
-
-    if status == "approved":
-        order.status = "paid"
-    elif status in ("cancelled", "rejected"):
-        order.status = "cancelled"
-    else:
-        order.status = "pending"
-
-    order.save(update_fields=["mp_payment_id", "mp_status", "status"])
-
-    return JsonResponse({"ok": True})
+        ev.notes = "event received but not processed (missing fields or not payment)"
+        ev.save(update_fields=["notes"])
+        return JsonResponse({"ok": True})
+    except Exception as e:
+        ev.notes = f"processing error: {e}"
+        ev.save(update_fields=["notes"])
+        return JsonResponse({"ok": True})

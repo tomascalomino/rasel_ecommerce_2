@@ -9,8 +9,8 @@ class MercadoPagoError(RuntimeError):
     pass
 
 
-def _headers():
-    token = os.getenv("MP_ACCESS_TOKEN", "").strip()
+def _headers() -> dict:
+    token = os.getenv("MP_ACCESS_TOKEN")
     if not token:
         raise MercadoPagoError("Falta MP_ACCESS_TOKEN en variables de entorno")
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -25,7 +25,7 @@ def create_preference(payload: dict) -> dict:
 
 
 def get_payment(payment_id: str) -> dict:
-    url = f"{MP_API_BASE}/v1/payments/{payment_id}"
+    url = f"https://api.mercadopago.com/v1/payments/{payment_id}"
     r = requests.get(url, headers=_headers(), timeout=20)
     if r.status_code >= 400:
         raise MercadoPagoError(f"MercadoPago get_payment error {r.status_code}: {r.text}")
