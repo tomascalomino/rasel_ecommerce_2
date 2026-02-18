@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} · RaSel{% endblock %}
+
+{% block content %}
+  <p><a href="{% url 'shop:product_list' %}">← Volver a tienda</a></p>
+
+  <h2>{{ product.name }}</h2>
+  {% if product.category %}
+    <p>Categoría: {{ product.category.name }}</p>
+  {% endif %}
+
+  {% if product.description %}
+    <p>{{ product.description }}</p>
+  {% endif %}
+
+  <h3>Variantes</h3>
+  {% if product.variants.all %}
+    <ul>
+      {% for v in product.variants.all %}
+        {% if v.is_active %}
+          <li>{{ v.name }} — ${{ v.price_ars }} (stock: {{ v.stock_qty }})</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Sin variantes cargadas.</p>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}RaSel · Tienda{% endblock %}
+
+{% block content %}
+  <h2>Tienda</h2>
+
+  {% if products %}
+    <ul>
+      {% for p in products %}
+        <li>
+          <a href="{% url 'shop:product_detail' slug=p.slug %}">
+            <strong>{{ p.name }}</strong>
+          </a>
+          {% if p.short_description %}
+            <div>{{ p.short_description }}</div>
+          {% endif %}
+
+          {% if p.variants.all %}
+            <ul>
+              {% for v in p.variants.all %}
+                {% if v.is_active %}
+                  <li>{{ v.name }} — ${{ v.price_ars }} (stock: {{ v.stock_qty }})</li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No hay productos cargados todavía.</p>
+  {% endif %}
+{% endblock %}
