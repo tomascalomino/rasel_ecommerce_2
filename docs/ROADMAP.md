@@ -8,3 +8,8 @@
 [x] Primer run (migrate + runserver)
 [ ] Settings con .env + Whitenoise + templates
 [ ] Home básica conectada por URLs
+
+## Hito 2 – Catálogo funcional
+[ ] Modelos Category/Product/Variant
+[ ] Admin para carga rápida
+[ ] Tienda (listado) + detalle de producto

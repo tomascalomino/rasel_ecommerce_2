@@ -20,7 +20,18 @@
             <ul>
               {% for v in p.variants.all %}
                 {% if v.is_active %}
-                  <li>{{ v.name }} — ${{ v.price_ars }} (stock: {{ v.stock_qty }})</li>
+                  <li>
+                    {{ v.name }} — ${{ v.price_ars }} (stock: {{ v.stock_qty }})
+
+                    <form method="post" action="{% url 'cart:add' %}" style="display:inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="variant_id" value="{{ v.id }}" />
+                      <input type="hidden" name="qty" value="1" />
+                      <button type="submit" {% if v.stock_qty == 0 %}disabled{% endif %}>
+                        Agregar
+                      </button>
+                    </form>
+                  </li>
                 {% endif %}
               {% endfor %}
             </ul>

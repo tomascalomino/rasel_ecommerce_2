@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Carrito · RaSel{% endblock %}
+
+{% block content %}
+  <h2>Carrito</h2>
+
+  {% if cart|length > 0 %}
+    <table border="1" cellpadding="8" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Variante</th>
+          <th>Precio</th>
+          <th>Cantidad</th>
+          <th>Total</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in cart.items %}
+          <tr>
+            <td>{{ item.variant.product.name }}</td>
+            <td>{{ item.variant.name }}</td>
+            <td>${{ item.unit_price }}</td>
+            <td>
+              <form method="post" action="{% url 'cart:update' %}">
+                {% csrf_token %}
+                <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
+                <input type="number" name="qty" min="0" value="{{ item.qty }}" />
+                <button type="submit">Actualizar</button>
+              </form>
+              <small>0 elimina</small>
+            </td>
+            <td>${{ item.line_total }}</td>
+            <td>
+              <form method="post" action="{% url 'cart:remove' %}">
+                {% csrf_token %}
+                <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
+                <button type="submit">Quitar</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p><strong>Total: ${{ cart.total }}</strong></p>
+
+    <p>
+      <!-- checkout vendrá en el siguiente paso -->
+      <em>Siguiente: Checkout</em>
+    </p>
+  {% else %}
+    <p>Tu carrito está vacío.</p>
+    <p><a href="{% url 'shop:product_list' %}">Volver a la tienda</a></p>
+  {% endif %}
+{% endblock %}

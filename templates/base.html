@@ -9,7 +9,8 @@
     <header>
       <h1><a href="/">RaSel</a></h1>
       <nav>
-        <a href="/">Tienda</a>
+        <a href="{% url 'shop:product_list' %}">Tienda</a>
+        <a href="{% url 'cart:detail' %}">Carrito ({{ request.session.cart|length|default:0 }})</a>
         <a href="/admin/">Admin</a>
       </nav>
       <hr />
