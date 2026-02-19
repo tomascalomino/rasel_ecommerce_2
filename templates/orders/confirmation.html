@@ -6,7 +6,10 @@
 
 <p>
   <a href="{% url 'payments:start' order_id=order_id %}">
-    <button>Pagar con MercadoPago</button>
+    <button class="btn btn-primary">
+      {% include "partials/icons/credit.svg" %}
+      Pagar con MercadoPago
+    </button>
   </a>
 </p>
 

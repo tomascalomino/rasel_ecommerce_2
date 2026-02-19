@@ -10,6 +10,10 @@
         <a class="navlink {% if request.resolver_match and request.resolver_match.app_name == 'shop' %}is-active{% endif %}"
            href="{% url 'shop:product_list' %}">
           Tienda
+          <a href="#" class="pill">
+            {% include "partials/icons/search.svg" %}
+            <span>Buscar</span>
+          </a>
         </a>
 
         <a href="{% url 'cart:detail' %}"

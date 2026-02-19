@@ -11,6 +11,10 @@
 <div class="grid">
   {% for p in products %}
     <div class="card product">
+      <h3 class="h2">
+        {% include "partials/icons/bottle.svg" %}
+        {{ product.name }}
+      </h3>
       <a href="{% url 'shop:product_detail' p.slug %}">
         <div class="product-media">
           <div class="ph" title="Imagen (placeholder)"></div>

@@ -18,3 +18,16 @@
 ## 2026-02-19 — Cart global via context processor
 Decidimos agregar un context processor (`cart.context_processors.cart`) para inyectar `cart` en todos los templates.
 Motivo: mostrar badge global y evitar pasar `cart` manualmente en cada view. Implementación simple y segura (session-based).
+
+## 2026-02-19 — Migración a tema premium claro
+
+Se migró el diseño desde dark premium a light premium ajustando:
+- Variables globales (:root)
+- Cards
+- Header
+- Tablas
+- Inputs
+- Badge carrito
+
+Objetivo: mayor luminosidad y legibilidad manteniendo identidad oliva RaSel.
+

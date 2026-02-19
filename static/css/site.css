@@ -169,7 +169,7 @@ main { position: relative; z-index: 1; }
   border-radius: 999px;
   background: rgba(216,201,166,.18);
   border: 1px solid rgba(216,201,166,.22);
-  color: rgba(232,240,236,.90);
+  color: rgba(14, 22, 18, 0.5);
   padding: 0 7px;
   font-weight: 900;
   font-size: 12px;
@@ -261,3 +261,94 @@ input:focus, select:focus {
   border: 1px solid rgba(122,168,106,.28);
   color: rgba(232,240,236,.95);
 }
+
+.kicker{
+  display:flex; align-items:center; gap:10px;
+  font-weight:800;
+  color: rgba(232,240,236,.75);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: 12px;
+}
+.kicker .dot{
+  width:10px; height:10px; border-radius:999px;
+  background: rgba(122,168,106,.85);
+  box-shadow: 0 0 0 6px rgba(122,168,106,.10);
+}
+
+.cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:14px}
+.icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+}
+
+.icon svg{
+  width:100%;
+  height:100%;
+  display:block;
+  /* NO fuerces fill:none acá */
+  fill: currentColor;        /* para íconos sólidos */
+  stroke: currentColor;      /* para outline */
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trust-row{
+  margin-top:16px;
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.trust{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 10px;
+  border-radius: 999px;
+  border:1px solid var(--border);
+  background: rgba(232,240,236,.05);
+  color: rgba(232,240,236,.78);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.hero-visual .visual{
+  display:flex;
+  gap:14px;
+  align-items:center;
+  justify-content:space-between;
+}
+.bottle{
+  width: 120px;
+  height: 220px;
+  border-radius: 26px;
+  background:
+    radial-gradient(70px 120px at 50% 30%, rgba(216,201,166,.35), transparent 60%),
+    linear-gradient(180deg, rgba(122,168,106,.25), rgba(17,24,21,.0)),
+    rgba(232,240,236,.04);
+  border:1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.mini-grid{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.mini{
+  display:flex; gap:10px; align-items:center;
+  padding:12px;
+  border-radius: 16px;
+  border:1px solid var(--border);
+  background: rgba(232,240,236,.04);
+}
+.mini-ic{
+  width:36px; height:36px;
+  border-radius: 12px;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(122,168,106,.12);
+  border:1px solid rgba(122,168,106,.18);
+  color: rgba(232,240,236,.85);
+}
+.mini-title{font-weight:900}

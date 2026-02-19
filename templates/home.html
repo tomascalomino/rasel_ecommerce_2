@@ -1,38 +1,116 @@
 {% extends "base.html" %}
-{% block title %}RaSel — Home{% endblock %}
+{% load static %}
+
+{% block title %}RaSel — Aceite de Oliva Premium{% endblock %}
 
 {% block content %}
 <section class="hero">
   <div class="hero-grid">
+
+    <!-- BLOQUE IZQUIERDO -->
     <div class="card">
       <div class="card-inner">
-        <div class="badge">Aceite de oliva · Blend Suave</div>
-        <h1 class="h1">RaSel: sabor suave, calidad premium.</h1>
+
+        <div class="kicker">
+          <span class="dot"></span>
+          <span>Blend Suave · Andalgalá, Catamarca</span>
+        </div>
+
+        <h1 class="h1">
+          Sabor suave. <br>Calidad real.
+        </h1>
+
         <p class="p">
-          Elaborado en Andalgalá, Catamarca. Ideal para ensaladas, tostadas y cocina diaria.
+          Aceite de oliva premium pensado para uso diario.
+          Perfil equilibrado, fresco y elegante.
         </p>
-        <div class="row" style="gap:12px; flex-wrap:wrap">
-          <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Ver productos</a>
-          <a class="btn" href="{% url 'cart:detail' %}">Ir al carrito</a>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" href="{% url 'shop:product_list' %}">
+            {% include "partials/icons/cart.svg" %}
+            Ver tienda
+          </a>
+
+          <a class="btn" href="{% url 'cart:detail' %}">
+            Ir al carrito
+          </a>
         </div>
-        <div class="spacer"></div>
-        <div class="muted">
-          Envíos y retiros: (texto placeholder) · WhatsApp/IG: (placeholder)
+
+        <div class="trust-row">
+          <span class="trust">
+            <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
+            Origen seleccionado
+          </span>
+
+          <span class="trust">
+            <span class="icon">{% include "partials/icons/drop.svg" %}</span>
+            Perfil suave
+          </span>
+
+          <span class="trust">
+            <span class="icon">{% include "partials/icons/shield.svg" %}</span>
+            Compra segura
+          </span>
         </div>
+
       </div>
     </div>
 
-    <div class="card">
+
+    <!-- BLOQUE DERECHO -->
+    <div class="card hero-visual">
       <div class="card-inner">
-        <h2 class="h2">Productos más elegidos</h2>
-        <p class="p muted">250ml, 500ml y bidón 3L. Stock limitado según producción.</p>
-        <div class="product-media" style="border-radius:14px; border:1px solid var(--border);">
-          <div class="ph"></div>
+
+        <div class="visual">
+          <div class="bottle"></div>
+
+          <div>
+            <div class="h2">RaSel</div>
+            <div class="muted">250ml · 500ml · 3L</div>
+            <div class="spacer"></div>
+            <div class="price">Desde $6.000</div>
+          </div>
         </div>
-        <div class="spacer"></div>
-        <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Comprar ahora</a>
+
+        <div class="mini-grid">
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/truck.svg" %}</div>
+            <div>
+              <div class="mini-title">Envíos</div>
+              <div class="muted">Coordinación simple</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/star.svg" %}</div>
+            <div>
+              <div class="mini-title">Calidad</div>
+              <div class="muted">Seleccionado</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/credit.svg" %}</div>
+            <div>
+              <div class="mini-title">Pagos</div>
+              <div class="muted">MercadoPago</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/heart.svg" %}</div>
+            <div>
+              <div class="mini-title">Presentación</div>
+              <div class="muted">Ideal para regalo</div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
+
   </div>
 </section>
 {% endblock %}
