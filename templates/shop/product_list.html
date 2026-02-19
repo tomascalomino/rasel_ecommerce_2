@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}RaSel — Tienda{% endblock %}
 
 {% block content %}
@@ -12,27 +14,22 @@
   {% for p in products %}
     <div class="card product">
 
-      <div class="product-body" style="padding:14px 14px 0 14px;">
-        <h3 class="h2" style="display:flex; gap:10px; align-items:center; margin:0;">
-          {% include "partials/icons/bottle.svg" %}
-          {{ p.name }}
-        </h3>
-      </div>
-
-      <a href="{% url 'shop:product_detail' p.slug %}">
-        <div class="product-media">
-          {% if p.image %}
-            <img class="product-img" src="{{ p.image.url }}" alt="{{ p.name }}">
-          {% else %}
-            <div class="ph"></div>
-          {% endif %}
-        </div>
+      <a href="{% url 'shop:product_detail' p.slug %}" class="product-media" aria-label="Ver {{ p.name }}">
+        {% if p.image %}
+          <img class="product-img" src="{{ p.image.url }}" alt="{{ p.name }}">
+        {% else %}
+          <div class="ph"></div>
+        {% endif %}
       </a>
 
       <div class="product-body">
         <div class="row">
-          <div style="font-weight:900">{{ p.name }}</div>
-          {% if p.stock > 0 %}
+          <div style="font-weight:900; display:flex; gap:10px; align-items:center;">
+            <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
+            {{ p.name }}
+          </div>
+
+          {% if p.in_stock %}
             <span class="badge">Stock</span>
           {% else %}
             <span class="badge" style="border-color: rgba(255,107,107,.25); background: rgba(255,107,107,.10);">Sin stock</span>
@@ -46,13 +43,18 @@
         <div class="row" style="align-items:flex-end">
           <div>
             <div class="muted" style="font-size:12px">Precio</div>
-            <div class="price">$ {{ p.price }}</div>
+            <div class="price">
+              {% if p.min_price_ars %}
+                Desde $ {{ p.min_price_ars }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
           </div>
 
           <a class="btn btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
         </div>
       </div>
-
     </div>
   {% empty %}
     <div class="card"><div class="card-inner">No hay productos cargados.</div></div>
