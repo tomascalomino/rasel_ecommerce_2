@@ -11,13 +11,21 @@
 <div class="grid">
   {% for p in products %}
     <div class="card product">
-      <h3 class="h2">
-        {% include "partials/icons/bottle.svg" %}
-        {{ product.name }}
-      </h3>
+
+      <div class="product-body" style="padding:14px 14px 0 14px;">
+        <h3 class="h2" style="display:flex; gap:10px; align-items:center; margin:0;">
+          {% include "partials/icons/bottle.svg" %}
+          {{ p.name }}
+        </h3>
+      </div>
+
       <a href="{% url 'shop:product_detail' p.slug %}">
         <div class="product-media">
-          <div class="ph" title="Imagen (placeholder)"></div>
+          {% if p.image %}
+            <img class="product-img" src="{{ p.image.url }}" alt="{{ p.name }}">
+          {% else %}
+            <div class="ph"></div>
+          {% endif %}
         </div>
       </a>
 
@@ -44,6 +52,7 @@
           <a class="btn btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
         </div>
       </div>
+
     </div>
   {% empty %}
     <div class="card"><div class="card-inner">No hay productos cargados.</div></div>

@@ -81,7 +81,7 @@ a{color:inherit; text-decoration:none}
 @media (max-width: 900px){ .hero-grid{grid-template-columns:1fr} }
 
 .card{
-  background: rgba(255,255,255,.78);
+  background: rgba(169, 221, 101, 0.623);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -89,8 +89,8 @@ a{color:inherit; text-decoration:none}
 .card-inner{padding:18px}
 .h1{font-size: clamp(26px, 3.4vw, 40px); margin:0 0 10px 0}
 .h2{font-size: clamp(18px, 2.1vw, 26px); margin:0 0 8px 0}
-.p{color: rgba(232,240,236,.82); margin:0 0 12px 0}
-.muted{color: rgba(232,240,236,.62)}
+.p{color: rgba(0, 0, 0, 0.82); margin:0 0 12px 0}
+.muted{color: rgba(0, 0, 0, 0.82)}
 
 .btn{
   display:inline-flex; align-items:center; justify-content:center;
@@ -137,6 +137,29 @@ a{color:inherit; text-decoration:none}
   border:1px solid var(--border);
 }
 .product-body{padding:14px}
+
+.product-media{
+  position: relative;
+  height:160px;
+  overflow:hidden;
+}
+
+.product-img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}
+
+.detail-img{
+  width:100%;
+  max-height: 420px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display:block;
+}
+
 .row{display:flex; justify-content:space-between; gap:10px; align-items:center}
 .price{font-size:18px; font-weight:900}
 .badge{
@@ -151,7 +174,7 @@ a{color:inherit; text-decoration:none}
   margin-top:28px;
   border-top:1px solid var(--border);
   padding:22px 0;
-  color: rgba(232,240,236,.65);
+  color: rgba(85, 173, 129, 0.65);
   font-size:14px;
 }
 
@@ -265,7 +288,7 @@ input:focus, select:focus {
 .kicker{
   display:flex; align-items:center; gap:10px;
   font-weight:800;
-  color: rgba(232,240,236,.75);
+  color: rgba(102, 122, 11, 0.75);
   text-transform: uppercase;
   letter-spacing: .08em;
   font-size: 12px;
@@ -306,8 +329,8 @@ input:focus, select:focus {
   padding:8px 10px;
   border-radius: 999px;
   border:1px solid var(--border);
-  background: rgba(232,240,236,.05);
-  color: rgba(232,240,236,.78);
+  background: rgba(232, 240, 236, 0.897);
+  color: rgba(0, 61, 35, 0.85);
   font-weight: 700;
   font-size: 13px;
 }
@@ -349,6 +372,13 @@ input:focus, select:focus {
   display:flex; align-items:center; justify-content:center;
   background: rgba(122,168,106,.12);
   border:1px solid rgba(122,168,106,.18);
-  color: rgba(232,240,236,.85);
+  color: rgba(0, 61, 35, 0.85);
 }
 .mini-title{font-weight:900}
+
+.product-media img{
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  display:block;
+}

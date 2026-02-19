@@ -32,6 +32,7 @@ class Product(models.Model):
     description = models.TextField(blank=True)
 
     is_active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to="products/", blank=True, null=True)
 
     class Meta:
         ordering = ["name"]
