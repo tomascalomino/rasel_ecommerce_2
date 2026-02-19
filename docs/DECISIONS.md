@@ -14,3 +14,7 @@
 
 ## 2026-02-19
 - Front MVP: Django templates + CSS propio (sin frameworks) para mantener dependencias mínimas y controlar el look & feel.
+
+## 2026-02-19 — Cart global via context processor
+Decidimos agregar un context processor (`cart.context_processors.cart`) para inyectar `cart` en todos los templates.
+Motivo: mostrar badge global y evitar pasar `cart` manualmente en cada view. Implementación simple y segura (session-based).

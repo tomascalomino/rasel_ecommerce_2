@@ -4,16 +4,19 @@
 {% block content %}
 <div class="row">
   <h1 class="h2" style="margin:0">Tienda</h1>
-  <span class="badge">Blend Suave · ARS</span>
+  <span class="badge">Minimal · Premium · ARS</span>
 </div>
 <div class="spacer"></div>
 
 <div class="grid">
   {% for p in products %}
     <div class="card product">
-      <div class="product-media">
-        <div class="ph"></div>
-      </div>
+      <a href="{% url 'shop:product_detail' p.slug %}">
+        <div class="product-media">
+          <div class="ph" title="Imagen (placeholder)"></div>
+        </div>
+      </a>
+
       <div class="product-body">
         <div class="row">
           <div style="font-weight:900">{{ p.name }}</div>
@@ -25,11 +28,15 @@
         </div>
 
         <div class="muted" style="margin:8px 0 12px 0;">
-          {{ p.short_description|default:"Aceite de oliva RaSel Blend Suave." }}
+          {{ p.short_description|default:"RaSel Blend Suave. Sabor equilibrado y suave." }}
         </div>
 
-        <div class="row">
-          <div class="price">$ {{ p.price }}</div>
+        <div class="row" style="align-items:flex-end">
+          <div>
+            <div class="muted" style="font-size:12px">Precio</div>
+            <div class="price">$ {{ p.price }}</div>
+          </div>
+
           <a class="btn btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
         </div>
       </div>

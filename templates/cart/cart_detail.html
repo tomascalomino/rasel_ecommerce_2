@@ -1,59 +1,95 @@
 {% extends "base.html" %}
-
 {% block title %}Carrito · RaSel{% endblock %}
 
 {% block content %}
-  <h2>Carrito</h2>
+<div class="row">
+  <h1 class="h2" style="margin:0">Carrito</h1>
+  <span class="badge">Revisá tu pedido</span>
+</div>
 
-  {% if cart|length > 0 %}
-    <table border="1" cellpadding="8" cellspacing="0">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Variante</th>
-          <th>Precio</th>
-          <th>Cantidad</th>
-          <th>Total</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in cart.items %}
-          <tr>
-            <td>{{ item.variant.product.name }}</td>
-            <td>{{ item.variant.name }}</td>
-            <td>${{ item.unit_price }}</td>
-            <td>
-              <form method="post" action="{% url 'cart:update' %}">
-                {% csrf_token %}
-                <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
-                <input type="number" name="qty" min="0" value="{{ item.qty }}" />
-                <button type="submit">Actualizar</button>
-              </form>
-              <small>0 elimina</small>
-            </td>
-            <td>${{ item.line_total }}</td>
-            <td>
-              <form method="post" action="{% url 'cart:remove' %}">
-                {% csrf_token %}
-                <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
-                <button type="submit">Quitar</button>
-              </form>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="spacer"></div>
 
-    <p><strong>Total: ${{ cart.total }}</strong></p>
+{% if cart|length > 0 %}
+  <div class="card">
+    <div class="card-inner" style="padding:0">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Variante</th>
+              <th class="num">Precio</th>
+              <th class="num">Cantidad</th>
+              <th class="num">Total</th>
+              <th class="num"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in cart.items %}
+              <tr>
+                <td>
+                  <div style="font-weight:900">{{ item.variant.product.name }}</div>
+                  <div class="muted" style="font-size:12px">RaSel · Blend Suave</div>
+                </td>
 
-    <p>
-      <a href="{% url 'orders:checkout' %}">
-        <button>Ir al Checkout</button>
-      </a>
-    </p>
-  {% else %}
-    <p>Tu carrito está vacío.</p>
-    <p><a href="{% url 'shop:product_list' %}">Volver a la tienda</a></p>
-  {% endif %}
+                <td>
+                  <span class="pill" style="display:inline-flex">
+                    {{ item.variant.name }}
+                  </span>
+                </td>
+
+                <td class="num">
+                  $ {{ item.unit_price }}
+                </td>
+
+                <td class="num">
+                  <form method="post" action="{% url 'cart:update' %}" class="qtyform">
+                    {% csrf_token %}
+                    <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
+                    <input class="qty" type="number" name="qty" min="0" value="{{ item.qty }}" inputmode="numeric" />
+                    <button class="btn btn-small" type="submit">Actualizar</button>
+                  </form>
+                  <div class="muted" style="font-size:12px; margin-top:6px;">0 elimina</div>
+                </td>
+
+                <td class="num">
+                  <strong>$ {{ item.line_total }}</strong>
+                </td>
+
+                <td class="num">
+                  <form method="post" action="{% url 'cart:remove' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
+                    <button class="btn btn-danger btn-small" type="submit">Quitar</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cart-footer">
+        <div>
+          <div class="muted" style="font-size:12px">Total</div>
+          <div class="price">$ {{ cart.total }}</div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn" href="{% url 'shop:product_list' %}">← Seguir comprando</a>
+          <a class="btn btn-primary" href="{% url 'orders:checkout' %}">Ir al Checkout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="card-inner">
+      <div class="muted">Tu carrito está vacío.</div>
+      <div class="spacer"></div>
+      <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Volver a la tienda</a>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

@@ -1,40 +1,60 @@
 {% extends "base.html" %}
-
-{% block title %}{{ product.name }} · RaSel{% endblock %}
+{% block title %}RaSel — {{ product.name }}{% endblock %}
 
 {% block content %}
-  <p><a href="{% url 'shop:product_list' %}">← Volver a tienda</a></p>
+<div class="card">
+  <div class="product-media" style="height:220px; border-radius:16px 16px 0 0;">
+    <div class="ph"></div>
+  </div>
 
-  <h2>{{ product.name }}</h2>
-  {% if product.category %}
-    <p>Categoría: {{ product.category.name }}</p>
-  {% endif %}
+  <div class="card-inner">
+    <div class="row">
+      <div>
+        <div class="badge">RaSel · Blend Suave</div>
+        <h1 class="h2" style="margin-top:10px">{{ product.name }}</h1>
+        <div class="muted">{{ product.short_description|default:"Aceite de oliva premium." }}</div>
+      </div>
+    </div>
 
-  {% if product.description %}
-    <p>{{ product.description }}</p>
-  {% endif %}
+    <div class="spacer"></div>
 
-  <h3>Variantes</h3>
-  {% if product.variants.all %}
-    <ul>
-      {% for v in product.variants.all %}
-        {% if v.is_active %}
-          <li>
-            {{ v.name }} — ${{ v.price_ars }} (stock: {{ v.stock_qty }})
+    <form action="{% url 'cart:add' %}" method="post" class="buybox">
+      {% csrf_token %}
 
-            <form method="post" action="{% url 'cart:add' %}" style="display:inline;">
-              {% csrf_token %}
-              <input type="hidden" name="variant_id" value="{{ v.id }}" />
-              <input type="number" name="qty" min="1" value="1" style="width:70px;" />
-              <button type="submit" {% if v.stock_qty == 0 %}disabled{% endif %}>
-                Agregar
-              </button>
-            </form>
-          </li>
-        {% endif %}
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>Sin variantes cargadas.</p>
-  {% endif %}
+      <div class="row" style="gap:12px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:1; min-width:240px;">
+          <div class="muted" style="font-size:12px; margin-bottom:8px;">Elegí presentación</div>
+
+          <select name="variant_id" required>
+            {% for v in product.variants.all %}
+              <option value="{{ v.id }}">
+                {# intentamos nombre/label #}
+                {% if v.name %}{{ v.name }}{% else %}Variante {{ v.id }}{% endif %}
+                {# intentamos precio #}
+                {% if v.price %} — $ {{ v.price }}{% endif %}
+                {# intentamos stock #}
+                {% if v.stock is not None %}{% if v.stock <= 0 %} (Sin stock){% endif %}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="width:130px;">
+          <div class="muted" style="font-size:12px; margin-bottom:8px;">Cantidad</div>
+          <input type="number" name="qty" value="1" min="1" inputmode="numeric">
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn btn-primary" type="submit">Agregar al carrito</button>
+          <a class="btn" href="{% url 'shop:product_list' %}">← Volver</a>
+        </div>
+      </div>
+
+      {% if product.description %}
+        <div class="spacer"></div>
+        <div class="muted">{{ product.description }}</div>
+      {% endif %}
+    </form>
+  </div>
+</div>
 {% endblock %}
