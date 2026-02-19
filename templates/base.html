@@ -1,28 +1,22 @@
+{% load static %}
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>{% block title %}RaSel{% endblock %}</title>
-  </head>
-  <body>
-    <header>
-      <h1><a href="/">RaSel</a></h1>
-      <nav>
-        <a href="{% url 'shop:product_list' %}">Tienda</a>
-        <a href="{% url 'cart:detail' %}">Carrito ({{ request.session.cart|length|default:0 }})</a>
-        <a href="/admin/">Admin</a>
-      </nav>
-      <hr />
-    </header>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}RaSel — Aceite de Oliva{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+  {% include "partials/_header.html" %}
 
-    <main>
-      {% block content %}{% endblock %}
-    </main>
+  <main class="container">
+    <div class="spacer"></div>
+    {% block content %}{% endblock %}
+    <div class="spacer"></div>
+  </main>
 
-    <footer>
-      <hr />
-      <small>RaSel · Andalgalá, Catamarca</small>
-    </footer>
-  </body>
+  {% include "partials/_footer.html" %}
+</body>
 </html>
+

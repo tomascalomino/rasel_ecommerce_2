@@ -1,45 +1,41 @@
 {% extends "base.html" %}
-
-{% block title %}RaSel · Tienda{% endblock %}
+{% block title %}RaSel — Tienda{% endblock %}
 
 {% block content %}
-  <h2>Tienda</h2>
+<div class="row">
+  <h1 class="h2" style="margin:0">Tienda</h1>
+  <span class="badge">Blend Suave · ARS</span>
+</div>
+<div class="spacer"></div>
 
-  {% if products %}
-    <ul>
-      {% for p in products %}
-        <li>
-          <a href="{% url 'shop:product_detail' slug=p.slug %}">
-            <strong>{{ p.name }}</strong>
-          </a>
-          {% if p.short_description %}
-            <div>{{ p.short_description }}</div>
+<div class="grid">
+  {% for p in products %}
+    <div class="card product">
+      <div class="product-media">
+        <div class="ph"></div>
+      </div>
+      <div class="product-body">
+        <div class="row">
+          <div style="font-weight:900">{{ p.name }}</div>
+          {% if p.stock > 0 %}
+            <span class="badge">Stock</span>
+          {% else %}
+            <span class="badge" style="border-color: rgba(255,107,107,.25); background: rgba(255,107,107,.10);">Sin stock</span>
           {% endif %}
+        </div>
 
-          {% if p.variants.all %}
-            <ul>
-              {% for v in p.variants.all %}
-                {% if v.is_active %}
-                  <li>
-                    {{ v.name }} — ${{ v.price_ars }} (stock: {{ v.stock_qty }})
+        <div class="muted" style="margin:8px 0 12px 0;">
+          {{ p.short_description|default:"Aceite de oliva RaSel Blend Suave." }}
+        </div>
 
-                    <form method="post" action="{% url 'cart:add' %}" style="display:inline;">
-                      {% csrf_token %}
-                      <input type="hidden" name="variant_id" value="{{ v.id }}" />
-                      <input type="hidden" name="qty" value="1" />
-                      <button type="submit" {% if v.stock_qty == 0 %}disabled{% endif %}>
-                        Agregar
-                      </button>
-                    </form>
-                  </li>
-                {% endif %}
-              {% endfor %}
-            </ul>
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>No hay productos cargados todavía.</p>
-  {% endif %}
+        <div class="row">
+          <div class="price">$ {{ p.price }}</div>
+          <a class="btn btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="card"><div class="card-inner">No hay productos cargados.</div></div>
+  {% endfor %}
+</div>
 {% endblock %}

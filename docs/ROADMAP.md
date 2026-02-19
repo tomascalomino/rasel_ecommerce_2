@@ -30,3 +30,10 @@
 [ ] Redirección a checkout (debería quedar con este fix)
 [ ] Retornos success/pending/failure
 [ ] Webhook con túnel (cloudflared/ngrok) + actualización de estado
+
+## Hito Front MVP (UI)
+[ ] Base layout (header/footer)
+[ ] Home simple
+[ ] Grilla de productos (cards)
+[ ] Página producto (CTA agregar al carrito)
+[ ] Carrito con tabla prolija

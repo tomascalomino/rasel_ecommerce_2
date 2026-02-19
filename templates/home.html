@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}RaSel — Home{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-grid">
+    <div class="card">
+      <div class="card-inner">
+        <div class="badge">Aceite de oliva · Blend Suave</div>
+        <h1 class="h1">RaSel: sabor suave, calidad premium.</h1>
+        <p class="p">
+          Elaborado en Andalgalá, Catamarca. Ideal para ensaladas, tostadas y cocina diaria.
+        </p>
+        <div class="row" style="gap:12px; flex-wrap:wrap">
+          <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Ver productos</a>
+          <a class="btn" href="{% url 'cart:detail' %}">Ir al carrito</a>
+        </div>
+        <div class="spacer"></div>
+        <div class="muted">
+          Envíos y retiros: (texto placeholder) · WhatsApp/IG: (placeholder)
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-inner">
+        <h2 class="h2">Productos más elegidos</h2>
+        <p class="p muted">250ml, 500ml y bidón 3L. Stock limitado según producción.</p>
+        <div class="product-media" style="border-radius:14px; border:1px solid var(--border);">
+          <div class="ph"></div>
+        </div>
+        <div class="spacer"></div>
+        <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Comprar ahora</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
