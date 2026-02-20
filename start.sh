@@ -20,5 +20,26 @@ if [ -f fixtures/shop.json ] && ( [ ! -f ../.fixtures_loaded ] || [ "$LOAD_FIXTU
 	fi
 fi
 
+# Optionally create an admin user from environment variables (one-time)
+if [ "$CREATE_ADMIN" = "1" ]; then
+  echo "CREATE_ADMIN=1 detected — ensuring admin user exists..."
+  python manage.py shell <<'PY'
+import os
+from django.contrib.auth import get_user_model
+User = get_user_model()
+u = os.environ.get('ADMIN_USERNAME')
+e = os.environ.get('ADMIN_EMAIL')
+p = os.environ.get('ADMIN_PASSWORD')
+if not u or not p:
+	print('ADMIN_USERNAME or ADMIN_PASSWORD not set — skipping')
+else:
+	if User.objects.filter(username=u).exists():
+		print('Admin user already exists:', u)
+	else:
+		User.objects.create_superuser(u, e or '', p)
+		print('Created admin user:', u)
+PY
+fi
+
 # Start gunicorn (exec to replace the shell process)
 exec gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
