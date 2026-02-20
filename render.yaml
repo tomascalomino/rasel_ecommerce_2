@@ -2,7 +2,7 @@ services:
   - type: web
     name: rasel-ecommerce
     runtime: python
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn config.wsgi:application --chdir backend --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
     envVars:
       - key: DEBUG
