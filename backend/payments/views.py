@@ -164,6 +164,7 @@ def _verify_webhook_signature(request, event_id: str) -> bool:
         return False
 
     manifest = f"id:{event_id};request-id:{x_request_id};ts:{ts};"
+    # ✅ Fix: hmac.new() es la API correcta en Python (hmac.HMAC alias)
     digest = hmac.new(secret.encode(), msg=manifest.encode(), digestmod=hashlib.sha256).hexdigest()
     return hmac.compare_digest(digest, v1)
 
@@ -235,34 +236,30 @@ def _verify_webhook_signature(request, event_id: str) -> bool:
 
 #     return JsonResponse({"ok": True})
 
-def _mark_order_paid(order_id: str, notes: str = "") -> None:
+def _mark_order_paid(order_id: str, payment_id: str = "", mp_status: str = "approved") -> None:
     """
-    MVP: marcamos como pagado.
-    Ajustá el campo real de tu modelo (paid/status/etc).
+    Marca la orden como pagada y guarda los datos de MercadoPago.
     """
     try:
         order = Order.objects.get(id=int(order_id))
     except Exception:
         return
 
-    # Ajustá según tu Order model:
-    if hasattr(order, "status"):
-        order.status = "paid"
-    if hasattr(order, "is_paid"):
-        order.is_paid = True
-    if hasattr(order, "paid_at"):
-        from django.utils import timezone
-        order.paid_at = timezone.now()
-
-    order.save()
+    order.status = "paid"
+    if payment_id:
+        order.mp_payment_id = payment_id
+    order.mp_status = mp_status
+    order.save(update_fields=["status", "mp_payment_id", "mp_status"])
 
 
 @csrf_exempt
 def webhook(request):
     """
     Webhook MercadoPago.
-    - En local, podés testear con túnel (cloudflared/ngrok)
-    - Guardamos evento crudo para auditoría.
+    Soporta:
+    - Webhooks modernos: body JSON con {type, data: {id}}
+    - IPN clásico: query params topic + id, o data.id
+    Guarda PaymentEvent para auditoría y responde siempre 200 para evitar reintentos infinitos.
     """
     try:
         body = request.body.decode("utf-8") if request.body else ""
@@ -270,9 +267,20 @@ def webhook(request):
     except Exception:
         data = {}
 
-    # MercadoPago puede enviar también parámetros por query.
-    topic = request.GET.get("topic") or request.GET.get("type") or data.get("type", "")
-    event_id = request.GET.get("id") or data.get("id", "")
+    # MercadoPago puede enviar parámetros por query string o body.
+    # Webhooks modernos: body {type: "payment", data: {id: "123"}}
+    # IPN clásico: ?topic=payment&id=123   o   ?data.id=123
+    topic = (
+        request.GET.get("topic")
+        or request.GET.get("type")
+        or data.get("type", "")
+    )
+    event_id = (
+        request.GET.get("id")
+        or request.GET.get("data.id")  # IPN query param alternativo
+        or str(data.get("data", {}).get("id", "") if isinstance(data.get("data"), dict) else "")
+        or str(data.get("id", ""))
+    )
     resource = request.GET.get("resource") or data.get("resource", "")
 
     ev = PaymentEvent.objects.create(
@@ -283,25 +291,42 @@ def webhook(request):
         processed_ok=False,
     )
 
-    # MVP: si no podemos resolver pago, igual respondemos 200 para que MP no reintente infinito.
-    # (Luego lo refinamos).
+    # Validar firma si está configurada
+    if event_id and not _verify_webhook_signature(request, event_id):
+        ev.notes = "firma HMAC inválida"
+        ev.save(update_fields=["notes"])
+        return HttpResponse(status=401)
+
     try:
-        # Para pagos, MP suele notificar con topic/type = "payment"
         if str(topic).lower() in {"payment", "payments"} and event_id:
             payment = get_payment(str(event_id))
 
-            status = payment.get("status", "")
-            external_ref = payment.get("external_reference", "")
+            mp_status = str(payment.get("status", ""))
+            external_ref = str(payment.get("external_reference", ""))
+            payment_id = str(payment.get("id", event_id))
 
-            # Aprobado => marcar pedido pagado
-            if status == "approved" and external_ref:
-                _mark_order_paid(external_ref, notes=f"MP payment_id={event_id}")
+            if mp_status == "approved" and external_ref:
+                _mark_order_paid(external_ref, payment_id=payment_id, mp_status=mp_status)
                 ev.processed_ok = True
-                ev.notes = f"approved payment_id={event_id} order={external_ref}"
-                ev.save(update_fields=["processed_ok", "notes"])
-                return JsonResponse({"ok": True})
+                ev.notes = f"approved payment_id={payment_id} order={external_ref}"
+            elif mp_status in ("cancelled", "rejected") and external_ref:
+                # Actualizar estado sin marcar paid
+                try:
+                    order = Order.objects.get(id=int(external_ref))
+                    order.mp_payment_id = payment_id
+                    order.mp_status = mp_status
+                    order.status = "cancelled"
+                    order.save(update_fields=["mp_payment_id", "mp_status", "status"])
+                except Exception:
+                    pass
+                ev.notes = f"{mp_status} payment_id={payment_id} order={external_ref}"
+            else:
+                ev.notes = f"status={mp_status} external_ref={external_ref} (no action)"
 
-        ev.notes = "event received but not processed (missing fields or not payment)"
+            ev.save(update_fields=["processed_ok", "notes"])
+            return JsonResponse({"ok": True})
+
+        ev.notes = "event received but not processed (not payment topic or missing id)"
         ev.save(update_fields=["notes"])
         return JsonResponse({"ok": True})
     except Exception as e:

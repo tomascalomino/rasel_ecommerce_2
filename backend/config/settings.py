@@ -31,11 +31,18 @@ DEBUG = os.getenv("DEBUG", "0") == "1"
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
 
+# Agregar el host de SITE_URL automáticamente (útil para túneles cloudflared/ngrok y Render)
+_site_url = os.getenv("SITE_URL", "")
+if _site_url:
+    from urllib.parse import urlparse as _urlparse
+    _site_host = _urlparse(_site_url).hostname
+    if _site_host and _site_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_site_host)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+# Render y cloudflared sirven sobre HTTPS — necesario para forms + CSRF
+if _site_url.startswith("https"):
+    CSRF_TRUSTED_ORIGINS = [_site_url]
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if DEBUG and not os.getenv("MP_ACCESS_TOKEN"):
     print("[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará).")
