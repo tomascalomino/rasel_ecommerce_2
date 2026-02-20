@@ -3,7 +3,7 @@ services:
     name: rasel-ecommerce
     runtime: python
     buildCommand: "bash build.sh"
-    startCommand: "gunicorn config.wsgi:application --chdir backend --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
+    startCommand: "python backend/manage.py migrate --noinput && gunicorn config.wsgi:application --chdir backend --bind 0.0.0.0:$PORT --workers 2 --timeout 60"
     preDeployCommand: "python backend/manage.py migrate --noinput"
     envVars:
       - key: DEBUG
