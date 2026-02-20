@@ -9,10 +9,15 @@ python manage.py migrate --noinput
 
 # Load initial fixture once (if provided) to restore products.
 # We create a sentinel file in the repo root to avoid reloading on restarts.
-if [ -f fixtures/shop.json ] && [ ! -f ../.fixtures_loaded ]; then
+if [ -f fixtures/shop.json ] && ( [ ! -f ../.fixtures_loaded ] || [ "$LOAD_FIXTURES" = "1" ] ); then
 	echo "Found fixtures/shop.json — loading initial data..."
 	python manage.py loaddata fixtures/shop.json || true
-	touch ../.fixtures_loaded
+	# mark as loaded unless explicit reload requested
+	if [ "$LOAD_FIXTURES" != "1" ]; then
+		touch ../.fixtures_loaded
+	else
+		echo "LOAD_FIXTURES=1 was set — fixture loaded but sentinel not created (one-time run)"
+	fi
 fi
 
 # Start gunicorn (exec to replace the shell process)
