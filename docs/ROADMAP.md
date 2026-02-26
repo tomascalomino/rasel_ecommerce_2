@@ -42,7 +42,7 @@
 [x] Corregir media en Render (disco persistente + `MEDIA_ROOT` + `SERVE_MEDIA`)
 [x] Corregir URL callback `payments:return` (`result`)
 [x] Endurecer settings de seguridad base en producción
-[ ] Crear orden solo con pago confirmado (idempotencia)
-[ ] Descuento de stock transaccional al confirmar pago
+[x] Crear orden solo con pago confirmado (idempotencia)
+[x] Descuento de stock transaccional al confirmar pago
 [ ] Logging estructurado y monitoreo de errores
-[ ] Tests de flujo crítico checkout/pagos/webhook
+[x] Tests de flujo crítico checkout/pagos/webhook

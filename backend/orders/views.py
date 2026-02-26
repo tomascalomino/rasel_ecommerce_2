@@ -1,9 +1,8 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
-from decimal import Decimal
 
 from cart.cart import Cart
-from .models import Order, OrderItem
+from payments.models import PaymentDraft
 from .forms import CheckoutForm
 
 
@@ -17,7 +16,20 @@ def checkout(request):
     if request.method == "POST":
         form = CheckoutForm(request.POST)
         if form.is_valid():
-            order = Order.objects.create(
+            draft_items = []
+            for item in cart.items():
+                draft_items.append(
+                    {
+                        "variant_id": item.variant.id,
+                        "product_name": item.variant.product.name,
+                        "variant_name": item.variant.name,
+                        "unit_price": str(item.unit_price),
+                        "quantity": int(item.qty),
+                        "line_total": str(item.line_total),
+                    }
+                )
+
+            draft = PaymentDraft.objects.create(
                 full_name=form.cleaned_data["full_name"],
                 email=form.cleaned_data["email"],
                 phone=form.cleaned_data["phone"],
@@ -25,21 +37,13 @@ def checkout(request):
                 city=form.cleaned_data["city"],
                 postal_code=form.cleaned_data["postal_code"],
                 total_amount=cart.total(),
+                items=draft_items,
             )
 
-            for item in cart.items():
-                OrderItem.objects.create(
-                    order=order,
-                    product_name=item.variant.product.name,
-                    variant_name=item.variant.name,
-                    unit_price=item.unit_price,
-                    quantity=item.qty,
-                    line_total=item.line_total,
-                )
+            request.session["active_payment_draft"] = str(draft.token)
+            request.session.modified = True
 
-            cart.clear()
-
-            return redirect("orders:confirmation", order_id=order.id)
+            return redirect("payments:start", draft_id=draft.token)
 
     else:
         form = CheckoutForm()
