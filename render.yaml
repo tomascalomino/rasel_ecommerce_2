@@ -24,6 +24,14 @@ services:
         value: "1"
       - key: PYTHON_VERSION
         value: "3.11"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.0"
+      - key: SENTRY_ENVIRONMENT
+        value: "production"
       - key: MP_ACCESS_TOKEN
         sync: false
       - key: DJANGO_SETTINGS_MODULE

@@ -18,6 +18,7 @@ python-dotenv==1.2.1
 pytokens==0.4.1
 requests==2.32.5
 ruff==0.15.1
+sentry-sdk==2.22.0
 setuptools-scm==9.2.2
 sqlparse==0.5.5
 tzdata==2025.3

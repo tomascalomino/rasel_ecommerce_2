@@ -111,3 +111,5 @@ Pequeño proyecto de ejemplo de tienda online construido con Django. Contiene m�
 - `render.yaml`: define `preDeployCommand` para migraciones.
 - Media en producción: usar disco persistente montado en `/var/data/media` y variable `MEDIA_ROOT=/var/data/media`.
 - En producción, habilitar `SERVE_MEDIA=1` para exponer imágenes subidas por admin en `/media/`.
+- Logging estructurado por consola configurable con `LOG_LEVEL`.
+- Monitoreo opcional con Sentry (`SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_ENVIRONMENT`).

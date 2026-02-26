@@ -44,5 +44,5 @@
 [x] Endurecer settings de seguridad base en producción
 [x] Crear orden solo con pago confirmado (idempotencia)
 [x] Descuento de stock transaccional al confirmar pago
-[ ] Logging estructurado y monitoreo de errores
+[x] Logging estructurado y monitoreo de errores
 [x] Tests de flujo crítico checkout/pagos/webhook

@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import os
 import json
+import logging
 from decimal import Decimal
 
 from django.http import HttpResponse, JsonResponse
@@ -17,6 +18,9 @@ from shop.models import Variant
 from .mercadopago import create_preference, get_payment
 from urllib.parse import urlparse
 from .models import PaymentEvent, PaymentDraft
+
+
+logger = logging.getLogger("payments.flow")
 
 
 def _site_url() -> str:
@@ -80,6 +84,7 @@ def start(request, draft_id):
 
     if not draft.mp_preference_id:
         payload = _build_preference_payload(draft)
+        logger.info("Creando preference draft=%s email=%s", draft.token, draft.email)
         pref = create_preference(payload)
         draft.mp_preference_id = pref.get("id", "") or ""
         draft.save(update_fields=["mp_preference_id"])
@@ -90,6 +95,7 @@ def start(request, draft_id):
 
     if not init_point:
         payload = _build_preference_payload(draft)
+        logger.info("Recreando preference draft=%s", draft.token)
         pref = create_preference(payload)
         draft.mp_preference_id = pref.get("id", "") or ""
         draft.save(update_fields=["mp_preference_id"])
@@ -120,6 +126,7 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
     try:
         with transaction.atomic():
             draft = PaymentDraft.objects.select_for_update().select_related("order").get(token=external_reference)
+            logger.info("Finalizar pago approved draft=%s payment_id=%s", external_reference, payment_id)
 
             if draft.order_id:
                 if payment_id and draft.mp_payment_id != payment_id:
@@ -130,6 +137,7 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
 
             existing = Order.objects.filter(mp_payment_id=payment_id).first() if payment_id else None
             if existing:
+                logger.warning("Order ya existente para payment_id=%s draft=%s order=%s", payment_id, external_reference, existing.id)
                 draft.order = existing
                 draft.mp_payment_id = payment_id
                 draft.mp_status = mp_status
@@ -139,6 +147,7 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
 
             draft_rows = draft.items or []
             if not draft_rows:
+                logger.warning("Draft sin items draft=%s payment_id=%s", external_reference, payment_id)
                 return None, "draft_without_items"
 
             variant_rows = []
@@ -146,12 +155,15 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
                 variant_id = int(row.get("variant_id", 0) or 0)
                 qty = int(row.get("quantity", 0) or 0)
                 if variant_id <= 0 or qty <= 0:
+                    logger.warning("Draft item inválido draft=%s variant_id=%s qty=%s", external_reference, variant_id, qty)
                     return None, "invalid_draft_item"
 
                 variant = Variant.objects.select_for_update().select_related("product").filter(id=variant_id, is_active=True).first()
                 if not variant:
+                    logger.warning("Variant inexistente o inactiva draft=%s variant_id=%s", external_reference, variant_id)
                     return None, f"variant_not_found:{variant_id}"
                 if variant.stock_qty < qty:
+                    logger.warning("Stock insuficiente draft=%s variant_id=%s requested=%s stock=%s", external_reference, variant_id, qty, variant.stock_qty)
                     return None, f"insufficient_stock:{variant_id}"
 
                 variant_rows.append((variant, row, qty))
@@ -192,8 +204,10 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
             draft.mp_status = mp_status
             draft.consumed_at = timezone.now()
             draft.save(update_fields=["order", "mp_payment_id", "mp_status", "consumed_at"])
+            logger.info("Order creada draft=%s order=%s payment_id=%s", external_reference, order.id, payment_id)
             return order, None
     except PaymentDraft.DoesNotExist:
+        logger.warning("Draft no encontrado draft=%s payment_id=%s", external_reference, payment_id)
         return None, "draft_not_found"
 
 
@@ -223,6 +237,7 @@ def payment_return(request, result: str):
                 request.session.pop("active_payment_draft", None)
                 request.session.modified = True
         if draft and not order:
+            logger.warning("Approved sin order draft=%s payment_id=%s error=%s", external_reference, payment_id, finalize_error)
             draft.mp_status = status
             if payment_id:
                 draft.mp_payment_id = payment_id
@@ -387,10 +402,12 @@ def webhook(request):
     if event_id and not _verify_webhook_signature(request, event_id):
         ev.notes = "firma HMAC inválida"
         ev.save(update_fields=["notes"])
+        logger.warning("Webhook firma inválida event_id=%s topic=%s", event_id, topic)
         return HttpResponse(status=401)
 
     try:
         if str(topic).lower() in {"payment", "payments"} and event_id:
+            logger.info("Webhook payment event_id=%s topic=%s", event_id, topic)
             payment = get_payment(str(event_id))
 
             mp_status = str(payment.get("status", ""))
@@ -404,6 +421,7 @@ def webhook(request):
                     ev.notes = f"approved payment_id={payment_id} order={order.id}"
                 else:
                     ev.notes = f"approved payment_id={payment_id} finalize_error={error}"
+                    logger.warning("Webhook approved sin finalize event_id=%s payment_id=%s error=%s", event_id, payment_id, error)
             elif mp_status in ("cancelled", "rejected") and external_ref:
                 _set_draft_status(external_ref, payment_id=payment_id, status=mp_status)
                 if draft := PaymentDraft.objects.filter(token=external_ref).select_related("order").first():
@@ -421,8 +439,10 @@ def webhook(request):
 
         ev.notes = "event received but not processed (not payment topic or missing id)"
         ev.save(update_fields=["notes"])
+        logger.info("Webhook ignorado topic=%s event_id=%s", topic, event_id)
         return JsonResponse({"ok": True})
     except Exception as e:
         ev.notes = f"processing error: {e}"
         ev.save(update_fields=["notes"])
+        logger.exception("Error procesando webhook event_id=%s topic=%s", event_id, topic)
         return JsonResponse({"ok": True})

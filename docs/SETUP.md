@@ -15,6 +15,12 @@ Ejemplo mínimo:
 - `ALLOWED_HOSTS=127.0.0.1,localhost`
 - `SITE_URL=http://127.0.0.1:8000`
 - `MP_ACCESS_TOKEN=...`
+- `LOG_LEVEL=INFO`
+
+Opcional (monitoreo errores):
+- `SENTRY_DSN=...`
+- `SENTRY_TRACES_SAMPLE_RATE=0.0`
+- `SENTRY_ENVIRONMENT=development`
 
 ## Correr
 cd backend
