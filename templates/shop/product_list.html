@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}RaSel — Tienda{% endblock %}
+
+{% block content %}
+<div class="row">
+  <h1 class="h2" style="margin:0">Tienda</h1>
+  <span class="badge">Minimal · Premium · ARS</span>
+</div>
+<div class="spacer"></div>
+
+<div class="grid">
+  {% for p in products %}
+    <div class="card product">
+
+      <a href="{% url 'shop:product_detail' p.slug %}" class="product-media" aria-label="Ver {{ p.name }}">
+        {% if p.image %}
+          <img class="product-img" src="{{ p.image.url }}" alt="{{ p.name }}">
+        {% else %}
+          <div class="ph"></div>
+        {% endif %}
+      </a>
+
+      <div class="product-body">
+        <div class="row">
+          <div style="font-weight:900; display:flex; gap:10px; align-items:center;">
+            <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
+            {{ p.name }}
+          </div>
+
+          {% if p.in_stock %}
+            <span class="badge">Stock</span>
+          {% else %}
+            <span class="badge" style="border-color: rgba(255,107,107,.25); background: rgba(255,107,107,.10);">Sin stock</span>
+          {% endif %}
+        </div>
+
+        <div class="muted" style="margin:8px 0 12px 0;">
+          {{ p.short_description|default:"RaSel Blend Suave. Sabor equilibrado y suave." }}
+        </div>
+
+        <div class="row" style="align-items:flex-end">
+          <div>
+            <div class="muted" style="font-size:12px">Precio</div>
+            <div class="price">
+              {% if p.min_price_ars %}
+                Desde $ {{ p.min_price_ars }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+
+          <a class="btn btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="card"><div class="card-inner">No hay productos cargados.</div></div>
+  {% endfor %}
+</div>
+{% endblock %}

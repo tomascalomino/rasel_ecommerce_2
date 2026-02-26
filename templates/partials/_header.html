@@ -1,0 +1,34 @@
+{% load static %}
+<div class="topbar">
+  <div class="container">
+    <div class="nav">
+      <a class="brand" href="{% url 'home' %}">
+        <img class="brand-logo" src="{% static 'img/rasel-escudo.png' %}" alt="RaSel">
+        <span>Aceite de Oliva virgen extra</span>
+      </a>
+
+      <div class="navlinks">
+        <a class="navlink {% if request.resolver_match and request.resolver_match.app_name == 'shop' %}is-active{% endif %}"
+           href="{% url 'shop:product_list' %}">
+          Tienda
+          <a href="#" class="pill">
+            {% include "partials/icons/search.svg" %}
+            <span>Buscar</span>
+          </a>
+        </a>
+
+        <a href="{% url 'cart:detail' %}"
+           class="pill pill-cart {% if request.resolver_match and request.resolver_match.app_name == 'cart' %}is-active{% endif %}"
+           aria-label="Carrito">
+          <span>Carrito</span>
+          <span class="badge-num" aria-label="Items en carrito">{{ cart|length }}</span>
+        </a>
+
+        <span class="pill pill-meta">
+          <span class="muted">Blend Suave</span>
+          <strong>Catamarca</strong>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

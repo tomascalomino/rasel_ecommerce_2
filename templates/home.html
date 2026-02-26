@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}RaSel — Aceite de Oliva Premium{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-grid">
+
+    <!-- BLOQUE IZQUIERDO -->
+    <div class="card">
+      <div class="card-inner">
+
+        <div class="kicker">
+          <span class="dot"></span>
+          <span>Blend Suave · Andalgalá, Catamarca</span>
+        </div>
+
+        <h1 class="h1">
+          Sabor suave. <br>Calidad real.
+        </h1>
+
+        <p class="p">
+          Aceite de oliva premium pensado para uso diario.
+          Perfil equilibrado, fresco y elegante.
+        </p>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" href="{% url 'shop:product_list' %}">
+            {% include "partials/icons/cart.svg" %}
+            Ver tienda
+          </a>
+
+          <a class="btn" href="{% url 'cart:detail' %}">
+            Ir al carrito
+          </a>
+        </div>
+
+        <div class="trust-row">
+          <span class="trust">
+            <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
+            Origen seleccionado
+          </span>
+
+          <span class="trust">
+            <span class="icon">{% include "partials/icons/drop.svg" %}</span>
+            Perfil suave
+          </span>
+
+          <span class="trust">
+            <span class="icon">{% include "partials/icons/shield.svg" %}</span>
+            Compra segura
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- BLOQUE DERECHO -->
+    <div class="card hero-visual">
+      <div class="card-inner">
+
+        <div class="visual">
+          <img class="bottle" src="{% static 'img/bottle.jpeg' %}" alt="RaSel botella">
+
+          <div>
+            <div class="h2">RaSel</div>
+            <div class="muted">250ml · 500ml · 3L</div>
+            <div class="spacer"></div>
+            <div class="price">Desde $6.000</div>
+          </div>
+        </div>
+
+        <div class="mini-grid">
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/truck.svg" %}</div>
+            <div>
+              <div class="mini-title">Envíos</div>
+              <div class="muted">Coordinación simple</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/star.svg" %}</div>
+            <div>
+              <div class="mini-title">Calidad</div>
+              <div class="muted">Seleccionado</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/credit.svg" %}</div>
+            <div>
+              <div class="mini-title">Pagos</div>
+              <div class="muted">MercadoPago</div>
+            </div>
+          </div>
+
+          <div class="mini">
+            <div class="mini-ic">{% include "partials/icons/heart.svg" %}</div>
+            <div>
+              <div class="mini-title">Presentación</div>
+              <div class="muted">Ideal para regalo</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

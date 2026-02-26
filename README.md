@@ -1,0 +1,106 @@
+# RaSel E-commerce
+
+Pequeño proyecto de ejemplo de tienda online construido con Django. Contiene módulos para catálogo, carrito, pagos y pedidos, además de plantillas y estilos básicos para una interfaz ligera y responsiva. Ideal para pruebas, demos o como punto de partida para un e-commerce.
+
+## Estructura del repo
+
+- `README.md`
+- `pyproject.toml`
+- `requirements.txt`
+- `.gitignore`
+- `docs/`
+  - `DECISIONS.md`
+  - `ROADMAP.md`
+  - `SETUP.md`
+- `backend/`
+  - `db.sqlite3`
+  - `manage.py`
+  - `config/`
+    - `__init__.py`
+    - `asgi.py`
+    - `settings.py`
+    - `urls.py`
+    - `wsgi.py`
+  - `cart/`
+    - `__init__.py`
+    - `admin.py`
+    - `apps.py`
+    - `cart.py`
+    - `context_processors.py`
+    - `models.py`
+    - `tests.py`
+    - `urls.py`
+    - `views.py`
+    - `migrations/`
+      - `__init__.py`
+  - `orders/`
+    - `__init__.py`
+    - `admin.py`
+    - `apps.py`
+    - `forms.py`
+    - `models.py`
+    - `tests.py`
+    - `urls.py`
+    - `views.py`
+    - `migrations/`
+      - `0001_initial.py`
+      - `0002_order_mp_payment_id_order_mp_preference_id_and_more.py`
+      - `__init__.py`
+  - `payments/`
+    - `__init__.py`
+    - `admin.py`
+    - `apps.py`
+    - `mercadopago.py`
+    - `models.py`
+    - `tests.py`
+    - `urls.py`
+    - `views.py`
+    - `migrations/`
+      - `0001_initial.py`
+      - `__init__.py`
+  - `shop/`
+    - `__init__.py`
+    - `admin.py`
+    - `apps.py`
+    - `models.py`
+    - `tests.py`
+    - `urls.py`
+    - `views.py`
+    - `migrations/`
+      - `0001_initial.py`
+      - `__init__.py`
+- `templates/`
+  - `base.html`
+  - `home.html`
+  - `partials/`
+    - `_header.html`
+    - `_footer.html`
+    - `icons/`
+      - `bottle.svg`
+      - `cart.svg`
+      - `credit.svg`
+      - `drop.svg`
+      - `heart.svg`
+      - `leaf.svg`
+      - `pin.svg`
+      - `plus.svg`
+      - `search.svg`
+      - `shield.svg`
+      - `star.svg`
+      - `truck.svg`
+  - `shop/`
+    - `home.html`
+    - `product_list.html`
+    - `product_detail.html`
+  - `orders/`
+    - `checkout.html`
+    - `confirmation.html`
+  - `cart/`
+    - `cart_detail.html`
+  - `payments/`
+    - `payment_result.html`
+- `static/`
+  - `favicon.ico`
+  - `css/`
+    - `site.css`
+- `media/` (carpeta para archivos subidos)

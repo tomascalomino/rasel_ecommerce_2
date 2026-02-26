@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}RaSel — {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="card product-detail">
+
+  {% if product.image %}
+    <div class="detail-media">
+      <img class="detail-img" src="{{ product.image.url }}" alt="{{ product.name }}">
+    </div>
+  {% endif %}
+
+  <div class="card-inner">
+
+    <div class="row" style="gap:12px; align-items:flex-start;">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
+        <div>
+          <div class="badge">RaSel · Blend Suave</div>
+          <h1 class="h2" style="margin:10px 0 6px 0">{{ product.name }}</h1>
+          <div class="muted">{{ product.short_description|default:"Aceite de oliva premium." }}</div>
+        </div>
+      </div>
+
+      <a class="btn btn-small" href="{% url 'shop:product_list' %}">← Volver</a>
+    </div>
+
+    <div class="spacer"></div>
+
+    <form action="{% url 'cart:add' %}" method="post" class="buybox">
+      {% csrf_token %}
+
+      <div class="row" style="gap:12px; align-items:flex-end; flex-wrap:wrap;">
+
+        <div style="flex:1; min-width:240px;">
+          <div class="muted" style="font-size:12px; margin-bottom:8px;">Elegí presentación</div>
+
+          <select name="variant_id" required>
+            {% for v in product.variants.all %}
+              <option value="{{ v.id }}" {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}>
+                {{ v.name }}
+                — $ {{ v.price_ars }}
+                {% if v.stock_qty|default:0 <= 0 %}(Sin stock){% endif %}
+              </option>
+            {% empty %}
+              <option disabled selected>No hay variantes disponibles</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="width:130px;">
+          <div class="muted" style="font-size:12px; margin-bottom:8px;">Cantidad</div>
+          <input type="number" name="qty" value="1" min="1" inputmode="numeric">
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button type="submit" class="btn btn-primary">
+            <span class="icon">{% include "partials/icons/plus.svg" %}</span>
+            Agregar
+          </button>
+
+          <a class="btn" href="{% url 'cart:detail' %}">
+            <span class="icon">{% include "partials/icons/cart.svg" %}</span>
+            Carrito
+          </a>
+        </div>
+
+      </div>
+
+      {% if product.description %}
+        <div class="spacer"></div>
+        <div class="muted">{{ product.description }}</div>
+      {% endif %}
+    </form>
+
+  </div>
+</div>
+{% endblock %}
