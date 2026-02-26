@@ -89,11 +89,13 @@ Si un deploy rompe producción:
 - Revisar logs de `payments.flow` al menos 1 vez por día.
 - Revisar eventos fallidos en `PaymentEvent`.
 - Revisar drafts sin consumir (`consumed_at` null) para detectar abandono o fallos de pago.
+- Ejecutar KPI rápido: `python backend/manage.py ops_kpis --days 7`.
 
 ## 7) Comandos útiles local
 - `python backend/manage.py check --deploy`
 - `python backend/manage.py test payments orders`
 - `python backend/manage.py migrate`
+- `python backend/manage.py ops_kpis --days 7`
 
 ## 8) Criterios de escalamiento
 Escalar de inmediato si ocurre cualquiera:
