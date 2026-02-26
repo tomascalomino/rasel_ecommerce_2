@@ -97,7 +97,13 @@ Si un deploy rompe producción:
 - `python backend/manage.py migrate`
 - `python backend/manage.py ops_kpis --days 7`
 
-## 8) Criterios de escalamiento
+## 8) Monitoreo semanal automático (Render Cron)
+- Servicio: `rasel-kpi-weekly`
+- Schedule: `0 9 * * 1` (lunes 09:00 UTC)
+- Command: `python backend/manage.py ops_kpis --days 7`
+- Dónde verlo: Render > Service `rasel-kpi-weekly` > Logs
+
+## 9) Criterios de escalamiento
 Escalar de inmediato si ocurre cualquiera:
 - No se crean órdenes con pagos `approved`.
 - Duplicación de órdenes confirmada.
