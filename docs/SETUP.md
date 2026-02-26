@@ -7,7 +7,14 @@ conda activate rasel-ecomm_venv
 pip install -r requirements.txt
 
 ## Variables de entorno
-Copiar `.env.example` a `.env` (NO se commitea) y completar valores.
+Crear archivo `.env` (NO se commitea) y completar valores.
+
+Ejemplo mínimo:
+- `SECRET_KEY=...`
+- `DEBUG=1`
+- `ALLOWED_HOSTS=127.0.0.1,localhost`
+- `SITE_URL=http://127.0.0.1:8000`
+- `MP_ACCESS_TOKEN=...`
 
 ## Correr
 cd backend

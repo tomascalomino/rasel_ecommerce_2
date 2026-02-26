@@ -5,6 +5,10 @@ services:
     buildCommand: "bash build.sh"
     startCommand: "bash start.sh"
     preDeployCommand: "python backend/manage.py migrate --noinput"
+    disk:
+      name: media
+      mountPath: /var/data/media
+      sizeGB: 1
     envVars:
       - key: DEBUG
         value: "0"
@@ -14,6 +18,10 @@ services:
         value: ".onrender.com"
       - key: SITE_URL
         value: "https://rasel-ecommerce.onrender.com"
+      - key: MEDIA_ROOT
+        value: "/var/data/media"
+      - key: SERVE_MEDIA
+        value: "1"
       - key: PYTHON_VERSION
         value: "3.11"
       - key: MP_ACCESS_TOKEN

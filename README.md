@@ -103,4 +103,11 @@ Pequeño proyecto de ejemplo de tienda online construido con Django. Contiene m�
   - `favicon.ico`
   - `css/`
     - `site.css`
-- `media/` (carpeta para archivos subidos)
+- `backend/media/` (carpeta local para archivos subidos)
+
+## Deploy en Render (resumen)
+
+- `build.sh`: instala dependencias y corre `collectstatic`.
+- `render.yaml`: define `preDeployCommand` para migraciones.
+- Media en producción: usar disco persistente montado en `/var/data/media` y variable `MEDIA_ROOT=/var/data/media`.
+- En producción, habilitar `SERVE_MEDIA=1` para exponer imágenes subidas por admin en `/media/`.

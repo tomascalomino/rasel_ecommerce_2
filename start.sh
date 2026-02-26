@@ -4,8 +4,10 @@ set -o errexit
 # Ensure we run inside the backend folder where manage.py lives
 cd backend
 
-# Run migrations against the configured DATABASE_URL
-python manage.py migrate --noinput
+# Run migrations optionally (Render ya corre preDeployCommand)
+if [ "${RUN_MIGRATIONS_ON_START:-0}" = "1" ]; then
+	python manage.py migrate --noinput
+fi
 
 # Load initial fixture once (if provided) to restore products.
 # We create a sentinel file in the repo root to avoid reloading on restarts.
