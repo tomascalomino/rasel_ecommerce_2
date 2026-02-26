@@ -41,6 +41,40 @@
 
 <div class="spacer"></div>
 
+{% if query or in_stock_only or sort != 'name_asc' %}
+  <div class="active-filters">
+    <span class="muted tiny">Filtros activos:</span>
+
+    {% if query %}
+      <span class="filter-chip">
+        Búsqueda: "{{ query }}"
+        <a class="filter-chip-clear" href="?{% if in_stock_only %}in_stock=1&{% endif %}{% if sort != 'name_asc' %}sort={{ sort }}{% endif %}">×</a>
+      </span>
+    {% endif %}
+
+    {% if in_stock_only %}
+      <span class="filter-chip">
+        Solo con stock
+        <a class="filter-chip-clear" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if sort != 'name_asc' %}sort={{ sort }}{% endif %}">×</a>
+      </span>
+    {% endif %}
+
+    {% if sort != 'name_asc' %}
+      <span class="filter-chip">
+        Orden:
+        {% if sort == 'name_desc' %}Nombre (Z-A)
+        {% elif sort == 'price_asc' %}Precio (menor a mayor)
+        {% elif sort == 'price_desc' %}Precio (mayor a menor)
+        {% else %}Personalizado{% endif %}
+        <a class="filter-chip-clear" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if in_stock_only %}in_stock=1{% endif %}">×</a>
+      </span>
+    {% endif %}
+
+    <a class="btn btn-small" href="{% url 'shop:product_list' %}">Limpiar todo</a>
+  </div>
+  <div class="spacer"></div>
+{% endif %}
+
 {% if page_obj and page_obj.paginator.count > 0 %}
   <div class="results-meta muted tiny">
     Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
