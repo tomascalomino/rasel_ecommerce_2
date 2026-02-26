@@ -2,16 +2,7 @@
 
 {% block content %}
 <h2>Pedido confirmado</h2>
-<p>Tu pedido #{{ order_id }} fue creado correctamente.</p>
-
-<p>
-  <a href="{% url 'payments:start' order_id=order_id %}">
-    <button class="btn btn-primary">
-      {% include "partials/icons/credit.svg" %}
-      Pagar con MercadoPago
-    </button>
-  </a>
-</p>
+<p>Tu pedido #{{ order_id }} fue creado y pagado correctamente.</p>
 
 <p><a href="/">Volver a tienda</a></p>
 {% endblock %}

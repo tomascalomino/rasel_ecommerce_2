@@ -35,6 +35,13 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    variant = models.ForeignKey(
+        "shop.Variant",
+        on_delete=models.SET_NULL,
+        related_name="order_items",
+        null=True,
+        blank=True,
+    )
 
     product_name = models.CharField(max_length=150)
     variant_name = models.CharField(max_length=80)
