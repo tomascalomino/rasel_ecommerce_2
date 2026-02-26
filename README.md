@@ -11,6 +11,7 @@ Peque√±o proyecto de ejemplo de tienda online construido con Django. Contiene m√
 - `docs/`
   - `DECISIONS.md`
   - `ROADMAP.md`
+  - `RUNBOOK.md`
   - `SETUP.md`
 - `backend/`
   - `db.sqlite3`
