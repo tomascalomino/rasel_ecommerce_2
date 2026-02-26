@@ -41,6 +41,13 @@
 
 <div class="spacer"></div>
 
+{% if page_obj and page_obj.paginator.count > 0 %}
+  <div class="results-meta muted tiny">
+    Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }} productos
+  </div>
+  <div class="spacer"></div>
+{% endif %}
+
 <div class="grid">
   {% for p in products %}
     <div class="card product">
