@@ -1,21 +1,46 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Checkout</h2>
+<div class="section-head">
+  <h1 class="h2 section-title">Checkout</h1>
+  <span class="badge">Paso final antes del pago</span>
+</div>
 
-<h3>Resumen</h3>
-<ul>
-  {% for item in cart.items %}
-    <li>{{ item.variant.product.name }} - {{ item.variant.name }} x {{ item.qty }} — ${{ item.line_total }}</li>
-  {% endfor %}
-</ul>
+<div class="spacer"></div>
 
-<p><strong>Total: ${{ cart.total }}</strong></p>
+<div class="card">
+  <div class="card-inner">
+    <h3 class="h2">Resumen</h3>
+    <div class="result-list">
+      {% for item in cart.items %}
+        <div class="row">
+          <div>{{ item.variant.product.name }} · {{ item.variant.name }} x {{ item.qty }}</div>
+          <strong>$ {{ item.line_total }}</strong>
+        </div>
+      {% endfor %}
+    </div>
 
-<h3>Datos de envío</h3>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Continuar a pago</button>
-</form>
+    <div class="spacer"></div>
+    <div class="row">
+      <span class="muted">Total</span>
+      <span class="price">$ {{ cart.total }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="spacer"></div>
+
+<div class="card">
+  <div class="card-inner">
+    <h3 class="h2">Datos de envío</h3>
+    <form method="post" class="result-list">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="stack">
+        <a class="btn" href="{% url 'cart:detail' %}">Volver al carrito</a>
+        <button class="btn btn-primary" type="submit">Continuar a pago</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

@@ -11,11 +11,16 @@
         <a class="navlink {% if request.resolver_match and request.resolver_match.app_name == 'shop' %}is-active{% endif %}"
            href="{% url 'shop:product_list' %}">
           Tienda
-          <a href="#" class="pill">
-            {% include "partials/icons/search.svg" %}
-            <span>Buscar</span>
-          </a>
         </a>
+
+        <form action="{% url 'shop:product_list' %}" method="get" class="search-form" role="search">
+          <label for="q" class="sr-only">Buscar productos</label>
+          <input id="q" class="search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Buscar" />
+          <button class="btn btn-small" type="submit">
+            <span class="icon">{% include "partials/icons/search.svg" %}</span>
+            Buscar
+          </button>
+        </form>
 
         <a href="{% url 'cart:detail' %}"
            class="pill pill-cart {% if request.resolver_match and request.resolver_match.app_name == 'cart' %}is-active{% endif %}"

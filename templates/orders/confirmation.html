@@ -1,8 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Pedido confirmado</h2>
-<p>Tu pedido #{{ order_id }} fue creado y pagado correctamente.</p>
-
-<p><a href="/">Volver a tienda</a></p>
+<div class="card">
+	<div class="card-inner">
+		<h1 class="h2">Pedido confirmado</h1>
+		<p class="muted">Tu pedido #{{ order_id }} fue creado y pagado correctamente.</p>
+		<div class="stack">
+			<a class="btn btn-primary" href="{% url 'shop:product_list' %}">Volver a tienda</a>
+		</div>
+	</div>
+</div>
 {% endblock %}

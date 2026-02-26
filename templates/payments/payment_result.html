@@ -1,33 +1,40 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Resultado del pago: {{ result|title }}</h2>
+<div class="card">
+  <div class="card-inner">
+    <h1 class="h2">Resultado del pago: {{ result|title }}</h1>
 
-{% if order %}
-  <p>Pedido: #{{ order.id }}</p>
-  <p>Estado MP: {{ order.mp_status|default:"(sin estado)" }}</p>
-  <p>Payment ID: {{ order.mp_payment_id|default:"(sin id)" }}</p>
-  <p>Estado interno: {{ order.status }}</p>
+    {% if order %}
+      <div class="result-list">
+        <p>Pedido: <strong>#{{ order.id }}</strong></p>
+        <p>Estado MP: {{ order.mp_status|default:"(sin estado)" }}</p>
+        <p>Payment ID: {{ order.mp_payment_id|default:"(sin id)" }}</p>
+        <p>Estado interno: {{ order.status }}</p>
+      </div>
 
-{% elif draft %}
-  <p>Pago asociado al borrador: {{ draft.token }}</p>
-  <p>Estado MP: {{ draft.mp_status|default:"(sin estado)" }}</p>
-  <p>Payment ID: {{ draft.mp_payment_id|default:"(sin id)" }}</p>
+    {% elif draft %}
+      <div class="result-list">
+        <p>Pago asociado al borrador: {{ draft.token }}</p>
+        <p>Estado MP: {{ draft.mp_status|default:"(sin estado)" }}</p>
+        <p>Payment ID: {{ draft.mp_payment_id|default:"(sin id)" }}</p>
+      </div>
 
-  {% if draft.mp_status != "approved" %}
-    <p>
-      <a href="{% url 'payments:start' draft_id=draft.token %}">
-        <button>Reintentar pago</button>
-      </a>
-    </p>
-  {% endif %}
-{% else %}
-  <p>No pudimos vincular el retorno a un borrador de pago.</p>
-{% endif %}
+      {% if draft.mp_status != "approved" %}
+        <div class="spacer"></div>
+        <a class="btn" href="{% url 'payments:start' draft_id=draft.token %}">Reintentar pago</a>
+      {% endif %}
+    {% else %}
+      <p class="muted">No pudimos vincular el retorno a un borrador de pago.</p>
+    {% endif %}
 
-{% if finalize_error %}
-  <p>No se pudo finalizar el pedido automáticamente: {{ finalize_error }}</p>
-{% endif %}
+    {% if finalize_error %}
+      <div class="spacer"></div>
+      <p class="alert alert-info">No se pudo finalizar el pedido automáticamente: {{ finalize_error }}</p>
+    {% endif %}
 
-<p><a href="/">Volver a tienda</a></p>
+    <div class="spacer"></div>
+    <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Volver a tienda</a>
+  </div>
+</div>
 {% endblock %}

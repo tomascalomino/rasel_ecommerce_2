@@ -4,10 +4,41 @@
 {% block title %}RaSel — Tienda{% endblock %}
 
 {% block content %}
-<div class="row">
-  <h1 class="h2" style="margin:0">Tienda</h1>
+<div class="section-head">
+  <h1 class="h2 section-title">Tienda</h1>
   <span class="badge">Minimal · Premium · ARS</span>
 </div>
+<div class="spacer"></div>
+
+<div class="card">
+  <div class="controls">
+    <form method="get" class="controls">
+      <div class="control-field">
+        <label for="q" class="muted tiny">Buscar</label>
+        <input id="q" name="q" type="search" value="{{ query }}" placeholder="Nombre o descripción" />
+      </div>
+
+      <div class="control-field">
+        <input id="in_stock" name="in_stock" type="checkbox" value="1" {% if in_stock_only %}checked{% endif %} />
+        <label for="in_stock" class="muted tiny">Solo con stock</label>
+      </div>
+
+      <div class="control-field">
+        <label for="sort" class="muted tiny">Orden</label>
+        <select id="sort" name="sort" class="control-select">
+          <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
+          <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Nombre (Z-A)</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Precio (menor a mayor)</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Precio (mayor a menor)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-small" type="submit">Aplicar</button>
+      <a class="btn btn-small" href="{% url 'shop:product_list' %}">Limpiar</a>
+    </form>
+  </div>
+</div>
+
 <div class="spacer"></div>
 
 <div class="grid">
@@ -24,7 +55,7 @@
 
       <div class="product-body">
         <div class="row">
-          <div style="font-weight:900; display:flex; gap:10px; align-items:center;">
+          <div class="name-row">
             <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
             {{ p.name }}
           </div>
@@ -32,17 +63,18 @@
           {% if p.in_stock %}
             <span class="badge">Stock</span>
           {% else %}
-            <span class="badge" style="border-color: rgba(255,107,107,.25); background: rgba(255,107,107,.10);">Sin stock</span>
+            <span class="badge stock-off">Sin stock</span>
           {% endif %}
         </div>
 
-        <div class="muted" style="margin:8px 0 12px 0;">
+        <div class="muted">
           {{ p.short_description|default:"RaSel Blend Suave. Sabor equilibrado y suave." }}
         </div>
+        <div class="spacer"></div>
 
-        <div class="row" style="align-items:flex-end">
+        <div class="row">
           <div>
-            <div class="muted" style="font-size:12px">Precio</div>
+            <div class="muted price-meta">Precio</div>
             <div class="price">
               {% if p.min_price_ars %}
                 Desde $ {{ p.min_price_ars }}
@@ -57,7 +89,7 @@
       </div>
     </div>
   {% empty %}
-    <div class="card"><div class="card-inner">No hay productos cargados.</div></div>
+    <div class="card"><div class="card-inner">No hay productos para ese criterio.</div></div>
   {% endfor %}
 </div>
 {% endblock %}

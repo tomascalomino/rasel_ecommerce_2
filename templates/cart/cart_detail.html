@@ -2,8 +2,8 @@
 {% block title %}Carrito · RaSel{% endblock %}
 
 {% block content %}
-<div class="row">
-  <h1 class="h2" style="margin:0">Carrito</h1>
+<div class="section-head">
+  <h1 class="h2 section-title">Carrito</h1>
   <span class="badge">Revisá tu pedido</span>
 </div>
 
@@ -11,7 +11,7 @@
 
 {% if cart|length > 0 %}
   <div class="card">
-    <div class="card-inner" style="padding:0">
+    <div class="card-inner">
       <div class="table-wrap">
         <table class="table">
           <thead>
@@ -28,12 +28,12 @@
             {% for item in cart.items %}
               <tr>
                 <td>
-                  <div style="font-weight:900">{{ item.variant.product.name }}</div>
-                  <div class="muted" style="font-size:12px">RaSel · Blend Suave</div>
+                  <div class="name-row">{{ item.variant.product.name }}</div>
+                  <div class="muted tiny">RaSel · Blend Suave</div>
                 </td>
 
                 <td>
-                  <span class="pill" style="display:inline-flex">
+                  <span class="pill">
                     {{ item.variant.name }}
                   </span>
                 </td>
@@ -49,7 +49,7 @@
                     <input class="qty" type="number" name="qty" min="0" value="{{ item.qty }}" inputmode="numeric" />
                     <button class="btn btn-small" type="submit">Actualizar</button>
                   </form>
-                  <div class="muted" style="font-size:12px; margin-top:6px;">0 elimina</div>
+                  <div class="muted tiny mt-6">0 elimina</div>
                 </td>
 
                 <td class="num">
@@ -71,11 +71,11 @@
 
       <div class="cart-footer">
         <div>
-          <div class="muted" style="font-size:12px">Total</div>
+          <div class="muted tiny">Total</div>
           <div class="price">$ {{ cart.total }}</div>
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div class="stack">
           <a class="btn" href="{% url 'shop:product_list' %}">← Seguir comprando</a>
           <a class="btn btn-primary" href="{% url 'orders:checkout' %}">Ir al Checkout</a>
         </div>

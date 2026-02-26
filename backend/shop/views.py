@@ -5,6 +5,10 @@ from .models import Product, Variant
 
 
 def product_list(request):
+    query = (request.GET.get("q") or "").strip()
+    in_stock_only = (request.GET.get("in_stock") or "") in {"1", "true", "on"}
+    sort = (request.GET.get("sort") or "name_asc").strip()
+
     active_variants = Variant.objects.filter(is_active=True)
 
     products = (
@@ -24,10 +28,38 @@ def product_list(request):
                 )
             ),
         )
-        .order_by("name")
     )
 
-    return render(request, "shop/product_list.html", {"products": products})
+    if query:
+        products = products.filter(
+            Q(name__icontains=query)
+            | Q(short_description__icontains=query)
+            | Q(description__icontains=query)
+        )
+
+    if in_stock_only:
+        products = products.filter(in_stock=True)
+
+    if sort == "name_desc":
+        products = products.order_by("-name")
+    elif sort == "price_asc":
+        products = products.order_by("min_price_ars", "name")
+    elif sort == "price_desc":
+        products = products.order_by("-min_price_ars", "name")
+    else:
+        sort = "name_asc"
+        products = products.order_by("name")
+
+    return render(
+        request,
+        "shop/product_list.html",
+        {
+            "products": products,
+            "query": query,
+            "in_stock_only": in_stock_only,
+            "sort": sort,
+        },
+    )
 
 
 def product_detail(request, slug: str):

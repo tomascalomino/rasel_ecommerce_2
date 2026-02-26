@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
@@ -42,6 +43,7 @@ def checkout(request):
 
             request.session["active_payment_draft"] = str(draft.token)
             request.session.modified = True
+            messages.info(request, "Datos guardados. Continuá con el pago para confirmar tu pedido.")
 
             return redirect("payments:start", draft_id=draft.token)
 
