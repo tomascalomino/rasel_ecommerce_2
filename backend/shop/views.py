@@ -1,4 +1,5 @@
 from django.db.models import Min, Exists, OuterRef, Q, Prefetch
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
 
 from .models import Product, Variant
@@ -50,11 +51,20 @@ def product_list(request):
         sort = "name_asc"
         products = products.order_by("name")
 
+    paginator = Paginator(products, 9)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
     return render(
         request,
         "shop/product_list.html",
         {
-            "products": products,
+            "products": page_obj,
+            "page_obj": page_obj,
+            "query_string": query_string,
             "query": query,
             "in_stock_only": in_stock_only,
             "sort": sort,

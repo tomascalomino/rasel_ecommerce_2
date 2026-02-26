@@ -467,6 +467,19 @@ input:focus, select:focus {
 
 .result-list{display:grid; gap:8px}
 
+.pagination-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.btn-disabled{
+  opacity:.45;
+  pointer-events:none;
+}
+
 @media (max-width: 760px){
   .search-form{width:100%}
   .search-input{width:100%}
