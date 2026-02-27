@@ -35,7 +35,7 @@ class Product(models.Model):
     image = models.ImageField(upload_to="products/", blank=True, null=True)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["-name"]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -62,7 +62,7 @@ class Variant(models.Model):
 
     class Meta:
         unique_together = [("product", "name")]
-        ordering = ["product__name", "name"]
+        ordering = ["product__name", "price_ars"]
 
     def __str__(self) -> str:
         return f"{self.product.name} - {self.name}"
