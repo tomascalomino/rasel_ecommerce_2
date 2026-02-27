@@ -4,18 +4,19 @@
     <div class="nav">
       <a class="brand" href="{% url 'home' %}">
         <img class="brand-logo" src="{% static 'img/rasel-escudo.png' %}" alt="RaSel">
-        <span>Aceite de Oliva virgen extra</span>
+        <span>Virgen Extra</span>
       </a>
 
       <div class="navlinks">
         <a class="navlink {% if request.resolver_match and request.resolver_match.app_name == 'shop' %}is-active{% endif %}"
-           href="{% url 'shop:product_list' %}">
+          href="{% url 'shop:product_list' %}">
           Tienda
         </a>
 
         <form action="{% url 'shop:product_list' %}" method="get" class="search-form" role="search">
           <label for="q" class="sr-only">Buscar productos</label>
-          <input id="q" class="search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Buscar" />
+          <input id="q" class="search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}"
+            placeholder="Buscar" />
           <button class="btn btn-small" type="submit">
             <span class="icon">{% include "partials/icons/search.svg" %}</span>
             Buscar
@@ -23,8 +24,8 @@
         </form>
 
         <a href="{% url 'cart:detail' %}"
-           class="pill pill-cart {% if request.resolver_match and request.resolver_match.app_name == 'cart' %}is-active{% endif %}"
-           aria-label="Carrito">
+          class="pill pill-cart {% if request.resolver_match and request.resolver_match.app_name == 'cart' %}is-active{% endif %}"
+          aria-label="Carrito">
           <span>Carrito</span>
           <span class="badge-num" aria-label="Items en carrito">{{ cart|length }}</span>
         </a>
