@@ -11,7 +11,7 @@ build/
 # Django
 db.sqlite3
 *.log
-media/
+# media/ # Comentado para trackear imágenes en github
 
 # Environment variables
 .env
