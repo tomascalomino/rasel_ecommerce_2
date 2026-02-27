@@ -160,9 +160,18 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR / "media"))
+# Por defecto usar el directorio `media/` en la raíz del repositorio (un nivel arriba de `backend`)
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR.parent / "media")))
+MEDIA_ROOT = Path(MEDIA_ROOT)
 SERVE_MEDIA = DEBUG or os.getenv("SERVE_MEDIA", "0") == "1"
 RUNNING_TESTS = "test" in sys.argv
+
+# Crear directorio de media por defecto cuando se sirve media desde la app
+if SERVE_MEDIA:
+    try:
+        MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        logging.getLogger("config.settings").warning("No se pudo crear MEDIA_ROOT: %s", MEDIA_ROOT)
 
 if not DEBUG and not RUNNING_TESTS:
     SECURE_SSL_REDIRECT = True
