@@ -41,15 +41,15 @@ def product_list(request):
     if in_stock_only:
         products = products.filter(in_stock=True)
 
-    if sort == "name_desc":
-        products = products.order_by("-name")
+    if sort == "name_asc":
+        products = products.order_by("name")
     elif sort == "price_asc":
         products = products.order_by("min_price_ars", "name")
     elif sort == "price_desc":
         products = products.order_by("-min_price_ars", "name")
     else:
-        sort = "name_asc"
-        products = products.order_by("name")
+        sort = "name_desc"
+        products = products.order_by("-name")
 
     paginator = Paginator(products, 9)
     page_obj = paginator.get_page(request.GET.get("page"))

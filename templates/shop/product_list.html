@@ -26,8 +26,8 @@
       <div class="control-field">
         <label for="sort" class="muted tiny">Orden</label>
         <select id="sort" name="sort" class="control-select">
-          <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
           <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Nombre (Z-A)</option>
+          <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
           <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Precio (menor a mayor)</option>
           <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Precio (mayor a menor)</option>
         </select>
@@ -48,21 +48,21 @@
     {% if query %}
       <span class="filter-chip">
         Búsqueda: "{{ query }}"
-        <a class="filter-chip-clear" href="?{% if in_stock_only %}in_stock=1&{% endif %}{% if sort != 'name_asc' %}sort={{ sort }}{% endif %}">×</a>
+        <a class="filter-chip-clear" href="?{% if in_stock_only %}in_stock=1&{% endif %}{% if sort != 'name_desc' %}sort={{ sort }}{% endif %}">×</a>
       </span>
     {% endif %}
 
     {% if in_stock_only %}
       <span class="filter-chip">
         Solo con stock
-        <a class="filter-chip-clear" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if sort != 'name_asc' %}sort={{ sort }}{% endif %}">×</a>
+        <a class="filter-chip-clear" href="?{% if query %}q={{ query|urlencode }}&{% endif %}{% if sort != 'name_desc' %}sort={{ sort }}{% endif %}">×</a>
       </span>
     {% endif %}
 
-    {% if sort != 'name_asc' %}
+    {% if sort != 'name_desc' %}
       <span class="filter-chip">
         Orden:
-        {% if sort == 'name_desc' %}Nombre (Z-A)
+        {% if sort == 'name_asc' %}Nombre (A-Z)
         {% elif sort == 'price_asc' %}Precio (menor a mayor)
         {% elif sort == 'price_desc' %}Precio (mayor a menor)
         {% else %}Personalizado{% endif %}
