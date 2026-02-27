@@ -57,7 +57,7 @@ a{color:inherit; text-decoration:none}
   background: rgba(255,255,255,.05);
   border:1px solid var(--border);
 }
-.navlinks{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+.navlinks{display:flex; gap:14px; align-items:center; flex-wrap:nowrap; white-space:nowrap;}
 .navlinks a{
   padding:8px 10px; border-radius:12px;
   color: rgba(14,22,18,.78);
