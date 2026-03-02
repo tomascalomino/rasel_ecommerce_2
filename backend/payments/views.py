@@ -15,7 +15,7 @@ from django.views.decorators.http import require_GET
 from cart.cart import Cart
 from orders.models import Order, OrderItem
 from shop.models import Variant
-from .mercadopago import create_preference, get_payment
+from .mercadopago import create_preference, get_payment, MercadoPagoError
 from urllib.parse import urlparse
 from .models import PaymentEvent, PaymentDraft
 
@@ -85,21 +85,28 @@ def start(request, draft_id):
     if not draft.mp_preference_id:
         payload = _build_preference_payload(draft)
         logger.info("Creando preference draft=%s email=%s", draft.token, draft.email)
-        pref = create_preference(payload)
-        draft.mp_preference_id = pref.get("id", "") or ""
-        draft.save(update_fields=["mp_preference_id"])
-
-        init_point = pref.get("init_point")
+        try:
+            pref = create_preference(payload)
+            draft.mp_preference_id = pref.get("id", "") or ""
+            draft.save(update_fields=["mp_preference_id"])
+            init_point = pref.get("init_point")
+        except MercadoPagoError as e:
+            logger.error("Error creating preference: %s", str(e))
+            return HttpResponse(f"Error de MercadoPago: {e}", status=500)
     else:
         init_point = None
 
     if not init_point:
         payload = _build_preference_payload(draft)
         logger.info("Recreando preference draft=%s", draft.token)
-        pref = create_preference(payload)
-        draft.mp_preference_id = pref.get("id", "") or ""
-        draft.save(update_fields=["mp_preference_id"])
-        init_point = pref.get("init_point")
+        try:
+            pref = create_preference(payload)
+            draft.mp_preference_id = pref.get("id", "") or ""
+            draft.save(update_fields=["mp_preference_id"])
+            init_point = pref.get("init_point")
+        except MercadoPagoError as e:
+            logger.error("Error recreating preference: %s", str(e))
+            return HttpResponse(f"Error de MercadoPago: {e}", status=500)
 
     return redirect(init_point)
 
@@ -289,7 +296,7 @@ def _verify_webhook_signature(request, event_id: str) -> bool:
     manifest = f"id:{event_id};request-id:{x_request_id};ts:{ts};"
     # ✅ Fix: hmac.new() es la API correcta en Python (hmac.HMAC alias)
     digest = hmac.new(secret.encode(), msg=manifest.encode(), digestmod=hashlib.sha256).hexdigest()
-    return hmac.compare_digest(digest, v1)
+    return hmac.compare_digest(digest, str(v1))
 
 
 # @csrf_exempt
@@ -385,10 +392,10 @@ def webhook(request):
     event_id = (
         request.GET.get("id")
         or request.GET.get("data.id")  # IPN query param alternativo
-        or str(data.get("data", {}).get("id", "") if isinstance(data.get("data"), dict) else "")
-        or str(data.get("id", ""))
+        or str(data.get("data", {}).get("id", "") if isinstance(data, dict) and isinstance(data.get("data"), dict) else "")
+        or str(data.get("id", "") if isinstance(data, dict) else "")
     )
-    resource = request.GET.get("resource") or data.get("resource", "")
+    resource = request.GET.get("resource") or (data.get("resource", "") if isinstance(data, dict) else "")
 
     ev = PaymentEvent.objects.create(
         topic=str(topic or ""),
