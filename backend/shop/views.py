@@ -10,7 +10,12 @@ def product_list(request):
     in_stock_only = (request.GET.get("in_stock") or "") in {"1", "true", "on"}
     sort = (request.GET.get("sort") or "name_asc").strip()
 
-    products = Product.objects.filter(is_active=True)
+    products = (
+        Product.objects.filter(is_active=True)
+        .annotate(
+            min_price_ars=Min("variants__price_ars"),
+        )
+    )
 
     if query:
         products = products.filter(
@@ -20,19 +25,27 @@ def product_list(request):
 
     # Basic ordering
     if sort == "price_asc":
-        # Note: this will need annotations back later, but making it simple first
-        products = products.order_by("name")
+        products = products.order_by("min_price_ars", "name")
+    elif sort == "price_desc":
+        products = products.order_by("-min_price_ars", "name")
+    elif sort == "name_desc":
+        products = products.order_by("-name")
     else:
         products = products.order_by("name")
 
     paginator = Paginator(products, 9)
     page_obj = paginator.get_page(request.GET.get("page"))
+    
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
 
     return render(
         request,
         "shop/product_list.html",
         {
             "page_obj": page_obj,
+            "query_string": query_string,
             "query": query,
             "in_stock_only": in_stock_only,
             "sort": sort,
