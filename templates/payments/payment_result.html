@@ -9,24 +9,15 @@
   <p>Payment ID: {{ order.mp_payment_id|default:"(sin id)" }}</p>
   <p>Estado interno: {{ order.status }}</p>
 
-{% elif draft %}
-  <p>Pago asociado al borrador: {{ draft.token }}</p>
-  <p>Estado MP: {{ draft.mp_status|default:"(sin estado)" }}</p>
-  <p>Payment ID: {{ draft.mp_payment_id|default:"(sin id)" }}</p>
-
-  {% if draft.mp_status != "approved" %}
+  {% if order.status != "paid" %}
     <p>
-      <a href="{% url 'payments:start' draft_id=draft.token %}">
+      <a href="{% url 'payments:start' order_id=order.id %}">
         <button>Reintentar pago</button>
       </a>
     </p>
   {% endif %}
 {% else %}
-  <p>No pudimos vincular el retorno a un borrador de pago.</p>
-{% endif %}
-
-{% if finalize_error %}
-  <p>No se pudo finalizar el pedido automáticamente: {{ finalize_error }}</p>
+  <p>No pudimos vincular el retorno a un pedido (external_reference faltante).</p>
 {% endif %}
 
 <p><a href="/">Volver a tienda</a></p>

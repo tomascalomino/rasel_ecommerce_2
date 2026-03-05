@@ -2,21 +2,16 @@ import hashlib
 import hmac
 import os
 import json
-from decimal import Decimal
 
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.db import transaction
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
-from cart.cart import Cart
-from orders.models import Order, OrderItem
-from shop.models import Variant
-from .mercadopago import create_preference, get_payment
+from orders.models import Order
+from .mercadopago import create_preference, get_payment, MercadoPagoError
 from urllib.parse import urlparse
-from .models import PaymentEvent, PaymentDraft
+from .models import PaymentEvent
 
 
 def _site_url() -> str:
@@ -34,24 +29,24 @@ def _is_public_url(url: str) -> bool:
     host = host.lower()
     return host not in {"127.0.0.1", "localhost"}
 
-def _build_preference_payload(draft: PaymentDraft) -> dict:
-    items = [
-        {
-            "title": f"{row.get('product_name', 'Producto')} - {row.get('variant_name', 'Variante')}",
-            "quantity": int(row.get("quantity", 0) or 0),
-            "unit_price": float(row.get("unit_price", 0) or 0),
-            "currency_id": "ARS",
-        }
-        for row in draft.items
-        if int(row.get("quantity", 0) or 0) > 0
-    ]
+def _build_preference_payload(order: Order) -> dict:
+    items = []
+    for it in order.items.all():
+        items.append(
+            {
+                "title": f"{it.product_name} - {it.variant_name}",
+                "quantity": int(it.quantity),
+                "unit_price": float(it.unit_price),
+                "currency_id": "ARS",
+            }
+        )
 
     base = _site_url().rstrip("/")
 
     payload = {
         "items": items,
-        "external_reference": str(draft.token),
-        "payer": {"email": draft.email},
+        "external_reference": str(order.id),
+        "payer": {"email": order.email},
         "back_urls": {
             "success": f"{base}/payments/return/success/",
             "pending": f"{base}/payments/return/pending/",
@@ -69,132 +64,35 @@ def _build_preference_payload(draft: PaymentDraft) -> dict:
     return payload
 
 @require_GET
-def start(request, draft_id):
-    draft = get_object_or_404(PaymentDraft, token=draft_id)
+def start(request, order_id: int):
+    order = get_object_or_404(Order.objects.prefetch_related("items"), id=order_id)
 
-    if draft.order_id:
-        return redirect("orders:confirmation", order_id=draft.order_id)
+    if order.status == "paid":
+        return redirect("orders:confirmation", order_id=order.id)
 
-    if not draft.items:
-        return redirect("orders:checkout")
-
-    if not draft.mp_preference_id:
-        payload = _build_preference_payload(draft)
+    # Si ya existe preference, no la recreamos
+    if not order.mp_preference_id:
+        payload = _build_preference_payload(order)
+        print("MP preference payload:", json.dumps(payload, indent=2))
         pref = create_preference(payload)
-        draft.mp_preference_id = pref.get("id", "") or ""
-        draft.save(update_fields=["mp_preference_id"])
+        order.mp_preference_id = pref.get("id", "") or ""
+        order.save(update_fields=["mp_preference_id"])
 
-        init_point = pref.get("init_point")
+        init_point = pref.get("init_point")  # con credenciales de test redirige a sandbox
     else:
+        # Para MVP, recrear init_point sin GET preference (evitamos dependencia extra).
+        # Si querés, luego podemos implementar GET /checkout/preferences/{id}.
         init_point = None
 
     if not init_point:
-        payload = _build_preference_payload(draft)
+        # fallback: recrear preference (simple y robusto en MVP)
+        payload = _build_preference_payload(order)
         pref = create_preference(payload)
-        draft.mp_preference_id = pref.get("id", "") or ""
-        draft.save(update_fields=["mp_preference_id"])
+        order.mp_preference_id = pref.get("id", "") or ""
+        order.save(update_fields=["mp_preference_id"])
         init_point = pref.get("init_point")
 
     return redirect(init_point)
-
-
-def _set_draft_status(external_reference: str, payment_id: str, status: str) -> None:
-    try:
-        draft = PaymentDraft.objects.get(token=external_reference)
-    except PaymentDraft.DoesNotExist:
-        return
-
-    changed = False
-    if payment_id and draft.mp_payment_id != payment_id:
-        draft.mp_payment_id = payment_id
-        changed = True
-    if status and draft.mp_status != status:
-        draft.mp_status = status
-        changed = True
-
-    if changed:
-        draft.save(update_fields=["mp_payment_id", "mp_status"])
-
-
-def _finalize_approved_payment(external_reference: str, payment_id: str, mp_status: str):
-    try:
-        with transaction.atomic():
-            draft = PaymentDraft.objects.select_for_update().select_related("order").get(token=external_reference)
-
-            if draft.order_id:
-                if payment_id and draft.mp_payment_id != payment_id:
-                    draft.mp_payment_id = payment_id
-                    draft.mp_status = mp_status
-                    draft.save(update_fields=["mp_payment_id", "mp_status"])
-                return draft.order, None
-
-            existing = Order.objects.filter(mp_payment_id=payment_id).first() if payment_id else None
-            if existing:
-                draft.order = existing
-                draft.mp_payment_id = payment_id
-                draft.mp_status = mp_status
-                draft.consumed_at = draft.consumed_at or timezone.now()
-                draft.save(update_fields=["order", "mp_payment_id", "mp_status", "consumed_at"])
-                return existing, None
-
-            draft_rows = draft.items or []
-            if not draft_rows:
-                return None, "draft_without_items"
-
-            variant_rows = []
-            for row in draft_rows:
-                variant_id = int(row.get("variant_id", 0) or 0)
-                qty = int(row.get("quantity", 0) or 0)
-                if variant_id <= 0 or qty <= 0:
-                    return None, "invalid_draft_item"
-
-                variant = Variant.objects.select_for_update().select_related("product").filter(id=variant_id, is_active=True).first()
-                if not variant:
-                    return None, f"variant_not_found:{variant_id}"
-                if variant.stock_qty < qty:
-                    return None, f"insufficient_stock:{variant_id}"
-
-                variant_rows.append((variant, row, qty))
-
-            for variant, _, qty in variant_rows:
-                variant.stock_qty -= qty
-                variant.save(update_fields=["stock_qty"])
-
-            order = Order.objects.create(
-                full_name=draft.full_name,
-                email=draft.email,
-                phone=draft.phone,
-                address_line=draft.address_line,
-                city=draft.city,
-                postal_code=draft.postal_code,
-                total_amount=draft.total_amount,
-                status="paid",
-                mp_preference_id=draft.mp_preference_id,
-                mp_payment_id=payment_id,
-                mp_status=mp_status,
-            )
-
-            for variant, row, qty in variant_rows:
-                unit_price = Decimal(str(row.get("unit_price", "0") or "0"))
-                line_total = Decimal(str(row.get("line_total", "0") or "0"))
-                OrderItem.objects.create(
-                    order=order,
-                    variant=variant,
-                    product_name=str(row.get("product_name", variant.product.name)),
-                    variant_name=str(row.get("variant_name", variant.name)),
-                    unit_price=unit_price,
-                    quantity=qty,
-                    line_total=line_total,
-                )
-
-            draft.order = order
-            draft.mp_payment_id = payment_id
-            draft.mp_status = mp_status
-            draft.consumed_at = timezone.now()
-            draft.save(update_fields=["order", "mp_payment_id", "mp_status", "consumed_at"])
-            return order, None
-    except PaymentDraft.DoesNotExist:
-        return None, "draft_not_found"
 
 
 @require_GET
@@ -208,29 +106,25 @@ def payment_return(request, result: str):
     external_reference = request.GET.get("external_reference", "")
 
     order = None
-    draft = None
-    finalize_error = ""
+    if external_reference.isdigit():
+        order = Order.objects.filter(id=int(external_reference)).first()
 
-    if external_reference:
-        draft = PaymentDraft.objects.filter(token=external_reference).first()
+    if order:
+        changed = False
+        if payment_id and order.mp_payment_id != payment_id:
+            order.mp_payment_id = payment_id
+            changed = True
+        if status and order.mp_status != status:
+            order.mp_status = status
+            changed = True
 
-    if status == "approved" and external_reference:
-        order, finalize_error = _finalize_approved_payment(external_reference, payment_id=payment_id, mp_status=status)
-        if order:
-            active_draft = str(request.session.get("active_payment_draft", ""))
-            if active_draft == external_reference:
-                Cart(request.session).clear()
-                request.session.pop("active_payment_draft", None)
-                request.session.modified = True
-        if draft and not order:
-            draft.mp_status = status
-            if payment_id:
-                draft.mp_payment_id = payment_id
-            draft.save(update_fields=["mp_status", "mp_payment_id"])
-    elif external_reference:
-        _set_draft_status(external_reference, payment_id=payment_id, status=status)
-        if draft:
-            draft.refresh_from_db()
+        # Si vuelve approved, marcamos paid (igual lo confirmamos con webhook luego)
+        if status == "approved" and order.status != "paid":
+            order.status = "paid"
+            changed = True
+
+        if changed:
+            order.save(update_fields=["mp_payment_id", "mp_status", "status"])
 
     return render(
         request,
@@ -238,10 +132,8 @@ def payment_return(request, result: str):
         {
             "result": result,
             "order": order,
-            "draft": draft,
             "payment_id": payment_id,
             "status": status,
-            "finalize_error": finalize_error,
         },
     )
 
@@ -344,6 +236,22 @@ def _verify_webhook_signature(request, event_id: str) -> bool:
 
 #     return JsonResponse({"ok": True})
 
+def _mark_order_paid(order_id: str, payment_id: str = "", mp_status: str = "approved") -> None:
+    """
+    Marca la orden como pagada y guarda los datos de MercadoPago.
+    """
+    try:
+        order = Order.objects.get(id=int(order_id))
+    except Exception:
+        return
+
+    order.status = "paid"
+    if payment_id:
+        order.mp_payment_id = payment_id
+    order.mp_status = mp_status
+    order.save(update_fields=["status", "mp_payment_id", "mp_status"])
+
+
 @csrf_exempt
 def webhook(request):
     """
@@ -398,21 +306,20 @@ def webhook(request):
             payment_id = str(payment.get("id", event_id))
 
             if mp_status == "approved" and external_ref:
-                order, error = _finalize_approved_payment(external_ref, payment_id=payment_id, mp_status=mp_status)
-                ev.processed_ok = order is not None
-                if order:
-                    ev.notes = f"approved payment_id={payment_id} order={order.id}"
-                else:
-                    ev.notes = f"approved payment_id={payment_id} finalize_error={error}"
+                _mark_order_paid(external_ref, payment_id=payment_id, mp_status=mp_status)
+                ev.processed_ok = True
+                ev.notes = f"approved payment_id={payment_id} order={external_ref}"
             elif mp_status in ("cancelled", "rejected") and external_ref:
-                _set_draft_status(external_ref, payment_id=payment_id, status=mp_status)
-                if draft := PaymentDraft.objects.filter(token=external_ref).select_related("order").first():
-                    if draft.order_id and draft.order.status != "paid":
-                        draft.order.status = "cancelled"
-                        draft.order.mp_status = mp_status
-                        draft.order.mp_payment_id = payment_id
-                        draft.order.save(update_fields=["status", "mp_status", "mp_payment_id"])
-                ev.notes = f"{mp_status} payment_id={payment_id} external_ref={external_ref}"
+                # Actualizar estado sin marcar paid
+                try:
+                    order = Order.objects.get(id=int(external_ref))
+                    order.mp_payment_id = payment_id
+                    order.mp_status = mp_status
+                    order.status = "cancelled"
+                    order.save(update_fields=["mp_payment_id", "mp_status", "status"])
+                except Exception:
+                    pass
+                ev.notes = f"{mp_status} payment_id={payment_id} order={external_ref}"
             else:
                 ev.notes = f"status={mp_status} external_ref={external_ref} (no action)"
 
