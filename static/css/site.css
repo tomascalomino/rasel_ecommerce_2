@@ -10,6 +10,8 @@
   /* oliva suave */
   --brand-2: #d8c9a6;
   /* beige */
+  --brand-3: #b0c4a4;
+  /* oliva claro */
   --danger: #d94b4b;
 
   --border: rgba(14, 22, 18, .12);
@@ -937,4 +939,52 @@ select:focus {
 
 .navlink {
   white-space: nowrap;
+}
+
+/* Gallery Styles */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  height: 240px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .5s ease;
+}
+
+.gallery-item:hover .gallery-img {
+  transform: scale(1.08);
+}
+
+.gallery-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 60%);
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+  opacity: 1;
+}
+
+.gallery-overlay span {
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
 }

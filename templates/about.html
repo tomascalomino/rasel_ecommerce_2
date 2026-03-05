@@ -5,10 +5,6 @@
 
 {% block content %}
 
-{# ═══════════════════════════════════════════════════════════
-EDITÁ EL CONTENIDO DIRECTAMENTE ACÁ ABAJO.
-No hace falta tocar nada de código, solo el texto.
-═══════════════════════════════════════════════════════════ #}
 
 <!-- ── HERO ── -->
 <section class="page-header">
@@ -49,6 +45,34 @@ No hace falta tocar nada de código, solo el texto.
                 Nuestro compromiso es llevar a tu mesa un producto auténtico, sin
                 intermediarios, directamente desde el campo hasta tu hogar.
             </p>
+        </div>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── GALERÍA ── -->
+<section class="content-section">
+    <h2 class="h2">Galería de Fotos</h2>
+    <div class="spacer"></div>
+    <div class="gallery-grid">
+        <div class="gallery-item card">
+            <img src="{% static 'img/gallery-1.png' %}" alt="Olivar en Catamarca" class="gallery-img">
+            <div class="gallery-overlay">
+                <span>Nuestros Olivares</span>
+            </div>
+        </div>
+        <div class="gallery-item card">
+            <img src="{% static 'img/gallery-2.png' %}" alt="Extracción de aceite" class="gallery-img">
+            <div class="gallery-overlay">
+                <span>Extracción en Frío</span>
+            </div>
+        </div>
+        <div class="gallery-item card">
+            <img src="{% static 'img/gallery-3.png' %}" alt="Cosecha de aceitunas" class="gallery-img">
+            <div class="gallery-overlay">
+                <span>Cosecha Manual</span>
+            </div>
         </div>
     </div>
 </section>
