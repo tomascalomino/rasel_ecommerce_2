@@ -13,6 +13,16 @@
           Tienda
         </a>
 
+        <a class="navlink {% if request.resolver_match and request.resolver_match.url_name == 'about' %}is-active{% endif %}"
+          href="{% url 'about' %}">
+          Quiénes Somos
+        </a>
+
+        <a class="navlink {% if request.resolver_match and request.resolver_match.url_name == 'contact' %}is-active{% endif %}"
+          href="{% url 'contact' %}">
+          Contacto
+        </a>
+
         <form action="{% url 'shop:product_list' %}" method="get" class="search-form" role="search">
           <label for="q" class="sr-only">Buscar productos</label>
           <input id="q" class="search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}"

@@ -24,6 +24,8 @@ from django.views.static import serve
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
+    path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
     path("shop/", include("shop.urls")),
     path("cart/", include("cart.urls")),
     path("orders/", include("orders.urls")),

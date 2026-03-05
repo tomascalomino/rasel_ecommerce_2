@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Quiénes Somos — RaSel{% endblock %}
+
+{% block content %}
+
+{# ═══════════════════════════════════════════════════════════
+EDITÁ EL CONTENIDO DIRECTAMENTE ACÁ ABAJO.
+No hace falta tocar nada de código, solo el texto.
+═══════════════════════════════════════════════════════════ #}
+
+<!-- ── HERO ── -->
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker">
+            <span class="dot"></span>
+            <span>Nuestra Historia</span>
+        </div>
+        <h1 class="h1">Quiénes Somos</h1>
+        <p class="p page-subtitle">
+            Somos una familia olivícola de Andalgalá, Catamarca, dedicada a producir
+            aceite de oliva virgen extra de la más alta calidad desde hace más de 20 años.
+        </p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── HISTORIA ── -->
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner">
+            <h2 class="h2">Nuestra Historia</h2>
+            <p class="p">
+                RaSel nació en el corazón de los valles catamarqueños, donde el clima seco
+                y soleado crea las condiciones perfectas para el cultivo del olivo. Nuestra
+                familia comenzó con un pequeño olivar heredado de nuestros abuelos, y con
+                dedicación y pasión fuimos creciendo hasta convertirnos en una marca
+                reconocida por la calidad de nuestro aceite.
+            </p>
+            <p class="p">
+                Cada botella de RaSel es el resultado de un proceso artesanal que respeta
+                los tiempos de la naturaleza. Cosechamos las aceitunas en su punto óptimo
+                de maduración y las procesamos en frío dentro de las primeras horas,
+                preservando todos sus aromas, sabores y propiedades nutricionales.
+            </p>
+            <p class="p">
+                Nuestro compromiso es llevar a tu mesa un producto auténtico, sin
+                intermediarios, directamente desde el campo hasta tu hogar.
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── CARACTERÍSTICAS DEL ACEITE ── -->
+<section class="content-section">
+    <h2 class="h2">Nuestro Aceite</h2>
+    <div class="spacer"></div>
+
+    <div class="feature-grid">
+
+        <div class="card feature-card">
+            <div class="card-inner">
+                <div class="feature-icon">
+                    <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
+                </div>
+                <h3 class="feature-title">100% Virgen Extra</h3>
+                <p class="feature-desc">
+                    Primera prensada en frío. Sin refinar, sin mezclar, sin aditivos.
+                    Pura esencia del olivo catamarqueño.
+                </p>
+            </div>
+        </div>
+
+        <div class="card feature-card">
+            <div class="card-inner">
+                <div class="feature-icon">
+                    <span class="icon">{% include "partials/icons/drop.svg" %}</span>
+                </div>
+                <h3 class="feature-title">Perfil Suave</h3>
+                <p class="feature-desc">
+                    Blend equilibrado con notas frutadas y un toque de hierba fresca.
+                    Ideal para ensaladas, pastas y uso diario.
+                </p>
+            </div>
+        </div>
+
+        <div class="card feature-card">
+            <div class="card-inner">
+                <div class="feature-icon">
+                    <span class="icon">{% include "partials/icons/shield.svg" %}</span>
+                </div>
+                <h3 class="feature-title">Calidad Garantizada</h3>
+                <p class="feature-desc">
+                    Acidez menor a 0,5%. Alto contenido de polifenoles y antioxidantes
+                    naturales. Análisis de laboratorio en cada lote.
+                </p>
+            </div>
+        </div>
+
+        <div class="card feature-card">
+            <div class="card-inner">
+                <div class="feature-icon">
+                    <span class="icon">{% include "partials/icons/heart.svg" %}</span>
+                </div>
+                <h3 class="feature-title">Producción Artesanal</h3>
+                <p class="feature-desc">
+                    Cosecha manual y molienda en las primeras 6 horas.
+                    Lotes pequeños que garantizan frescura y trazabilidad.
+                </p>
+            </div>
+        </div>
+
+        <div class="card feature-card">
+            <div class="card-inner">
+                <div class="feature-icon">
+                    <span class="icon">{% include "partials/icons/star.svg" %}</span>
+                </div>
+                <h3 class="feature-title">Variedad Arauco</h3>
+                <p class="feature-desc">
+                    Variedad autóctona argentina, reconocida internacionalmente
+                    por su sabor único y sus propiedades saludables.
+                </p>
+            </div>
+        </div>
+
+        <div class="card feature-card">
+            <div class="card-inner">
+                <div class="feature-icon">
+                    <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
+                </div>
+                <h3 class="feature-title">Presentaciones</h3>
+                <p class="feature-desc">
+                    Disponible en botellas de 250ml y 500ml, y bidón de 3 litros.
+                    Packaging premium, ideal también para regalo.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── CTA FINAL ── -->
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner" style="text-align:center">
+            <h2 class="h2">¿Querés probar nuestro aceite?</h2>
+            <p class="p">Visitá nuestra tienda y elegí la presentación que más te guste.</p>
+            <div class="cta-row" style="justify-content:center">
+                <a class="btn btn-primary" href="{% url 'shop:product_list' %}">
+                    {% include "partials/icons/cart.svg" %}
+                    Ver Tienda
+                </a>
+                <a class="btn" href="{% url 'contact' %}">
+                    Contactanos
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
