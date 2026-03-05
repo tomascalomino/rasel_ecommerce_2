@@ -55,10 +55,12 @@
 
     <!-- BLOQUE DERECHO -->
     <div class="hero-visual">
-      <div class="bottle-wrapper">
-        <img class="bottle-hero" src="{% static 'img/bottle.jpeg' %}" alt="RaSel botella">
-        <div class="bottle-shadow"></div>
-      </div>
+      <a href="{% url 'shop:product_list' %}" class="bottle-link" aria-label="Ver productos">
+        <div class="bottle-wrapper">
+          <img class="bottle-hero" src="{% static 'img/bottle.jpeg' %}" alt="RaSel botella">
+          <div class="bottle-shadow"></div>
+        </div>
+      </a>
 
       <div class="visual-info">
         <div class="visual-badge">
