@@ -69,7 +69,7 @@
   </span>
   {% endif %}
 
-  {% if sort != 'name_desc' %}
+  {% if sort != 'name_asc' %}
   <span class="filter-chip">
     Orden:
     {% if sort == 'name_asc' %}Nombre (A-Z)
@@ -94,7 +94,7 @@
 {% endif %}
 
 <div class="grid">
-  {% for p in products %}
+  {% for p in page_obj %}
   <div class="card product">
 
     <a href="{% url 'shop:product_detail' p.slug %}" class="product-media" aria-label="Ver {{ p.name }}">
@@ -136,7 +136,7 @@
           </div>
         </div>
 
-        <a class="btn btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+        <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
       </div>
     </div>
   </div>
