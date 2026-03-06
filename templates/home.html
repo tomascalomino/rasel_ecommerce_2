@@ -4,84 +4,51 @@
 {% block title %}RaSel — Aceite de Oliva Premium{% endblock %}
 
 {% block content %}
-<section class="hero">
-  <div class="hero-grid">
-
-    <!-- BLOQUE IZQUIERDO -->
-    <div class="hero-content">
-      <div class="kicker">
-        <span class="dot"></span>
-        <span>Blend Suave · Andalgalá, Catamarca</span>
-      </div>
-
-      <h1 class="h1">
-        Sabor suave. <br>Calidad real.
-      </h1>
-
-      <p class="p hero-desc">
-        Aceite de oliva premium pensado para uso diario.
-        Perfil equilibrado, fresco y elegante.
-      </p>
-
-      <div class="cta-row">
-        <a class="btn btn-primary" href="{% url 'shop:product_list' %}">
-          {% include "partials/icons/cart.svg" %}
-          Ver tienda
-        </a>
-
-        <a class="btn btn-lite" href="{% url 'cart:detail' %}">
-          Ir al carrito
-        </a>
-      </div>
-
-      <div class="trust-row">
-        <span class="trust-item">
-          <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
-          Origen seleccionado
-        </span>
-
-        <span class="trust-item">
-          <span class="icon">{% include "partials/icons/drop.svg" %}</span>
-          Perfil suave
-        </span>
-
-        <span class="trust-item">
-          <span class="icon">{% include "partials/icons/shield.svg" %}</span>
-          Compra segura
-        </span>
-      </div>
+<section class="hero-full" style="background-image: url('{% static 'img/hero-bg.png' %}');">
+  <div class="hero-content-full">
+    <div class="kicker">
+      <span class="dot"></span>
+      <span>Blend Suave · Andalgalá, Catamarca</span>
     </div>
 
+    <h1 class="h1">
+      Sabor suave. <br>Calidad real.
+    </h1>
 
-    <!-- BLOQUE DERECHO -->
-    <div class="hero-visual">
-      <a href="{% url 'shop:product_list' %}" class="bottle-link" aria-label="Ver productos">
-        <div class="bottle-wrapper">
-          <img class="bottle-hero" src="{% static 'img/bottle.jpeg' %}" alt="RaSel botella">
-          <div class="bottle-shadow"></div>
-        </div>
+    <p class="p hero-desc">
+      Aceite de oliva premium pensado para uso diario. <br>
+      Perfil equilibrado, fresco y elegante, directamente de nuestra familia a tu mesa.
+    </p>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="{% url 'shop:product_list' %}">
+        {% include "partials/icons/cart.svg" %}
+        Ver tienda
       </a>
 
-      <div class="visual-info">
-        <div class="visual-badge">
-          <div class="h2">RaSel</div>
-          <div class="muted small">250ml · 500ml · 3L</div>
-          <div class="price-tag">Desde $6.000</div>
-        </div>
-
-        <div class="mini-benefits">
-          <div class="benefit">
-            <div class="benefit-ic">{% include "partials/icons/truck.svg" %}</div>
-            <span>Envíos simples</span>
-          </div>
-          <div class="benefit">
-            <div class="benefit-ic">{% include "partials/icons/credit.svg" %}</div>
-            <span>MercadoPago</span>
-          </div>
-        </div>
-      </div>
+      <a class="btn" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;"
+        href="{% url 'cart:detail' %}">
+        Ir al carrito
+      </a>
     </div>
 
+    <div class="trust-row"
+      style="justify-content: center; margin-top: 30px; background: rgba(0,0,0,0.2); padding: 15px 30px; border-radius: 999px; backdrop-filter: blur(5px);">
+      <span class="trust-item" style="color: white;">
+        <span class="icon" style="color: var(--brand-2);">{% include "partials/icons/leaf.svg" %}</span>
+        Origen seleccionado
+      </span>
+
+      <span class="trust-item" style="color: white;">
+        <span class="icon" style="color: var(--brand-2);">{% include "partials/icons/drop.svg" %}</span>
+        Perfil suave
+      </span>
+
+      <span class="trust-item" style="color: white;">
+        <span class="icon" style="color: var(--brand-2);">{% include "partials/icons/shield.svg" %}</span>
+        Compra segura
+      </span>
+    </div>
   </div>
 </section>
 {% endblock %}
