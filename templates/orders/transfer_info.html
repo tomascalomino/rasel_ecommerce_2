@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}RaSel — Detalles de Transferencia{% endblock %}
+
+{% block content %}
+<div class="section-head">
+    <h1 class="h2 section-title">Pagar por Transferencia Bancaria</h1>
+    <span class="badge">Orden #{{ order.id }}</span>
+</div>
+
+<div class="spacer"></div>
+
+<div class="card">
+    <div class="card-inner">
+        <div class="alerts mb-4">
+            <div class="alert alert-success">
+                <p>Tu orden ha sido registrada correctamente. Para que podamos prepararla, por favor completá el pago
+                    mediante transferencia a la siguiente cuenta.</p>
+            </div>
+        </div>
+
+        <div class="result-list" style="margin-top: 20px; margin-bottom: 20px;">
+            <div class="row">
+                <span class="muted">Total a transferir:</span>
+                <strong class="price">$ {{ order.total_amount }}</strong>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <h3 class="h2" style="margin-bottom: 15px;">Datos de la cuenta</h3>
+        <div class="result-list">
+            <div class="row">
+                <span class="muted">Titular:</span>
+                <strong>RaSel E-Commerce</strong>
+            </div>
+            <div class="row">
+                <span class="muted">Alias:</span>
+                <strong>RASEL.OLIVA.AR</strong> <span class="muted tiny">(ejemplo)</span>
+            </div>
+            <div class="row">
+                <span class="muted">CBU/CVU:</span>
+                <strong>1234567890123456789012</strong> <span class="muted tiny">(ejemplo)</span>
+            </div>
+            <div class="row">
+                <span class="muted">Banco:</span>
+                <strong>Banco Ejemplo</strong>
+            </div>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="alerts" style="margin-top: 20px;">
+            <div class="alert" style="text-align: center; border-color: var(--brand);">
+                <p>Una vez realizada la transferencia, enviá el comprobante por mail a:<br>
+                    <strong style="font-size: 1.1em; color: var(--text);">ventas@raselecommerce.com.ar</strong>
+                </p>
+                <p class="muted tiny" style="margin-top: 10px;">
+                    (Por favor, incluí el número de orden <strong>#{{ order.id }}</strong> en el asunto del correo).<br>
+                    <strong>Recibirás un mail de confirmación de la compra en cuanto validemos el pago.</strong>
+                </p>
+            </div>
+        </div>
+
+        <div class="stack" style="margin-top: 30px;">
+            <a class="btn btn-lite" href="{% url 'shop:product_list' %}">Volver a la tienda</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -12,6 +12,7 @@ class Order(models.Model):
 
     created_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    payment_method = models.CharField(max_length=20, default="mp")
 
     # Datos cliente (MVP sin login)
     full_name = models.CharField(max_length=120)

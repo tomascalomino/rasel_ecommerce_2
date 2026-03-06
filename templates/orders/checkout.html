@@ -13,10 +13,10 @@
     <h3 class="h2">Resumen</h3>
     <div class="result-list">
       {% for item in cart.items %}
-        <div class="row">
-          <div>{{ item.variant.product.name }} · {{ item.variant.name }} x {{ item.qty }}</div>
-          <strong>$ {{ item.line_total }}</strong>
-        </div>
+      <div class="row">
+        <div>{{ item.variant.product.name }} · {{ item.variant.name }} x {{ item.qty }}</div>
+        <strong>$ {{ item.line_total }}</strong>
+      </div>
       {% endfor %}
     </div>
 
@@ -35,7 +35,68 @@
     <h3 class="h2">Datos de envío</h3>
     <form method="post" class="result-list">
       {% csrf_token %}
-      {{ form.as_p }}
+      <div class="field-wrap">
+        {{ form.full_name.label_tag }}
+        {{ form.full_name }}
+        {{ form.full_name.errors }}
+      </div>
+      <div class="field-wrap">
+        {{ form.email.label_tag }}
+        {{ form.email }}
+        {{ form.email.errors }}
+      </div>
+      <div class="field-wrap">
+        {{ form.phone.label_tag }}
+        {{ form.phone }}
+        {{ form.phone.errors }}
+      </div>
+      <div class="field-wrap">
+        {{ form.address_line.label_tag }}
+        {{ form.address_line }}
+        {{ form.address_line.errors }}
+      </div>
+      <div class="field-wrap">
+        {{ form.city.label_tag }}
+        {{ form.city }}
+        {{ form.city.errors }}
+      </div>
+      <div class="field-wrap">
+        {{ form.postal_code.label_tag }}
+        {{ form.postal_code }}
+        {{ form.postal_code.errors }}
+      </div>
+
+      <div class="spacer"></div>
+      <h3 class="h2">Método de pago</h3>
+      <div class="filter-item checkbox-wrap"
+        style="height: auto; align-items: flex-start; gap: 10px; margin-top: 15px;">
+        {% for radio in form.payment_method %}
+        <label class="checkbox-container" style="padding-left: 28px;">
+          {{ radio.tag }}
+          <span class="checkmark" style="border-radius: 50%;"></span>
+          <span class="checkbox-label" style="font-weight: 600;">{{ radio.choice_label }}</span>
+        </label>
+        {% endfor %}
+        {{ form.payment_method.errors }}
+      </div>
+      <style>
+        .checkbox-container input[type="radio"]:checked~.checkmark {
+          background-color: var(--brand);
+          border-color: var(--brand);
+        }
+
+        .checkbox-container input[type="radio"]:checked~.checkmark:after {
+          display: block;
+          left: 6px;
+          top: 6px;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: white;
+          border: none;
+          transform: none;
+        }
+      </style>
       <div class="stack">
         <a class="btn" href="{% url 'cart:detail' %}">Volver al carrito</a>
         <button class="btn btn-primary" type="submit">Continuar a pago</button>
