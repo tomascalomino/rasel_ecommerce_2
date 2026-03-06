@@ -155,8 +155,8 @@ a {
   align-items: flex-end;
   /* Push content to the bottom */
   justify-content: center;
-  padding: 40px var(--pad) 100px var(--pad);
-  /* Increased bottom padding, less top */
+  padding: 0 var(--pad) 50px var(--pad);
+  /* Content pushed to bottom, logo clear on top */
   margin-top: -22px;
   /* Pull up to touch topbar if spacer is present */
   border-radius: var(--radius);
