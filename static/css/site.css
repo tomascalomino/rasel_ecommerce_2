@@ -150,11 +150,11 @@ a {
 .hero-full {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px var(--pad);
+  padding: 120px var(--pad);
   margin-top: -22px;
   /* Pull up to touch topbar if spacer is present */
   border-radius: var(--radius);
@@ -170,7 +170,7 @@ a {
   .hero-full {
     aspect-ratio: 4 / 5;
     /* Mas vertical en movil */
-    min-height: 500px;
+    min-height: 600px;
   }
 }
 
