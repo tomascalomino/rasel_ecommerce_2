@@ -152,9 +152,11 @@ a {
   width: 100%;
   aspect-ratio: 16 / 10;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  /* Push content to the bottom */
   justify-content: center;
-  padding: 120px var(--pad);
+  padding: 40px var(--pad) 100px var(--pad);
+  /* Increased bottom padding, less top */
   margin-top: -22px;
   /* Pull up to touch topbar if spacer is present */
   border-radius: var(--radius);
