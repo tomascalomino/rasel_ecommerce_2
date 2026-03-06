@@ -10,30 +10,48 @@ def product_list(request):
     in_stock_only = (request.GET.get("in_stock") or "") in {"1", "true", "on"}
     sort = (request.GET.get("sort") or "name_asc").strip()
 
-    products = (
-        Product.objects.filter(is_active=True)
-        .annotate(
-            min_price_ars=Min("variants__price_ars"),
-        )
-    )
+    # 1. Fetch all products and their variants to memory (safe for small/medium boutique catalogs)
+    all_products = list(Product.objects.filter(is_active=True).prefetch_related("variants"))
 
-    if query:
-        products = products.filter(
-            Q(name__icontains=query)
-            | Q(short_description__icontains=query)
-        )
+    # 2. Attach properties statically to avoid DB annotation errors in Postgres
+    for p in all_products:
+        active_vars = [v for v in p.variants.all() if v.is_active]
+        if active_vars:
+            p.min_price_ars = min(v.price_ars for v in active_vars)
+            p.in_stock = any(v.stock_qty > 0 for v in active_vars)
+        else:
+            p.min_price_ars = None
+            p.in_stock = False
 
-    # Basic ordering
+    # 3. Apply filters
+    filtered_products = []
+    query_lower = query.lower()
+    for p in all_products:
+        text_match = True
+        if query_lower:
+            name_lower = (p.name or "").lower()
+            desc_lower = (p.short_description or "").lower()
+            text_match = (query_lower in name_lower) or (query_lower in desc_lower)
+            
+        stock_match = True
+        if in_stock_only:
+            stock_match = p.in_stock
+            
+        if text_match and stock_match:
+            filtered_products.append(p)
+
+    # 4. Apply sorting
     if sort == "price_asc":
-        products = products.order_by("min_price_ars", "name")
+        filtered_products.sort(key=lambda p: (p.min_price_ars if p.min_price_ars is not None else 99999999, p.name))
     elif sort == "price_desc":
-        products = products.order_by("-min_price_ars", "name")
+        filtered_products.sort(key=lambda p: (p.min_price_ars if p.min_price_ars is not None else -1, p.name), reverse=True)
     elif sort == "name_desc":
-        products = products.order_by("-name")
+        filtered_products.sort(key=lambda p: p.name, reverse=True)
     else:
-        products = products.order_by("name")
+        filtered_products.sort(key=lambda p: p.name)
 
-    paginator = Paginator(products, 9)
+    # 5. Paginate the resulting list
+    paginator = Paginator(filtered_products, 9)
     page_obj = paginator.get_page(request.GET.get("page"))
     
     query_params = request.GET.copy()
@@ -51,6 +69,7 @@ def product_list(request):
             "sort": sort,
         },
     )
+
 
 
 def product_detail(request, slug: str):
