@@ -26,10 +26,10 @@
       <div class="filter-item">
         <div class="filter-label">Ordenar por</div>
         <select id="sort" name="sort" class="filter-select">
-          <option value="name_asc" {% if sort=='name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
-          <option value="name_desc" {% if sort=='name_desc' %}selected{% endif %}>Nombre (Z-A)</option>
-          <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %}>Precio (Menor a Mayor)</option>
-          <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %}>Precio (Mayor a Menor)</option>
+          <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Nombre (A-Z)</option>
+          <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Nombre (Z-A)</option>
+          <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Precio (Menor a Mayor)</option>
+          <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Precio (Mayor a Menor)</option>
         </select>
       </div>
 
