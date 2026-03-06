@@ -413,6 +413,20 @@ a {
   background: #f0f2f0;
 }
 
+.product-category-label {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: transparent;
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  pointer-events: none;
+  letter-spacing: 0.03em;
+}
+
 .product-img {
   width: 100%;
   height: 100%;
@@ -804,7 +818,7 @@ select:focus {
 
 .filter-group {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr auto;
   gap: 20px;
   align-items: flex-end;
 }
@@ -844,8 +858,21 @@ select:focus {
   height: 18px;
 }
 
-.input-with-icon input {
-  padding-left: 42px !important;
+.input-with-icon input[type="search"] {
+  width: 100%;
+  padding: 8px 14px 8px 36px !important;
+  border-radius: 20px;
+  background: rgba(14, 22, 18, 0.03);
+  border: 1px solid transparent;
+  color: var(--text);
+  outline: none;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.input-with-icon input[type="search"]:focus {
+  background: rgba(14, 22, 18, 0.05);
+  border-color: rgba(14, 22, 18, 0.1);
 }
 
 .filter-select {
