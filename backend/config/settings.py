@@ -29,16 +29,20 @@ load_dotenv(BASE_DIR.parent / ".env")
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-prod-debug-enabled-temporarily")
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "0") == "1"
 
 
-
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",") if h.strip()]
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if h.strip()
+]
 
 # Agregar el host de SITE_URL automáticamente (útil para túneles cloudflared/ngrok y Render)
 _site_url = os.getenv("SITE_URL", "")
 if _site_url:
     from urllib.parse import urlparse as _urlparse
+
     _site_host = _urlparse(_site_url).hostname
     if _site_host and _site_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_site_host)
@@ -49,7 +53,9 @@ if _site_url.startswith("https"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if DEBUG and not os.getenv("MP_ACCESS_TOKEN"):
-    print("[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará).")
+    print(
+        "[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará)."
+    )
 
 # Application definition
 
@@ -60,7 +66,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     # Apps del proyecto
     "shop",
     "cart",
@@ -173,7 +178,9 @@ if SERVE_MEDIA:
     try:
         MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
     except Exception:
-        logging.getLogger("config.settings").warning("No se pudo crear MEDIA_ROOT: %s", MEDIA_ROOT)
+        logging.getLogger("config.settings").warning(
+            "No se pudo crear MEDIA_ROOT: %s", MEDIA_ROOT
+        )
 
 if not DEBUG and not RUNNING_TESTS:
     SECURE_SSL_REDIRECT = True
@@ -236,7 +243,11 @@ if SENTRY_DSN and not RUNNING_TESTS:
             integrations=[DjangoIntegration()],
             traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.0")),
             send_default_pii=False,
-            environment=os.getenv("SENTRY_ENVIRONMENT", "development" if DEBUG else "production"),
+            environment=os.getenv(
+                "SENTRY_ENVIRONMENT", "development" if DEBUG else "production"
+            ),
         )
     except Exception as exc:
-        logging.getLogger("config.settings").warning("No se pudo inicializar Sentry: %s", exc)
+        logging.getLogger("config.settings").warning(
+            "No se pudo inicializar Sentry: %s", exc
+        )
