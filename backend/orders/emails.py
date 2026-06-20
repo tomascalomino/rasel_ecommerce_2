@@ -100,6 +100,50 @@ def _send(order) -> None:
         ).send(fail_silently=False)
 
 
+def _paid_body(order) -> str:
+    return (
+        f"Hola {order.full_name},\n\n"
+        f"¡Confirmamos la recepción de tu pago del pedido #{order.id}!\n"
+        f"Ya lo estamos preparando para el envío.\n\n"
+        f"Detalle:\n{_build_lines(order)}\n\n"
+        f"Total: ${order.total_amount}\n\n"
+        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n\n"
+        f"¡Gracias por tu compra!\nRaSel — Aceite de Oliva\n"
+    )
+
+
+def send_payment_confirmed(order_id: int) -> None:
+    """
+    Email de 'pago confirmado' al cliente (se dispara cuando el dueño valida la
+    transferencia en el admin). Idempotente vía Order.paid_email_sent, separado del
+    mail de 'pedido reservado' (Order.confirmation_email_sent).
+    """
+    from .models import Order
+
+    try:
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(id=order_id)
+            if order.paid_email_sent:
+                return
+            order.paid_email_sent = True
+            order.save(update_fields=["paid_email_sent"])
+    except Order.DoesNotExist:
+        return
+
+    try:
+        order.refresh_from_db()
+        EmailMessage(
+            subject=f"RaSel — Pago confirmado · Pedido #{order.id}",
+            body=_paid_body(order),
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
+            to=[order.email],
+        ).send(fail_silently=False)
+        logger.info("Email de pago confirmado enviado order=%s", order_id)
+    except Exception:
+        Order.objects.filter(id=order_id).update(paid_email_sent=False)
+        logger.exception("Error enviando email de pago confirmado order %s", order_id)
+
+
 def send_order_confirmation(order_id: int) -> None:
     from .models import Order
 

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Términos y Condiciones — RaSel{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker"><span class="dot"></span><span>Legales</span></div>
+        <h1 class="h1">Términos y Condiciones</h1>
+        <p class="p page-subtitle">Condiciones de uso y de compra del sitio de RaSel.</p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner">
+            <p class="muted">Última actualización: [COMPLETAR FECHA]</p>
+
+            <h2 class="h2">1. Identificación del comercio</h2>
+            <p class="p">
+                Este sitio es operado por <strong>[RAZÓN SOCIAL / NOMBRE DEL TITULAR]</strong>,
+                CUIT <strong>[CUIT]</strong>, con domicilio en <strong>[DOMICILIO FISCAL]</strong>,
+                Argentina. Contacto: <strong>[EMAIL DE CONTACTO]</strong> · <strong>[TELÉFONO]</strong>.
+            </p>
+
+            <h2 class="h2">2. Objeto</h2>
+            <p class="p">
+                Estos Términos regulan el uso del sitio y la compra de productos (aceite de oliva
+                y derivados). Al realizar un pedido, el usuario acepta estas condiciones.
+            </p>
+
+            <h2 class="h2">3. Precios y pagos</h2>
+            <p class="p">
+                Los precios están expresados en pesos argentinos (ARS) e incluyen los impuestos
+                vigentes. El medio de pago disponible es la <strong>transferencia bancaria</strong>;
+                el pedido se considera confirmado una vez acreditado el pago. RaSel se reserva el
+                derecho de modificar precios sin previo aviso; el precio aplicable es el vigente al
+                momento de la compra.
+            </p>
+
+            <h2 class="h2">4. Disponibilidad y stock</h2>
+            <p class="p">
+                La disponibilidad de productos está sujeta a stock. Si un producto no estuviera
+                disponible luego de la compra, se contactará al cliente para coordinar reposición,
+                cambio o reintegro.
+            </p>
+
+            <h2 class="h2">5. Envíos</h2>
+            <p class="p">
+                Los plazos y costos de envío se informan antes de confirmar la compra y/o por los
+                canales de contacto. [COMPLETAR: zonas de cobertura, costos y plazos de entrega.]
+            </p>
+
+            <h2 class="h2">6. Derecho de arrepentimiento</h2>
+            <p class="p">
+                El consumidor puede revocar la compra dentro de los 10 días corridos de recibido el
+                producto, conforme la Ley 24.240 de Defensa del Consumidor. Ver
+                <a href="{% url 'regret' %}">Botón de Arrepentimiento</a>.
+            </p>
+
+            <h2 class="h2">7. Cambios y devoluciones</h2>
+            <p class="p">
+                Las condiciones para cambios y devoluciones se detallan en nuestra
+                <a href="{% url 'returns' %}">Política de Cambios y Devoluciones</a>.
+            </p>
+
+            <h2 class="h2">8. Privacidad</h2>
+            <p class="p">
+                El tratamiento de datos personales se rige por nuestra
+                <a href="{% url 'privacy' %}">Política de Privacidad</a>.
+            </p>
+
+            <h2 class="h2">9. Legislación y jurisdicción aplicable</h2>
+            <p class="p">
+                Estos Términos se rigen por las leyes de la República Argentina. Ante cualquier
+                conflicto serán competentes los tribunales de [COMPLETAR JURISDICCIÓN].
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -21,11 +21,19 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
+from shop.views import robots_txt, sitemap_xml
 
 urlpatterns = [
+    path("robots.txt", robots_txt),
+    path("sitemap.xml", sitemap_xml),
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
+    # Legales
+    path("terminos/", TemplateView.as_view(template_name="legal/terms.html"), name="terms"),
+    path("privacidad/", TemplateView.as_view(template_name="legal/privacy.html"), name="privacy"),
+    path("devoluciones/", TemplateView.as_view(template_name="legal/returns.html"), name="returns"),
+    path("arrepentimiento/", TemplateView.as_view(template_name="legal/regret.html"), name="regret"),
     path("shop/", include("shop.urls")),
     path("cart/", include("cart.urls")),
     path("orders/", include("orders.urls")),

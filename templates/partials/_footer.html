@@ -4,6 +4,12 @@
       <div>
         <strong>RaSel</strong> · Aceite de Oliva · Andalgalá, Catamarca
         <div class="muted">© {% now "Y" %} RaSel. Todos los derechos reservados.</div>
+        <nav class="footer-legal muted" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 12px;">
+          <a href="{% url 'terms' %}">Términos y Condiciones</a>
+          <a href="{% url 'privacy' %}">Privacidad</a>
+          <a href="{% url 'returns' %}">Cambios y Devoluciones</a>
+          <a href="{% url 'regret' %}">Botón de Arrepentimiento</a>
+        </nav>
       </div>
       <span class="pill pill-meta">
         <span class="muted">Blend Suave</span>

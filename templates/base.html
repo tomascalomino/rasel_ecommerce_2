@@ -5,6 +5,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}RaSel — Aceite de Oliva{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}RaSel — Aceite de oliva virgen extra artesanal de Andalgalá, Catamarca. Comprá online y recibilo en tu casa.{% endblock %}">
+
+  {# Open Graph / redes sociales (WhatsApp, Instagram, Facebook) #}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RaSel — Aceite de Oliva">
+  <meta property="og:title" content="{% block og_title %}RaSel — Aceite de Oliva{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Aceite de oliva virgen extra artesanal de Andalgalá, Catamarca.{% endblock %}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/hero-bg.png' %}">
+  <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <link rel="icon" href="{% static 'favicon.ico' %}">
 </head>

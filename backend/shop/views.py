@@ -1,8 +1,43 @@
 from django.db.models import Min, Exists, OuterRef, Q, Prefetch
 from django.core.paginator import Paginator
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils.html import escape
 
 from .models import Product, Variant
+
+
+def robots_txt(request):
+    sitemap_url = request.build_absolute_uri("/sitemap.xml")
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /cart/",
+        "Disallow: /orders/",
+        "Disallow: /payments/",
+        f"Sitemap: {sitemap_url}",
+        "",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
+
+
+def sitemap_xml(request):
+    urls = [request.build_absolute_uri(reverse(name)) for name in (
+        "home", "about", "contact", "terms", "privacy", "returns", "regret",
+        "shop:product_list",
+    )]
+    for product in Product.objects.filter(is_active=True):
+        urls.append(request.build_absolute_uri(reverse("shop:product_detail", args=[product.slug])))
+
+    items = "".join(f"<url><loc>{escape(u)}</loc></url>" for u in urls)
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{items}</urlset>"
+    )
+    return HttpResponse(xml, content_type="application/xml")
 
 
 def product_list(request):

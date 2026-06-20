@@ -32,6 +32,10 @@ class Order(models.Model):
 
     # Email de confirmación (idempotencia: evita reenvíos en reintentos de webhook)
     confirmation_email_sent = models.BooleanField(default=False)
+    # Email de "pago confirmado" (se envía al marcar la orden como pagada en el admin)
+    paid_email_sent = models.BooleanField(default=False)
+    # Idempotencia de reposición de stock al cancelar (evita devolver stock dos veces)
+    stock_restored = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Order #{self.id} - {self.full_name}"

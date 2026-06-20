@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Cambios y Devoluciones — RaSel{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker"><span class="dot"></span><span>Legales</span></div>
+        <h1 class="h1">Política de Cambios y Devoluciones</h1>
+        <p class="p page-subtitle">Cómo proceder ante un cambio, devolución o problema con tu pedido.</p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner">
+            <h2 class="h2">1. Derecho de arrepentimiento (10 días)</h2>
+            <p class="p">
+                Si comprás a distancia, tenés derecho a revocar la compra dentro de los
+                <strong>10 días corridos</strong> contados desde la entrega del producto, sin
+                necesidad de expresar motivo y sin penalidad (Ley 24.240, art. 34). Para ejercerlo,
+                usá el <a href="{% url 'regret' %}">Botón de Arrepentimiento</a>.
+            </p>
+
+            <h2 class="h2">2. Condiciones para cambios y devoluciones</h2>
+            <p class="p">
+                El producto debe estar sin abrir, en su envase original y en condiciones de
+                reventa. Por tratarse de un producto alimenticio, no se aceptan devoluciones de
+                unidades abiertas o consumidas, salvo defecto de fábrica o error en el envío.
+            </p>
+
+            <h2 class="h2">3. Producto defectuoso o error en el envío</h2>
+            <p class="p">
+                Si recibís un producto dañado, vencido o distinto al solicitado, contactanos dentro
+                de las 48 hs a <strong>[EMAIL DE CONTACTO]</strong> adjuntando fotos y el número de
+                pedido. Coordinaremos el cambio o la devolución del importe sin costo para vos.
+            </p>
+
+            <h2 class="h2">4. Reintegros</h2>
+            <p class="p">
+                Aceptada la devolución, el reintegro se realiza por el mismo medio de pago
+                (transferencia a la cuenta de origen) dentro de [COMPLETAR: plazo, ej. 10 días
+                hábiles] de recibido el producto devuelto.
+            </p>
+
+            <h2 class="h2">5. Costos de envío en devoluciones</h2>
+            <p class="p">
+                Si la devolución se origina por un defecto o error nuestro, el costo de envío corre
+                por cuenta de RaSel. En los casos de arrepentimiento, [COMPLETAR criterio de costos
+                de envío de la devolución].
+            </p>
+
+            <h2 class="h2">6. Contacto</h2>
+            <p class="p">
+                Por cualquier gestión escribinos a <strong>[EMAIL DE CONTACTO]</strong> o por
+                WhatsApp al <strong>[TELÉFONO]</strong>, indicando tu número de pedido.
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

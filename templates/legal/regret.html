@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Botón de Arrepentimiento — RaSel{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker"><span class="dot"></span><span>Defensa del Consumidor</span></div>
+        <h1 class="h1">Botón de Arrepentimiento</h1>
+        <p class="p page-subtitle">
+            Ejercé tu derecho a cancelar una compra dentro de los 10 días corridos de recibida.
+        </p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner">
+            <h2 class="h2">¿Qué es?</h2>
+            <p class="p">
+                Conforme la Ley 24.240 de Defensa del Consumidor y la Resolución 424/2020, podés
+                arrepentirte de una compra realizada a distancia dentro de los <strong>10 días
+                corridos</strong> desde que recibiste el producto, sin necesidad de justificar el
+                motivo y sin penalidad alguna.
+            </p>
+
+            <h2 class="h2">¿Cómo lo solicito?</h2>
+            <p class="p">
+                Envianos un mail a <strong>[EMAIL DE CONTACTO]</strong> con el asunto
+                <strong>"Arrepentimiento - Pedido #[número]"</strong> incluyendo:
+            </p>
+            <ul class="p">
+                <li>Número de pedido.</li>
+                <li>Nombre y apellido del comprador.</li>
+                <li>CBU/CVU para el reintegro.</li>
+            </ul>
+            <p class="p">
+                También podés escribirnos por WhatsApp al <strong>[TELÉFONO]</strong>. Procesaremos
+                la solicitud y coordinaremos la devolución del producto y el reintegro del importe.
+            </p>
+
+            <div class="cta-row" style="margin-top: 20px;">
+                <a class="btn btn-primary" href="mailto:[EMAIL DE CONTACTO]?subject=Arrepentimiento%20-%20Pedido%20%23">
+                    Solicitar por email
+                </a>
+                <a class="btn" href="{% url 'returns' %}">Ver política de devoluciones</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
