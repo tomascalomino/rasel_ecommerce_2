@@ -2,13 +2,14 @@ services:
   - type: web
     name: rasel-ecommerce
     runtime: python
+    plan: free
     buildCommand: "bash build.sh"
     startCommand: "bash start.sh"
-    preDeployCommand: "python backend/manage.py migrate --noinput"
-    disk:
-      name: media
-      mountPath: /var/data/media
-      sizeGB: 1
+    # NOTA: en plan free NO hay disco persistente. Las imágenes subidas por el
+    # admin se pierden en cada deploy; sólo persisten las que están commiteadas
+    # en el repo (media/products/*). Para subir imágenes desde el admin y que
+    # persistan, mover MEDIA a un bucket externo (Cloudflare R2 / S3) o pasar a
+    # un plan con disco.
     envVars:
       - key: DEBUG
         value: "0"
@@ -18,8 +19,7 @@ services:
         value: ".onrender.com"
       - key: SITE_URL
         value: "https://rasel-ecommerce.onrender.com"
-      - key: MEDIA_ROOT
-        value: "/var/data/media"
+      # Sin disco en free: servimos la media commiteada en el repo (default de settings).
       - key: SERVE_MEDIA
         value: "1"
       - key: PYTHON_VERSION
@@ -32,35 +32,14 @@ services:
         value: "0.0"
       - key: SENTRY_ENVIRONMENT
         value: "production"
+      # Credenciales MercadoPago de PRODUCCIÓN (APP_USR-...). Cargar a mano en el dashboard.
       - key: MP_ACCESS_TOKEN
+        sync: false
+      # Secret del webhook de MercadoPago: OBLIGATORIO en prod (valida la firma).
+      - key: MP_WEBHOOK_SECRET
         sync: false
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
+      # DB externa (Neon/Supabase): pegar la connection string en el dashboard de Render.
       - key: DATABASE_URL
-        fromDatabase:
-          name: rasel-db
-          property: connectionString
-
-  - type: cron
-    name: rasel-kpi-weekly
-    runtime: python
-    buildCommand: "bash build.sh"
-    schedule: "0 9 * * 1"
-    command: "python backend/manage.py ops_kpis --days 7"
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.11"
-      - key: DJANGO_SETTINGS_MODULE
-        value: "config.settings"
-      - key: LOG_LEVEL
-        value: "INFO"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: rasel-db
-          property: connectionString
-
-databases:
-  - name: rasel-db
-    databaseName: rasel
-    user: rasel
-    plan: free
+        sync: false

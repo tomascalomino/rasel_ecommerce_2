@@ -109,8 +109,10 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Configure database from DATABASE_URL, fallback to SQLite when parsing fails
-_db_config = dj_database_url.config(conn_max_age=600)
+# Configure database from DATABASE_URL, fallback to SQLite when parsing fails.
+# conn_health_checks: Neon (Postgres serverless) cierra conexiones inactivas;
+# con health checks Django descarta la conexión muerta y reabre en vez de fallar.
+_db_config = dj_database_url.config(conn_max_age=600, conn_health_checks=True)
 if not _db_config or not _db_config.get("ENGINE"):
     _db_config = {
         "ENGINE": "django.db.backends.sqlite3",
@@ -158,8 +160,37 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR.parent / "static"]
 
-# Para servir estáticos en prod con WhiteNoise
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Storage backends (Django 5 STORAGES dict).
+# - staticfiles: WhiteNoise (comprimido + manifest) en prod.
+# - default (media): Cloudflare R2 si está configurado; si no, filesystem local.
+# En tests usamos storage simple (sin manifest) para no depender de collectstatic.
+if "test" in sys.argv:
+    _WHITENOISE_STATIC = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+else:
+    _WHITENOISE_STATIC = {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}
+
+R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "").strip()
+if R2_BUCKET_NAME:
+    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "")
+    AWS_STORAGE_BUCKET_NAME = R2_BUCKET_NAME
+    AWS_S3_ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL", "")  # https://<account>.r2.cloudflarestorage.com
+    AWS_S3_REGION_NAME = "auto"
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+    # Dominio público para servir las imágenes (pub-xxxx.r2.dev o dominio propio).
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN", "").strip() or None
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+        "staticfiles": _WHITENOISE_STATIC,
+    }
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": _WHITENOISE_STATIC,
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -231,6 +262,21 @@ LOGGING = {
         },
     },
 }
+
+# Email (Brevo SMTP). Si hay credenciales SMTP usamos Brevo; si no, consola (dev).
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "RaSel <no-reply@rasel.local>")
+ORDER_NOTIFICATION_EMAIL = os.getenv("ORDER_NOTIFICATION_EMAIL", "").strip()
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
+
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp-relay.brevo.com")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+    EMAIL_USE_TLS = True
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 SENTRY_DSN = os.getenv("SENTRY_DSN", "").strip()
 if SENTRY_DSN and not RUNNING_TESTS:

@@ -30,6 +30,9 @@ class Order(models.Model):
     mp_payment_id = models.CharField(max_length=120, blank=True, default="")
     mp_status = models.CharField(max_length=60, blank=True, default="")
 
+    # Email de confirmación (idempotencia: evita reenvíos en reintentos de webhook)
+    confirmation_email_sent = models.BooleanField(default=False)
+
     def __str__(self):
         return f"Order #{self.id} - {self.full_name}"
 

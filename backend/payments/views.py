@@ -14,6 +14,7 @@ from django.views.decorators.http import require_GET
 
 from cart.cart import Cart
 from orders.models import Order, OrderItem
+from orders.emails import send_order_confirmation
 from shop.models import Variant
 from .mercadopago import create_preference, get_payment, MercadoPagoError
 from urllib.parse import urlparse
@@ -238,6 +239,7 @@ def payment_return(request, result: str):
     if status == "approved" and external_reference:
         order, finalize_error = _finalize_approved_payment(external_reference, payment_id=payment_id, mp_status=status)
         if order:
+            send_order_confirmation(order.id)
             active_draft = str(request.session.get("active_payment_draft", ""))
             if active_draft == external_reference:
                 Cart(request.session).clear()
@@ -276,7 +278,16 @@ def _verify_webhook_signature(request, event_id: str) -> bool:
     """
     secret = os.getenv("MP_WEBHOOK_SECRET", "").strip()
     if not secret:
-        return True
+        # En producción NO aceptamos webhooks sin firma: cualquiera podría
+        # postear un "pago aprobado" falso. En DEBUG lo permitimos para testear.
+        from django.conf import settings as dj_settings
+        if dj_settings.DEBUG or dj_settings.RUNNING_TESTS:
+            return True
+        logger.error(
+            "MP_WEBHOOK_SECRET no configurado en producción: webhook rechazado event_id=%s",
+            event_id,
+        )
+        return False
 
     x_signature = request.headers.get("x-signature", "")
     x_request_id = request.headers.get("x-request-id", "")
@@ -425,6 +436,7 @@ def webhook(request):
                 order, error = _finalize_approved_payment(external_ref, payment_id=payment_id, mp_status=mp_status)
                 ev.processed_ok = order is not None
                 if order:
+                    send_order_confirmation(order.id)
                     ev.notes = f"approved payment_id={payment_id} order={order.id}"
                 else:
                     ev.notes = f"approved payment_id={payment_id} finalize_error={error}"

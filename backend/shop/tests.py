@@ -45,24 +45,24 @@ class ProductListViewTests(TestCase):
 		response = self.client.get(reverse("shop:product_list"))
 		self.assertEqual(response.status_code, 200)
 		self.assertIn("page_obj", response.context)
-		self.assertEqual(len(response.context["products"]), 9)
+		self.assertEqual(len(response.context["page_obj"]), 9)
 
 	def test_search_filters_by_name(self):
 		response = self.client.get(reverse("shop:product_list"), {"q": "Intenso"})
 		self.assertEqual(response.status_code, 200)
-		names = [product.name for product in response.context["products"]]
+		names = [product.name for product in response.context["page_obj"]]
 		self.assertIn("RaSel Intenso", names)
 		self.assertNotIn("RaSel Clásico", names)
 
 	def test_in_stock_filter(self):
 		response = self.client.get(reverse("shop:product_list"), {"in_stock": "1", "q": "RaSel"})
 		self.assertEqual(response.status_code, 200)
-		names = [product.name for product in response.context["products"]]
+		names = [product.name for product in response.context["page_obj"]]
 		self.assertIn("RaSel Clásico", names)
 		self.assertNotIn("RaSel Intenso", names)
 
 	def test_sort_price_desc(self):
 		response = self.client.get(reverse("shop:product_list"), {"sort": "price_desc"})
 		self.assertEqual(response.status_code, 200)
-		products = list(response.context["products"])
+		products = list(response.context["page_obj"])
 		self.assertGreaterEqual(products[0].min_price_ars, products[1].min_price_ars)

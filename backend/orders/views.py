@@ -5,6 +5,7 @@ from django.views.decorators.http import require_http_methods
 from cart.cart import Cart
 from payments.models import PaymentDraft
 from .models import Order, OrderItem
+from .emails import send_order_confirmation
 from shop.models import Variant
 from .forms import CheckoutForm
 from django.db import transaction
@@ -24,44 +25,62 @@ def checkout(request):
 
             if payment_method == "transfer":
                 # Implementación para Transferencia Bancaria
-                with transaction.atomic():
-                    # 1. Crear Orden
-                    order = Order.objects.create(
-                        full_name=form.cleaned_data["full_name"],
-                        email=form.cleaned_data["email"],
-                        phone=form.cleaned_data["phone"],
-                        address_line=form.cleaned_data["address_line"],
-                        city=form.cleaned_data["city"],
-                        postal_code=form.cleaned_data["postal_code"],
-                        total_amount=cart.total(),
-                        status="pending",
-                        payment_method="transfer",
-                    )
+                try:
+                    with transaction.atomic():
+                        # 1. Validar stock de TODOS los items antes de crear la orden
+                        validated_rows = []
+                        for item in cart.items():
+                            variant = (
+                                Variant.objects.select_for_update()
+                                .select_related("product")
+                                .get(id=item.variant.id, is_active=True)
+                            )
+                            if variant.stock_qty < item.qty:
+                                raise ValueError(
+                                    f"Sin stock suficiente de {variant.product.name} "
+                                    f"({variant.name}). Disponible: {variant.stock_qty}."
+                                )
+                            validated_rows.append((variant, item))
 
-                    # 2. Guardar Items y descontar stock (MVP)
-                    for item in cart.items():
-                        variant_id = item.variant.id
-                        qty = item.qty
-                        variant = Variant.objects.select_for_update().get(id=variant_id)
-
-                        OrderItem.objects.create(
-                            order=order,
-                            variant=variant,
-                            product_name=variant.product.name,
-                            variant_name=variant.name,
-                            unit_price=item.unit_price,
-                            quantity=qty,
-                            line_total=item.line_total,
+                        # 2. Crear Orden
+                        order = Order.objects.create(
+                            full_name=form.cleaned_data["full_name"],
+                            email=form.cleaned_data["email"],
+                            phone=form.cleaned_data["phone"],
+                            address_line=form.cleaned_data["address_line"],
+                            city=form.cleaned_data["city"],
+                            postal_code=form.cleaned_data["postal_code"],
+                            total_amount=cart.total(),
+                            status="pending",
+                            payment_method="transfer",
                         )
 
-                        if variant.stock_qty >= qty:
-                            variant.stock_qty -= qty
+                        # 3. Guardar Items y descontar stock (ya validado arriba)
+                        for variant, item in validated_rows:
+                            OrderItem.objects.create(
+                                order=order,
+                                variant=variant,
+                                product_name=variant.product.name,
+                                variant_name=variant.name,
+                                unit_price=item.unit_price,
+                                quantity=item.qty,
+                                line_total=item.line_total,
+                            )
+                            variant.stock_qty -= item.qty
                             variant.save(update_fields=["stock_qty"])
+                except (ValueError, Variant.DoesNotExist) as exc:
+                    messages.error(
+                        request,
+                        str(exc) if isinstance(exc, ValueError)
+                        else "Uno de los productos ya no está disponible.",
+                    )
+                    return render(request, "orders/checkout.html", {"cart": cart, "form": form})
 
-                    # 3. Limpiar el carrito y redirigir
-                    cart.clear()
-                    request.session.modified = True
-                    return redirect("orders:transfer_info", order_id=order.id)
+                # 4. Limpiar el carrito, notificar por email y redirigir
+                cart.clear()
+                request.session.modified = True
+                send_order_confirmation(order.id)
+                return redirect("orders:transfer_info", order_id=order.id)
             else:
                 # Implementación para Mercado Pago
                 draft_items = []

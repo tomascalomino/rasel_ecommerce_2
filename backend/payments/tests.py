@@ -1,4 +1,5 @@
 import json
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from unittest.mock import patch
@@ -144,6 +145,10 @@ class WebhookTests(TestCase):
 
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_qty, 1)
+
+        # El email de confirmación se envía una sola vez pese a los 2 webhooks.
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.draft.email, mail.outbox[0].to)
 
     @patch("payments.views.get_payment")
     def test_webhook_payment_rejected_marks_order_cancelled(self, mock_get_payment):
