@@ -23,7 +23,7 @@ services:
       - key: SERVE_MEDIA
         value: "1"
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.12.8"
       - key: LOG_LEVEL
         value: "INFO"
       - key: SENTRY_DSN
