@@ -52,7 +52,21 @@ if _site_url.startswith("https"):
     CSRF_TRUSTED_ORIGINS = [_site_url]
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-if DEBUG and not os.getenv("MP_ACCESS_TOKEN"):
+# Feature flag: MercadoPago apagado por defecto (la web cobra solo por transferencia).
+# Para reactivarlo en el futuro: setear MP_ENABLED=1 (y tener MP_ACCESS_TOKEN +
+# MP_WEBHOOK_SECRET productivos). El código de MP queda intacto, solo dormido.
+MP_ENABLED = os.getenv("MP_ENABLED", "0") == "1"
+
+# Datos bancarios para el pago por transferencia (no hardcodear en el repo).
+# Cargar en variables de entorno: BANK_HOLDER, BANK_ALIAS, BANK_CBU, BANK_NAME.
+BANK_TRANSFER = {
+    "holder": os.getenv("BANK_HOLDER", "").strip(),
+    "alias": os.getenv("BANK_ALIAS", "").strip(),
+    "cbu": os.getenv("BANK_CBU", "").strip(),
+    "bank": os.getenv("BANK_NAME", "").strip(),
+}
+
+if DEBUG and MP_ENABLED and not os.getenv("MP_ACCESS_TOKEN"):
     print(
         "[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará)."
     )

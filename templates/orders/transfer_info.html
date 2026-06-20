@@ -30,22 +30,36 @@
 
         <h3 class="h2" style="margin-bottom: 15px;">Datos de la cuenta</h3>
         <div class="result-list">
+            {% if bank.holder %}
             <div class="row">
                 <span class="muted">Titular:</span>
-                <strong>RaSel E-Commerce</strong>
+                <strong>{{ bank.holder }}</strong>
             </div>
+            {% endif %}
+            {% if bank.alias %}
             <div class="row">
                 <span class="muted">Alias:</span>
-                <strong>RASEL.OLIVA.AR</strong> <span class="muted tiny">(ejemplo)</span>
+                <strong>{{ bank.alias }}</strong>
             </div>
+            {% endif %}
+            {% if bank.cbu %}
             <div class="row">
                 <span class="muted">CBU/CVU:</span>
-                <strong>1234567890123456789012</strong> <span class="muted tiny">(ejemplo)</span>
+                <strong>{{ bank.cbu }}</strong>
             </div>
+            {% endif %}
+            {% if bank.bank %}
             <div class="row">
                 <span class="muted">Banco:</span>
-                <strong>Banco Ejemplo</strong>
+                <strong>{{ bank.bank }}</strong>
             </div>
+            {% endif %}
+            {% if not bank.alias and not bank.cbu %}
+            <div class="alert" style="border-color: var(--brand);">
+                Estamos terminando de cargar los datos de pago. Escribinos a
+                <strong>{{ notify_email|default:"nuestro email" }}</strong> y te los pasamos.
+            </div>
+            {% endif %}
         </div>
 
         <div class="spacer"></div>
@@ -53,7 +67,7 @@
         <div class="alerts" style="margin-top: 20px;">
             <div class="alert" style="text-align: center; border-color: var(--brand);">
                 <p>Una vez realizada la transferencia, enviá el comprobante por mail a:<br>
-                    <strong style="font-size: 1.1em; color: var(--text);">ventas@raselecommerce.com.ar</strong>
+                    <strong style="font-size: 1.1em; color: var(--text);">{{ notify_email|default:"raseloliva@gmail.com" }}</strong>
                 </p>
                 <p class="muted tiny" style="margin-top: 10px;">
                     (Por favor, incluí el número de orden <strong>#{{ order.id }}</strong> en el asunto del correo).<br>

@@ -68,6 +68,7 @@
 
       <div class="spacer"></div>
       <h3 class="h2">Método de pago</h3>
+      {% if mp_enabled %}
       <div class="filter-item checkbox-wrap"
         style="height: auto; align-items: flex-start; gap: 10px; margin-top: 15px;">
         {% for radio in form.payment_method %}
@@ -79,6 +80,13 @@
         {% endfor %}
         {{ form.payment_method.errors }}
       </div>
+      {% else %}
+      <p class="muted" style="margin-top: 10px;">
+        Tu pedido se abona por <strong>Transferencia Bancaria</strong>. Al confirmar te
+        mostramos los datos para transferir y te los enviamos por email.
+      </p>
+      <div style="display: none;">{{ form.payment_method }}</div>
+      {% endif %}
       <style>
         .checkbox-container input[type="radio"]:checked~.checkmark {
           background-color: var(--brand);

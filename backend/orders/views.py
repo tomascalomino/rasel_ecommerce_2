@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 
@@ -74,7 +75,7 @@ def checkout(request):
                         str(exc) if isinstance(exc, ValueError)
                         else "Uno de los productos ya no está disponible.",
                     )
-                    return render(request, "orders/checkout.html", {"cart": cart, "form": form})
+                    return render(request, "orders/checkout.html", {"cart": cart, "form": form, "mp_enabled": settings.MP_ENABLED})
 
                 # 4. Limpiar el carrito, notificar por email y redirigir
                 cart.clear()
@@ -118,7 +119,7 @@ def checkout(request):
     else:
         form = CheckoutForm()
 
-    return render(request, "orders/checkout.html", {"cart": cart, "form": form})
+    return render(request, "orders/checkout.html", {"cart": cart, "form": form, "mp_enabled": settings.MP_ENABLED})
 
 
 def confirmation(request, order_id):
@@ -129,4 +130,8 @@ def transfer_info(request, order_id):
     from django.shortcuts import get_object_or_404
 
     order = get_object_or_404(Order, id=order_id)
-    return render(request, "orders/transfer_info.html", {"order": order})
+    return render(
+        request,
+        "orders/transfer_info.html",
+        {"order": order, "bank": settings.BANK_TRANSFER, "notify_email": settings.ORDER_NOTIFICATION_EMAIL},
+    )

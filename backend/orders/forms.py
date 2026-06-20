@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 
 
 class CheckoutForm(forms.Form):
@@ -17,3 +18,12 @@ class CheckoutForm(forms.Form):
     payment_method = forms.ChoiceField(
         choices=PAYMENT_CHOICES, widget=forms.RadioSelect, initial="mp"
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Con MercadoPago apagado, la única opción válida es transferencia.
+        if not settings.MP_ENABLED:
+            self.fields["payment_method"].choices = [
+                ("transfer", "Transferencia Bancaria"),
+            ]
+            self.fields["payment_method"].initial = "transfer"

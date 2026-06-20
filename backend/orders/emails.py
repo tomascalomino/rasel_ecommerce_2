@@ -24,11 +24,34 @@ def _build_lines(order) -> str:
     return "\n".join(rows)
 
 
+def _bank_block() -> str:
+    bank = getattr(settings, "BANK_TRANSFER", {}) or {}
+    lines = []
+    if bank.get("holder"):
+        lines.append(f"  Titular: {bank['holder']}")
+    if bank.get("alias"):
+        lines.append(f"  Alias: {bank['alias']}")
+    if bank.get("cbu"):
+        lines.append(f"  CBU/CVU: {bank['cbu']}")
+    if bank.get("bank"):
+        lines.append(f"  Banco: {bank['bank']}")
+    return "\n".join(lines)
+
+
 def _customer_body(order) -> str:
     if order.payment_method == "transfer":
+        bank_block = _bank_block()
+        datos = (
+            f"\nDatos para transferir:\n{bank_block}\n" if bank_block else ""
+        )
+        notify = getattr(settings, "ORDER_NOTIFICATION_EMAIL", "") or ""
+        comprobante = (
+            f"Enviá el comprobante a {notify} indicando tu orden #{order.id}.\n"
+            if notify else ""
+        )
         estado = (
             "Tu pedido quedó RESERVADO y está pendiente de pago por transferencia.\n"
-            "Te enviamos los datos bancarios en el sitio al finalizar la compra.\n"
+            f"{datos}{comprobante}"
         )
     else:
         estado = "¡Tu pago fue confirmado! Estamos preparando tu pedido.\n"
