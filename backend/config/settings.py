@@ -182,6 +182,15 @@ if R2_BUCKET_NAME:
     AWS_S3_FILE_OVERWRITE = False
     # Dominio público para servir las imágenes (pub-xxxx.r2.dev o dominio propio).
     AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN", "").strip() or None
+    # boto3 >= 1.36 manda checksums CRC32 por defecto que R2 rechaza en el PUT
+    # (Server Error 500 al subir). Los pedimos solo cuando son necesarios.
+    from botocore.config import Config as _BotoConfig
+
+    AWS_S3_CLIENT_CONFIG = _BotoConfig(
+        signature_version="s3v4",
+        request_checksum_calculation="when_required",
+        response_checksum_validation="when_required",
+    )
     STORAGES = {
         "default": {"BACKEND": "storages.backends.s3.S3Storage"},
         "staticfiles": _WHITENOISE_STATIC,
