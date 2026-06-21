@@ -8,6 +8,11 @@ from django.utils.html import escape
 from .models import Product, Variant
 
 
+def healthz(request):
+    """Health-check liviano para el ping de keep-alive (no toca la base)."""
+    return HttpResponse("ok", content_type="text/plain")
+
+
 def robots_txt(request):
     sitemap_url = request.build_absolute_uri("/sitemap.xml")
     lines = [
@@ -17,6 +22,7 @@ def robots_txt(request):
         "Disallow: /cart/",
         "Disallow: /orders/",
         "Disallow: /payments/",
+        "Disallow: /healthz",
         f"Sitemap: {sitemap_url}",
         "",
     ]

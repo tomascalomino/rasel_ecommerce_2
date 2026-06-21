@@ -21,9 +21,10 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
-from shop.views import robots_txt, sitemap_xml
+from shop.views import robots_txt, sitemap_xml, healthz
 
 urlpatterns = [
+    path("healthz", healthz),
     path("robots.txt", robots_txt),
     path("sitemap.xml", sitemap_xml),
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
