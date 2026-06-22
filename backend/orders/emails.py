@@ -9,12 +9,54 @@ Diseño:
 - Nunca rompe el flujo de pago: cualquier error de SMTP se loguea y se traga.
 """
 import logging
+from email.utils import parseaddr
 
+import requests
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
 
 logger = logging.getLogger("orders.email")
+
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+
+
+def _send_email(subject: str, body: str, to_email: str) -> None:
+    """
+    Envía un email de texto plano.
+
+    Render (plan free) bloquea el SMTP saliente (puerto 587), así que en producción
+    usamos la **API HTTP de Brevo** (HTTPS 443) cuando hay BREVO_API_KEY. Si no está
+    configurada, cae al backend de email de Django (consola en dev, locmem en tests),
+    para no romper el entorno local ni la suite.
+    """
+    api_key = getattr(settings, "BREVO_API_KEY", "")
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or ""
+    sender_name, sender_email = parseaddr(from_email)
+
+    if api_key:
+        payload = {
+            "sender": {"email": sender_email or "no-reply@rasel.ar", "name": sender_name or "RaSel"},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "textContent": body,
+        }
+        resp = requests.post(
+            BREVO_API_URL,
+            headers={
+                "api-key": api_key,
+                "Content-Type": "application/json",
+                "accept": "application/json",
+            },
+            json=payload,
+            timeout=10,
+        )
+        if resp.status_code >= 300:
+            raise RuntimeError(f"Brevo API error {resp.status_code}: {resp.text}")
+    else:
+        EmailMessage(
+            subject=subject, body=body, from_email=from_email or None, to=[to_email]
+        ).send(fail_silently=False)
 
 
 def _build_lines(order) -> str:
@@ -79,25 +121,21 @@ def _owner_body(order) -> str:
 
 
 def _send(order) -> None:
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", None)
-
     # Email al cliente
-    EmailMessage(
-        subject=f"RaSel — Confirmación de tu pedido #{order.id}",
-        body=_customer_body(order),
-        from_email=from_email,
-        to=[order.email],
-    ).send(fail_silently=False)
+    _send_email(
+        f"RaSel — Confirmación de tu pedido #{order.id}",
+        _customer_body(order),
+        order.email,
+    )
 
     # Aviso al dueño (si está configurado)
     owner = getattr(settings, "ORDER_NOTIFICATION_EMAIL", "")
     if owner:
-        EmailMessage(
-            subject=f"Nueva orden #{order.id} — ${order.total_amount}",
-            body=_owner_body(order),
-            from_email=from_email,
-            to=[owner],
-        ).send(fail_silently=False)
+        _send_email(
+            f"Nueva orden #{order.id} — ${order.total_amount}",
+            _owner_body(order),
+            owner,
+        )
 
 
 def _paid_body(order) -> str:
@@ -132,12 +170,11 @@ def send_payment_confirmed(order_id: int) -> None:
 
     try:
         order.refresh_from_db()
-        EmailMessage(
-            subject=f"RaSel — Pago confirmado · Pedido #{order.id}",
-            body=_paid_body(order),
-            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None),
-            to=[order.email],
-        ).send(fail_silently=False)
+        _send_email(
+            f"RaSel — Pago confirmado · Pedido #{order.id}",
+            _paid_body(order),
+            order.email,
+        )
         logger.info("Email de pago confirmado enviado order=%s", order_id)
     except Exception:
         Order.objects.filter(id=order_id).update(paid_email_sent=False)

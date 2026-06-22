@@ -300,6 +300,11 @@ LOGGING = {
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "RaSel <no-reply@rasel.local>")
 ORDER_NOTIFICATION_EMAIL = os.getenv("ORDER_NOTIFICATION_EMAIL", "").strip()
 
+# Brevo API HTTP (HTTPS 443). Render free bloquea el SMTP saliente, así que en prod
+# enviamos por la API. Si BREVO_API_KEY está seteada, se usa la API; si no, el backend
+# de Django (SMTP/consola) — útil en local.
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "").strip()
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "").strip()
 
