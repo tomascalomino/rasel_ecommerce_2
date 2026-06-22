@@ -108,6 +108,7 @@ def product_list(request):
             "query": query,
             "in_stock_only": in_stock_only,
             "sort": sort,
+            "total_products": len(all_products),
         },
     )
 

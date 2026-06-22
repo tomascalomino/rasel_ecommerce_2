@@ -506,15 +506,26 @@ a {
   }
 }
 
+/* Grilla de tienda: se centra sola (ideal para catálogos chicos) */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 340px));
+  gap: 22px;
+  justify-content: center;
+}
+
 .product {
   overflow: hidden;
 }
 
 .product-media {
+  display: block;
   position: relative;
-  height: 220px;
+  height: 300px;
   overflow: hidden;
-  background: #f0f2f0;
+  background:
+    radial-gradient(140px 100px at 50% 35%, rgba(122, 168, 106, .14), transparent 70%),
+    linear-gradient(135deg, #f5f0e6 0%, #eef1ec 100%);
 }
 
 .product-category-label {
