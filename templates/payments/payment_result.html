@@ -1,28 +1,46 @@
 {% extends "base.html" %}
 
+{% block title %}Resultado del pago · RaSel{% endblock %}
+
 {% block content %}
-<div class="card">
+<div class="card confirm-card">
   <div class="card-inner">
-    <h1 class="h2">Resultado del pago: {{ result|title }}</h1>
+    {% if result == "success" %}
+      <span class="confirm-ic"><span class="icon">{% include "partials/icons/check.svg" %}</span></span>
+      <h1 class="h1 page-intro">¡Pago aprobado!</h1>
+      <p class="muted">Gracias por tu compra. Te enviamos los detalles por email.</p>
+    {% elif result == "pending" %}
+      <span class="confirm-ic" style="background:#fff7e6;color:#a9770f;border-color:#f0e0b8;">
+        <span class="icon">{% include "partials/icons/credit.svg" %}</span>
+      </span>
+      <h1 class="h1 page-intro">Pago pendiente</h1>
+      <p class="muted">Tu pago está siendo procesado. Te avisaremos cuando se confirme.</p>
+    {% else %}
+      <span class="confirm-ic" style="background:rgba(217,75,75,.08);color:var(--danger);border-color:rgba(217,75,75,.22);">
+        <span class="icon">{% include "partials/icons/credit.svg" %}</span>
+      </span>
+      <h1 class="h1 page-intro">No pudimos procesar el pago</h1>
+      <p class="muted">Podés reintentar el pago o elegir otro método.</p>
+    {% endif %}
+
+    <div class="spacer"></div>
 
     {% if order %}
-      <div class="result-list">
-        <p>Pedido: <strong>#{{ order.id }}</strong></p>
-        <p>Estado MP: {{ order.mp_status|default:"(sin estado)" }}</p>
-        <p>Payment ID: {{ order.mp_payment_id|default:"(sin id)" }}</p>
-        <p>Estado interno: {{ order.status }}</p>
+      <div class="result-list" style="text-align:left;">
+        <div class="row"><span class="muted">Pedido</span><strong>#{{ order.id }}</strong></div>
+        <div class="row"><span class="muted">Estado MP</span><strong>{{ order.mp_status|default:"(sin estado)" }}</strong></div>
+        <div class="row"><span class="muted">Payment ID</span><strong>{{ order.mp_payment_id|default:"(sin id)" }}</strong></div>
+        <div class="row"><span class="muted">Estado interno</span><strong>{{ order.status }}</strong></div>
       </div>
-
     {% elif draft %}
-      <div class="result-list">
-        <p>Pago asociado al borrador: {{ draft.token }}</p>
-        <p>Estado MP: {{ draft.mp_status|default:"(sin estado)" }}</p>
-        <p>Payment ID: {{ draft.mp_payment_id|default:"(sin id)" }}</p>
+      <div class="result-list" style="text-align:left;">
+        <div class="row"><span class="muted">Borrador</span><strong>{{ draft.token }}</strong></div>
+        <div class="row"><span class="muted">Estado MP</span><strong>{{ draft.mp_status|default:"(sin estado)" }}</strong></div>
+        <div class="row"><span class="muted">Payment ID</span><strong>{{ draft.mp_payment_id|default:"(sin id)" }}</strong></div>
       </div>
-
       {% if draft.mp_status != "approved" %}
         <div class="spacer"></div>
-        <a class="btn" href="{% url 'payments:start' draft_id=draft.token %}">Reintentar pago</a>
+        <a class="btn btn-gold" href="{% url 'payments:start' draft_id=draft.token %}">Reintentar pago</a>
       {% endif %}
     {% else %}
       <p class="muted">No pudimos vincular el retorno a un borrador de pago.</p>
@@ -34,7 +52,9 @@
     {% endif %}
 
     <div class="spacer"></div>
-    <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Volver a tienda</a>
+    <div class="stack-row" style="justify-content:center;">
+      <a class="btn" href="{% url 'shop:product_list' %}">Volver a la tienda</a>
+    </div>
   </div>
 </div>
 {% endblock %}

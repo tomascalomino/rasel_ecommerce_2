@@ -1,10 +1,15 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Carrito · RaSel{% endblock %}
 
 {% block content %}
-<div class="section-head">
-  <h1 class="h2 section-title">Carrito</h1>
-  <span class="badge">Revisá tu pedido</span>
+<div class="page-header">
+  <div class="eyebrow"><span class="dot"></span><span>Tu pedido</span></div>
+  <div class="section-head page-intro">
+    <h1 class="h1 section-title">Carrito</h1>
+    <span class="badge">Revisá tu pedido</span>
+  </div>
+  <hr class="divider-gold">
 </div>
 
 <div class="spacer"></div>
@@ -28,8 +33,17 @@
             {% for item in cart.items %}
               <tr>
                 <td>
-                  <div class="name-row">{{ item.variant.product.name }}</div>
-                  <div class="muted tiny">RaSel · Blend Suave</div>
+                  <div class="name-row">
+                    {% if item.variant.product.image %}
+                      <img class="cart-thumb" src="{{ item.variant.product.image.url }}" alt="{{ item.variant.product.name }}">
+                    {% else %}
+                      <span class="cart-thumb"></span>
+                    {% endif %}
+                    <div>
+                      <div>{{ item.variant.product.name }}</div>
+                      <div class="muted tiny">RaSel · Blend Suave</div>
+                    </div>
+                  </div>
                 </td>
 
                 <td>
@@ -71,13 +85,16 @@
 
       <div class="cart-footer">
         <div>
-          <div class="muted tiny">Total</div>
-          <div class="price">$ {{ cart.total }}</div>
+          <div class="label-sm">Total</div>
+          <div class="cart-total">$ {{ cart.total }}</div>
         </div>
 
         <div class="stack">
           <a class="btn" href="{% url 'shop:product_list' %}">← Seguir comprando</a>
-          <a class="btn btn-primary" href="{% url 'orders:checkout' %}">Ir al Checkout</a>
+          <a class="btn btn-gold" href="{% url 'orders:checkout' %}">
+            Ir al Checkout
+            <span class="icon">{% include "partials/icons/credit.svg" %}</span>
+          </a>
         </div>
       </div>
     </div>
@@ -85,10 +102,11 @@
 
 {% else %}
   <div class="card">
-    <div class="card-inner">
-      <div class="muted">Tu carrito está vacío.</div>
-      <div class="spacer"></div>
-      <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Volver a la tienda</a>
+    <div class="card-inner empty-state">
+      <span class="empty-ic"><span class="icon">{% include "partials/icons/bottle.svg" %}</span></span>
+      <h2 class="h2">Tu carrito está vacío</h2>
+      <p class="muted">Descubrí nuestro aceite de oliva premium y empezá tu pedido.</p>
+      <a class="btn btn-gold" href="{% url 'shop:product_list' %}">Ver la tienda</a>
     </div>
   </div>
 {% endif %}

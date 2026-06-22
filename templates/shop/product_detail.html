@@ -6,11 +6,15 @@
 {% block content %}
 <div class="card product-detail">
 
-  {% if product.image %}
-    <div class="detail-media">
+  <div class="detail-media">
+    {% if product.image %}
       <img class="detail-img" src="{{ product.image.url }}" alt="{{ product.name }}">
-    </div>
-  {% endif %}
+    {% else %}
+      <span class="icon" style="width:120px;height:120px;color:var(--gold);">
+        {% include "partials/icons/bottle.svg" %}
+      </span>
+    {% endif %}
+  </div>
 
   <div class="card-inner">
 
@@ -18,7 +22,7 @@
       <div class="product-title-wrap">
         <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
         <div>
-          <div class="badge">RaSel · Blend Suave</div>
+          <div class="eyebrow"><span class="dot"></span><span>RaSel · Blend Suave</span></div>
           <h1 class="h2 product-intro">{{ product.name }}</h1>
           <div class="muted">{{ product.short_description|default:"Aceite de oliva premium." }}</div>
         </div>
@@ -27,16 +31,19 @@
       <a class="btn btn-small" href="{% url 'shop:product_list' %}">← Volver</a>
     </div>
 
+    {% if product.min_price_ars %}
+      <div class="detail-price">Desde $ {{ product.min_price_ars }}</div>
+    {% endif %}
+
     <div class="spacer"></div>
 
     <form action="{% url 'cart:add' %}" method="post" class="buybox">
       {% csrf_token %}
 
-      <div class="row buy-grid">
+      <div class="buy-grid">
 
         <div class="buy-col">
-          <div class="muted label-sm">Elegí presentación</div>
-
+          <span class="label-sm">Elegí presentación</span>
           <select name="variant_id" required>
             {% for v in product.variants.all %}
               <option value="{{ v.id }}" {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}>
@@ -51,7 +58,7 @@
         </div>
 
         <div class="buy-col-small">
-          <div class="muted label-sm">Cantidad</div>
+          <span class="label-sm">Cantidad</span>
           <input type="number" name="qty" value="1" min="1" inputmode="numeric">
         </div>
 
@@ -69,12 +76,71 @@
 
       </div>
 
+      <div class="trust-badges">
+        <span class="trust-item">
+          <span class="icon">{% include "partials/icons/truck.svg" %}</span>
+          Envío a todo el país
+        </span>
+        <span class="trust-item">
+          <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
+          Origen seleccionado
+        </span>
+        <span class="trust-item">
+          <span class="icon">{% include "partials/icons/shield.svg" %}</span>
+          Pago seguro
+        </span>
+      </div>
+
       {% if product.description %}
-        <div class="spacer"></div>
-        <div class="muted">{{ product.description }}</div>
+        <div class="tasting-notes">{{ product.description|linebreaksbr }}</div>
       {% endif %}
     </form>
 
   </div>
 </div>
+
+{% if related_products %}
+  <div class="related-head">
+    <div class="eyebrow"><span class="dot"></span><span>Para tu mesa</span></div>
+    <h2 class="h2 page-intro">También te puede gustar</h2>
+    <hr class="divider-gold">
+  </div>
+
+  <div class="grid">
+    {% for p in related_products %}
+    <div class="card product">
+      <a href="{% url 'shop:product_detail' p.slug %}" class="product-media" aria-label="Ver {{ p.name }}">
+        {% if p.image %}
+          <img class="product-img" src="{{ p.image.url }}" alt="{{ p.name }}">
+        {% else %}
+          <div class="ph"></div>
+        {% endif %}
+      </a>
+      <div class="product-body">
+        <div class="row">
+          <div class="name-row">
+            <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
+            {{ p.name }}
+          </div>
+          {% if p.in_stock %}
+            <span class="badge">Stock</span>
+          {% else %}
+            <span class="badge stock-off">Sin stock</span>
+          {% endif %}
+        </div>
+        <div class="spacer"></div>
+        <div class="row">
+          <div>
+            <div class="price-meta">Precio</div>
+            <div class="price">
+              {% if p.min_price_ars %}Desde $ {{ p.min_price_ars }}{% else %}—{% endif %}
+            </div>
+          </div>
+          <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
 {% endblock %}

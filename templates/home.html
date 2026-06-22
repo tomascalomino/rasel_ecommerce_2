@@ -4,7 +4,7 @@
 {% block title %}RaSel — Aceite de Oliva Premium{% endblock %}
 
 {% block full_width %}
-<section class="hero-full" style="background-image: url('{% static 'img/hero-bg.png' %}');">
+<section class="hero-full" style="background-image: url('{% static 'img/hero-bg.webp' %}');">
   <div class="kicker">
     <span class="dot"></span>
     <span>Blend Suave · Andalgalá, Catamarca</span>
@@ -25,26 +25,24 @@
         Ver tienda
       </a>
 
-      <a class="btn" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: white;"
-        href="{% url 'cart:detail' %}">
+      <a class="btn btn-secondary" href="{% url 'cart:detail' %}">
         Ir al carrito
       </a>
     </div>
 
-    <div class="trust-row"
-      style="justify-content: center; margin-top: 30px; background: rgba(0,0,0,0.2); padding: 15px 30px; border-radius: 999px; backdrop-filter: blur(5px);">
-      <span class="trust-item" style="color: white;">
-        <span class="icon" style="color: var(--brand-2);">{% include "partials/icons/leaf.svg" %}</span>
+    <div class="trust-row hero-trust">
+      <span class="trust-item">
+        <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
         Origen seleccionado
       </span>
 
-      <span class="trust-item" style="color: white;">
-        <span class="icon" style="color: var(--brand-2);">{% include "partials/icons/drop.svg" %}</span>
+      <span class="trust-item">
+        <span class="icon">{% include "partials/icons/drop.svg" %}</span>
         Perfil suave
       </span>
 
-      <span class="trust-item" style="color: white;">
-        <span class="icon" style="color: var(--brand-2);">{% include "partials/icons/shield.svg" %}</span>
+      <span class="trust-item">
+        <span class="icon">{% include "partials/icons/shield.svg" %}</span>
         Compra segura
       </span>
     </div>

@@ -121,4 +121,24 @@ def product_detail(request, slug: str):
         slug=slug,
         is_active=True,
     )
-    return render(request, "shop/product_detail.html", {"product": product})
+
+    active_vars = list(product.variants.all())
+    product.min_price_ars = min((v.price_ars for v in active_vars), default=None)
+    product.in_stock = any(v.stock_qty > 0 for v in active_vars)
+
+    # "También te puede gustar": otros productos activos con su precio mínimo.
+    related = list(
+        Product.objects.filter(is_active=True)
+        .exclude(pk=product.pk)
+        .prefetch_related("variants")[:3]
+    )
+    for p in related:
+        rel_vars = [v for v in p.variants.all() if v.is_active]
+        p.min_price_ars = min((v.price_ars for v in rel_vars), default=None)
+        p.in_stock = any(v.stock_qty > 0 for v in rel_vars)
+
+    return render(
+        request,
+        "shop/product_detail.html",
+        {"product": product, "related_products": related},
+    )

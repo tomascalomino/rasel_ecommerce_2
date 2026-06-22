@@ -4,9 +4,13 @@
 {% block title %}RaSel — Tienda{% endblock %}
 
 {% block content %}
-<div class="section-head">
-  <h1 class="h2 section-title">Tienda</h1>
-  <span class="badge">Minimal · Premium · ARS</span>
+<div class="page-header">
+  <div class="eyebrow"><span class="dot"></span><span>Nuestra selección</span></div>
+  <div class="section-head page-intro">
+    <h1 class="h1 section-title">Tienda</h1>
+    <span class="badge">Premium · Andalgalá · ARS</span>
+  </div>
+  <hr class="divider-gold">
 </div>
 <div class="spacer"></div>
 
@@ -17,7 +21,7 @@
       <div class="filter-item search-field">
         <div class="filter-label">Buscar</div>
         <div class="input-with-icon">
-          <span class="icon">🔍</span>
+          <span class="icon">{% include "partials/icons/search.svg" %}</span>
           <input id="q" name="q" type="search" value="{{ query|default:'' }}" placeholder="Ej: Blend, 500ml..." />
         </div>
       </div>
@@ -128,7 +132,7 @@
     <div class="product-body">
       <div class="row">
         <div class="name-row">
-          <span class="icon">🧴</span>
+          <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
           {{ p.name }}
         </div>
         {% if p.in_stock %}

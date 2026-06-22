@@ -1,13 +1,22 @@
 {% extends "base.html" %}
 
+{% block title %}¡Gracias por tu compra! · RaSel{% endblock %}
+
 {% block content %}
-<div class="card">
-	<div class="card-inner">
-		<h1 class="h2">Pedido registrado</h1>
-		<p class="muted">Tu pedido #{{ order_id }} fue registrado. Te enviamos los detalles por email.</p>
-		<div class="stack">
-			<a class="btn btn-primary" href="{% url 'shop:product_list' %}">Volver a tienda</a>
-		</div>
-	</div>
+<div class="card confirm-card">
+  <div class="card-inner">
+    <span class="confirm-ic"><span class="icon">{% include "partials/icons/check.svg" %}</span></span>
+    <div class="eyebrow" style="justify-content:center;"><span class="dot"></span><span>Pedido registrado</span></div>
+    <h1 class="h1 page-intro">¡Gracias por tu compra!</h1>
+    <div class="order-pill">Pedido #{{ order_id }}</div>
+    <p class="muted">
+      Registramos tu pedido correctamente. Te enviamos los detalles y los próximos pasos por email.
+    </p>
+    <div class="spacer"></div>
+    <div class="stack-row" style="justify-content:center;">
+      <a class="btn btn-gold" href="{% url 'shop:product_list' %}">Seguir comprando</a>
+      <a class="btn" href="{% url 'home' %}">Volver al inicio</a>
+    </div>
+  </div>
 </div>
 {% endblock %}
