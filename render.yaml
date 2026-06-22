@@ -16,9 +16,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_HOSTS
-        value: ".onrender.com"
+        value: ".onrender.com,rasel.ar,www.rasel.ar"
       - key: SITE_URL
-        value: "https://rasel-ecommerce.onrender.com"
+        value: "https://rasel.ar"
       # Sin disco en free: servimos la media commiteada en el repo (default de settings).
       - key: SERVE_MEDIA
         value: "1"

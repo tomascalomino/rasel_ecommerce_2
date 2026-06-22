@@ -47,9 +47,19 @@ if _site_url:
     if _site_host and _site_host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_site_host)
 
-# Render y cloudflared sirven sobre HTTPS — necesario para forms + CSRF
+# Render y cloudflared sirven sobre HTTPS — necesario para forms + CSRF.
+# Confiamos en todos los hosts https configurados (dominio propio, www y onrender),
+# así el checkout funciona en cualquiera de ellos.
+CSRF_TRUSTED_ORIGINS = []
+for _h in ALLOWED_HOSTS:
+    if not _h or _h in {"127.0.0.1", "localhost"}:
+        continue
+    # ".onrender.com" -> "https://*.onrender.com" (wildcard de subdominios)
+    CSRF_TRUSTED_ORIGINS.append(f"https://*{_h}" if _h.startswith(".") else f"https://{_h}")
+
 if _site_url.startswith("https"):
-    CSRF_TRUSTED_ORIGINS = [_site_url]
+    if _site_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_site_url)
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # Feature flag: MercadoPago apagado por defecto (la web cobra solo por transferencia).
