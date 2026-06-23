@@ -47,10 +47,14 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(q.cost, Decimal("5000.00"))
         self.assertEqual(q.zone_code, "amba")
 
-    def test_rest_of_country_default(self):
+    def test_rest_of_country_is_carrier_arranged(self):
+        # Resto del país: envío a cargo del comprador (costo 0, no es "gratis").
         q = resolve_shipping("5000")
-        self.assertEqual(q.cost, Decimal("12000.00"))
         self.assertEqual(q.zone_code, "national")
+        self.assertTrue(q.carrier_arranged)
+        self.assertFalse(q.is_free)
+        self.assertEqual(q.cost, Decimal("0.00"))
+        self.assertTrue(q.note)
 
     def test_invalid_cp_falls_back_to_default_zone(self):
         q = resolve_shipping("abcd")
@@ -69,10 +73,10 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(resolve_shipping("1743").zone_code, "free")
 
     def test_magdalena_is_national_not_amba(self):
-        # 1913 = Magdalena (partido rural costero): no es AMBA.
+        # 1913 = Magdalena (partido rural costero): no es AMBA, cae en nacional.
         q = resolve_shipping("1913")
         self.assertEqual(q.zone_code, "national")
-        self.assertEqual(q.cost, Decimal("12000.00"))
+        self.assertTrue(q.carrier_arranged)
 
     def test_la_plata_neighbors_still_amba(self):
         # Los bordes del corte 1913 siguen siendo AMBA.
@@ -110,13 +114,14 @@ class FreeShippingThresholdTests(TestCase):
         self.assertEqual(q.cost, Decimal("5000.00"))
 
     def test_threshold_does_not_affect_amba_or_national(self):
+        # AMBA sigue fijo sin importar el subtotal.
         self.assertEqual(
             resolve_shipping("1828", subtotal=Decimal("1")).cost, Decimal("5000.00")
         )
-        self.assertEqual(
-            resolve_shipping("5000", subtotal=Decimal("999999")).cost,
-            Decimal("12000.00"),
-        )
+        # Nacional sigue "a coordinar" sin importar el subtotal.
+        nat = resolve_shipping("5000", subtotal=Decimal("999999"))
+        self.assertTrue(nat.carrier_arranged)
+        self.assertEqual(nat.cost, Decimal("0.00"))
 
 
 class QuoteEndpointTests(TestCase):
@@ -183,3 +188,39 @@ class MercadoPagoShippingLineTests(TestCase):
         payload = _build_preference_payload(self._draft(Decimal("0.00")))
         ship = [i for i in payload["items"] if i["title"].startswith("Envío")]
         self.assertEqual(len(ship), 0)
+
+
+class CarrierArrangedTests(TestCase):
+    """Resto del país: envío a cargo del comprador (a coordinar)."""
+
+    def test_legend_helper_returns_text(self):
+        from shipping.services import carrier_arranged_legend
+
+        self.assertIn("comprador", carrier_arranged_legend())
+
+    def test_quote_endpoint_interior(self):
+        resp = self.client.get(reverse("shipping:quote"), {"postal_code": "5000"})
+        data = resp.json()
+        self.assertTrue(data["carrier_arranged"])
+        self.assertFalse(data["free"])
+        self.assertEqual(data["cost"], "0.00")
+        self.assertTrue(data["note"])
+
+    def test_email_totals_block_for_carrier_order(self):
+        from orders.models import Order
+        from orders.emails import _totals_block
+
+        order = Order(
+            full_name="X",
+            email="x@example.com",
+            address_line="Calle 1",
+            city="Córdoba",
+            postal_code="5000",
+            shipping_cost=Decimal("0.00"),
+            shipping_zone="Resto del país",
+            shipping_carrier_arranged=True,
+            total_amount=Decimal("6000.00"),
+        )
+        block = _totals_block(order)
+        self.assertIn("a cargo del comprador", block)
+        self.assertNotIn("Gratis", block)

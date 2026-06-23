@@ -170,6 +170,21 @@
     }
     var cost = parseFloat(data.cost) || 0;
     var loc = data.location_label || ("CP " + data.cp);
+
+    // Envío a cargo del comprador (resto del país): costo 0 pero no es "gratis".
+    if (data.carrier_arranged) {
+      confirmEl.hidden = false;
+      confirmEl.className = "ship-confirm";
+      confirmEl.innerHTML =
+        '<span class="ship-pin">📍</span> <strong>' + loc +
+        "</strong> — <strong>Envío a coordinar</strong>" +
+        '<div class="ship-legend">' + (data.note || "") + "</div>";
+      sumShipping.textContent = "A coordinar";
+      sumShipping.className = "muted";
+      sumTotal.textContent = money(subtotal);
+      return;
+    }
+
     var label = data.free ? "Envío gratis" : money(cost);
 
     // Nudge: cuánto falta para alcanzar el envío gratis en esta zona.

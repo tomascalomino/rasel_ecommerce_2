@@ -53,6 +53,14 @@ class ShippingZone(models.Model):
         default=False,
         help_text="Se aplica cuando el CP no cae en ninguna regla (resto del país).",
     )
+    carrier_arranged = models.BooleanField(
+        default=False,
+        help_text=(
+            "El comprador elige y paga el correo; RaSel no cobra el envío (lo lleva "
+            "a la sucursal de CABA). Si está activo, se ignoran 'Price' y 'Free over' "
+            "y se muestra la leyenda de 'Description'."
+        ),
+    )
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(
         default=100,

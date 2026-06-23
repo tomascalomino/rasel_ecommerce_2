@@ -34,7 +34,7 @@
             <div class="card-inner">
                 <h3 class="feature-title">{{ zone.name }}</h3>
                 <p class="shipping-price {% if zone.is_free %}is-free{% endif %}">
-                    {% if zone.is_free %}Gratis{% else %}$ {{ zone.price|floatformat:0 }}{% endif %}
+                    {% if zone.carrier_arranged %}A coordinar{% elif zone.is_free %}Gratis{% else %}$ {{ zone.price|floatformat:0 }}{% endif %}
                 </p>
                 {% if zone.free_over %}
                 <p class="muted tiny mt-6">
@@ -69,8 +69,10 @@
                     (conurbano y La Plata) tienen un valor fijo.
                 </li>
                 <li>
-                    <strong>Resto del país:</strong> se gestionan a través de
-                    <strong>encomiendas de correo</strong>, con un valor fijo.
+                    <strong>Resto del país:</strong> el envío queda
+                    <strong>a cargo del comprador</strong>. RaSel acerca el pedido sin costo
+                    hasta la sucursal de CABA del correo que elijas, y vos abonás el envío
+                    directamente a la empresa de correo.
                 </li>
             </ul>
             <p class="muted mt-6">

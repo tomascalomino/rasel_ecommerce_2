@@ -27,6 +27,9 @@ class Order(models.Model):
     # total_amount = subtotal (items) + shipping_cost.
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipping_zone = models.CharField(max_length=80, blank=True, default="")
+    # Envío a cargo del comprador (resto del país): costo 0 pero NO es gratis,
+    # el comprador contrata y paga el correo. Distingue de "envío gratis real".
+    shipping_carrier_arranged = models.BooleanField(default=False)
 
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
 

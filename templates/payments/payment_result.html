@@ -32,6 +32,12 @@
         <div class="row"><span class="muted">Payment ID</span><strong>{{ order.mp_payment_id|default:"(sin id)" }}</strong></div>
         <div class="row"><span class="muted">Estado interno</span><strong>{{ order.status }}</strong></div>
       </div>
+      {% if shipping_legend %}
+        <div class="spacer"></div>
+        <div class="alert" style="text-align:left; border-color: var(--gold);">
+          <strong>Envío a coordinar.</strong> {{ shipping_legend }}
+        </div>
+      {% endif %}
     {% elif draft %}
       <div class="result-list" style="text-align:left;">
         <div class="row"><span class="muted">Borrador</span><strong>{{ draft.token }}</strong></div>

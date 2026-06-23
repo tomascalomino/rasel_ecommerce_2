@@ -69,13 +69,28 @@ def _build_lines(order) -> str:
 def _totals_block(order) -> str:
     shipping = order.shipping_cost or 0
     subtotal = order.total_amount - shipping
-    envio = f"${shipping}" if shipping and shipping > 0 else "Gratis"
     zona = f" ({order.shipping_zone})" if order.shipping_zone else ""
+    if getattr(order, "shipping_carrier_arranged", False):
+        envio = "a cargo del comprador (a coordinar con el correo)"
+    elif shipping and shipping > 0:
+        envio = f"${shipping}"
+    else:
+        envio = "Gratis"
     return (
         f"Subtotal: ${subtotal}\n"
         f"Envío{zona}: {envio}\n"
         f"Total: ${order.total_amount}"
     )
+
+
+def _shipping_legend(order) -> str:
+    """Leyenda del envío a coordinar, para sumar al cuerpo del email."""
+    if not getattr(order, "shipping_carrier_arranged", False):
+        return ""
+    from shipping.services import carrier_arranged_legend
+
+    legend = carrier_arranged_legend()
+    return f"\nSobre el envío:\n{legend}\n" if legend else ""
 
 
 def _bank_block() -> str:
@@ -116,7 +131,8 @@ def _customer_body(order) -> str:
         f"{estado}\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n\n"
-        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n\n"
+        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n"
+        f"{_shipping_legend(order)}\n"
         f"Gracias por tu compra.\nRaSel — Aceite de Oliva\n"
     )
 
@@ -157,7 +173,8 @@ def _paid_body(order) -> str:
         f"Ya lo estamos preparando para el envío.\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n\n"
-        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n\n"
+        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n"
+        f"{_shipping_legend(order)}\n"
         f"¡Gracias por tu compra!\nRaSel — Aceite de Oliva\n"
     )
 

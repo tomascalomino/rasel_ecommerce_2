@@ -201,6 +201,7 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
                 postal_code=draft.postal_code,
                 shipping_cost=draft.shipping_cost,
                 shipping_zone=draft.shipping_zone,
+                shipping_carrier_arranged=draft.shipping_carrier_arranged,
                 total_amount=draft.total_amount,
                 status="paid",
                 mp_preference_id=draft.mp_preference_id,
@@ -270,6 +271,12 @@ def payment_return(request, result: str):
         if draft:
             draft.refresh_from_db()
 
+    shipping_legend = ""
+    if order and order.shipping_carrier_arranged:
+        from shipping.services import carrier_arranged_legend
+
+        shipping_legend = carrier_arranged_legend()
+
     return render(
         request,
         "payments/payment_result.html",
@@ -280,6 +287,7 @@ def payment_return(request, result: str):
             "payment_id": payment_id,
             "status": status,
             "finalize_error": finalize_error,
+            "shipping_legend": shipping_legend,
         },
     )
 

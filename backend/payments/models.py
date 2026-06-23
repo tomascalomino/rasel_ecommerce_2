@@ -41,6 +41,7 @@ class PaymentDraft(models.Model):
     # Envío: se copia al Order al finalizar el pago. total_amount ya incluye el envío.
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     shipping_zone = models.CharField(max_length=80, blank=True, default="")
+    shipping_carrier_arranged = models.BooleanField(default=False)
 
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     items = models.JSONField(default=list, blank=True)

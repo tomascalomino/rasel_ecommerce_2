@@ -61,6 +61,7 @@ def checkout(request):
                             postal_code=form.cleaned_data["postal_code"],
                             shipping_cost=quote.cost,
                             shipping_zone=quote.zone_name,
+                            shipping_carrier_arranged=quote.carrier_arranged,
                             total_amount=grand_total,
                             status="pending",
                             payment_method="transfer",
@@ -116,6 +117,7 @@ def checkout(request):
                     postal_code=form.cleaned_data["postal_code"],
                     shipping_cost=quote.cost,
                     shipping_zone=quote.zone_name,
+                    shipping_carrier_arranged=quote.carrier_arranged,
                     total_amount=grand_total,
                     items=draft_items,
                 )
@@ -140,10 +142,18 @@ def confirmation(request, order_id):
 
 def transfer_info(request, order_id):
     from django.shortcuts import get_object_or_404
+    from shipping.services import carrier_arranged_legend
 
     order = get_object_or_404(Order, id=order_id)
     return render(
         request,
         "orders/transfer_info.html",
-        {"order": order, "bank": settings.BANK_TRANSFER, "notify_email": settings.ORDER_NOTIFICATION_EMAIL},
+        {
+            "order": order,
+            "bank": settings.BANK_TRANSFER,
+            "notify_email": settings.ORDER_NOTIFICATION_EMAIL,
+            "shipping_legend": (
+                carrier_arranged_legend() if order.shipping_carrier_arranged else ""
+            ),
+        },
     )

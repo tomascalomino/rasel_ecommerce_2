@@ -36,9 +36,15 @@ class ShippingQuote:
     # Cuánto falta de subtotal para alcanzar el envío gratis (None si ya es
     # gratis, si la zona no tiene mínimo, o si no se pasó el subtotal).
     remaining_for_free: Optional[Decimal] = None
+    # Envío a cargo del comprador (resto del país): costo 0 pero NO es gratis.
+    carrier_arranged: bool = False
+    # Leyenda a mostrar cuando carrier_arranged.
+    note: str = ""
 
     @property
     def cost_display(self) -> str:
+        if self.carrier_arranged:
+            return "A coordinar"
         return "Gratis" if self.is_free else f"$ {self.cost:.0f}"
 
     @property
@@ -127,6 +133,20 @@ def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
             province=province,
         )
 
+    # Envío a cargo del comprador: RaSel no cobra (costo 0) pero NO es gratis.
+    if zone.carrier_arranged:
+        return ShippingQuote(
+            cp=cp,
+            zone_code=zone.code,
+            zone_name=zone.name,
+            cost=Decimal("0.00"),
+            is_free=False,
+            locality=locality,
+            province=province,
+            carrier_arranged=True,
+            note=zone.description,
+        )
+
     cost = zone.price
     free_over = zone.free_over
     remaining_for_free = None
@@ -150,3 +170,16 @@ def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
         free_over=free_over,
         remaining_for_free=remaining_for_free,
     )
+
+
+def carrier_arranged_legend() -> str:
+    """
+    Leyenda de la zona 'a cargo del comprador' activa, para contextos que no
+    tienen la zona a mano (emails, páginas de confirmación). '' si no hay.
+    """
+    zone = (
+        ShippingZone.objects.filter(carrier_arranged=True, is_active=True)
+        .order_by("sort_order")
+        .first()
+    )
+    return zone.description if zone else ""

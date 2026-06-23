@@ -46,6 +46,8 @@ def quote(request):
                 if q.remaining_for_free is not None
                 else None
             ),
+            "carrier_arranged": q.carrier_arranged,
+            "note": q.note,
         }
     )
 

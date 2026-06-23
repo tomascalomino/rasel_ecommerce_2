@@ -1822,6 +1822,16 @@ textarea:focus {
   color: var(--gold);
 }
 
+.ship-legend {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+  opacity: .82;
+}
+
 /* --- Página de envíos --- */
 .shipping-price {
   font-family: var(--font-serif);
