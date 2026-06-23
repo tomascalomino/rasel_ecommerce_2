@@ -1,10 +1,13 @@
 {% load static %}
 <div class="topbar">
   <div class="container">
-    <div class="nav">
+    <nav class="nav">
       <a class="brand" href="{% url 'home' %}">
         <img class="brand-logo" src="{% static 'img/rasel-escudo.webp' %}" alt="RaSel">
       </a>
+
+      {# Toggle del menú mobile (checkbox-hack, sin JS) #}
+      <input type="checkbox" id="nav-toggle" class="nav-toggle sr-only" aria-hidden="true">
 
       <div class="navlinks">
         <a class="navlink {% if request.resolver_match and request.resolver_match.app_name == 'shop' %}is-active{% endif %}"
@@ -31,7 +34,9 @@
             Buscar
           </button>
         </form>
+      </div>
 
+      <div class="nav-actions">
         <a href="{% url 'cart:detail' %}"
           class="pill pill-cart {% if request.resolver_match and request.resolver_match.app_name == 'cart' %}is-active{% endif %}"
           aria-label="Carrito">
@@ -39,7 +44,11 @@
           <span class="badge-num" aria-label="Items en carrito">{{ cart|length }}</span>
         </a>
 
+        <label for="nav-toggle" class="nav-burger" aria-label="Abrir menú">
+          <span class="icon nav-burger-open">{% include "partials/icons/menu.svg" %}</span>
+          <span class="icon nav-burger-close">{% include "partials/icons/close.svg" %}</span>
+        </label>
       </div>
-    </div>
+    </nav>
   </div>
 </div>

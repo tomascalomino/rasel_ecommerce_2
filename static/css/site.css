@@ -123,6 +123,112 @@ a {
   background: rgba(14, 22, 18, .05);
 }
 
+/* En desktop: marca a la izquierda, links + buscador + carrito agrupados a la derecha */
+.nav {
+  position: relative;
+}
+
+.navlinks {
+  margin-left: auto;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Botón hamburguesa: oculto en desktop, visible en mobile */
+.nav-burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(14, 22, 18, .04);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.nav-burger:hover {
+  background: rgba(14, 22, 18, .07);
+}
+
+.nav-burger .icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* Por defecto se ve el ícono ☰; al abrir, la X */
+.nav-burger .nav-burger-close {
+  display: none;
+}
+
+.nav-toggle:checked ~ .nav-actions .nav-burger-open {
+  display: none;
+}
+
+.nav-toggle:checked ~ .nav-actions .nav-burger-close {
+  display: inline-flex;
+}
+
+/* ── Header en mobile: panel desplegable con hamburguesa ── */
+@media (max-width: 768px) {
+  .nav {
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: 150px;
+    height: 75px;
+  }
+
+  .nav-burger {
+    display: inline-flex;
+  }
+
+  /* Los links pasan a ser un panel vertical colapsado bajo la barra */
+  .navlinks {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-left: 0;
+    padding: 12px;
+    flex-wrap: wrap;
+    white-space: normal;
+    background: rgba(245, 240, 230, 0.97);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .nav-toggle:checked ~ .navlinks {
+    display: flex;
+  }
+
+  .navlinks a {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  /* Buscador a ancho completo dentro del panel */
+  .search-form {
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+    flex: 1;
+  }
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -1860,4 +1966,26 @@ textarea:focus {
 
 .footer-legal a:hover {
   color: var(--gold);
+}
+
+/* ── Ajustes mobile menores (footer, paddings en pantallas chicas) ── */
+@media (max-width: 560px) {
+  /* El footer apila el bloque de marca y el pill en vez de apretarlos */
+  .footer .row {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  /* Aflojar paddings grandes que aprietan en pantallas angostas */
+  .detail-media {
+    padding: 22px;
+  }
+
+  .product-detail > .card-inner {
+    padding: 22px;
+  }
+
+  .card-inner {
+    padding: 18px;
+  }
 }
