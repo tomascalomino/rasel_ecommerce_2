@@ -1,6 +1,8 @@
 from django import forms
 from django.conf import settings
 
+from shipping.services import normalize_cp
+
 
 class CheckoutForm(forms.Form):
     full_name = forms.CharField(max_length=120)
@@ -10,6 +12,14 @@ class CheckoutForm(forms.Form):
     address_line = forms.CharField(max_length=200)
     city = forms.CharField(max_length=100)
     postal_code = forms.CharField(max_length=20)
+
+    def clean_postal_code(self):
+        raw = self.cleaned_data["postal_code"]
+        if normalize_cp(raw) is None:
+            raise forms.ValidationError(
+                "Ingresá un código postal válido (ej. 1744 o C1744)."
+            )
+        return raw
 
     PAYMENT_CHOICES = [
         ("mp", "Mercado Pago"),

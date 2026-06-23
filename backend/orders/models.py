@@ -23,6 +23,11 @@ class Order(models.Model):
     city = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
 
+    # Envío: costo y nombre de la zona resuelta a partir del CP.
+    # total_amount = subtotal (items) + shipping_cost.
+    shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_zone = models.CharField(max_length=80, blank=True, default="")
+
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
 
     # MercadoPago tracking (MVP)

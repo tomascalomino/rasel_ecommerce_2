@@ -1778,6 +1778,80 @@ textarea:focus {
   color: var(--gold);
 }
 
+/* --- Envíos: desglose del resumen --- */
+.ship-summary {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(14, 22, 18, .08);
+}
+
+.ship-summary .row {
+  padding: 8px 0;
+}
+
+.ship-free {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* --- Envíos: confirmación de CP bajo el campo --- */
+.ship-confirm {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--gold-soft);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.ship-confirm.is-free {
+  background: #f0f7ef;
+  border-color: #d1e7dd;
+}
+
+.ship-confirm .ship-pin {
+  font-style: normal;
+}
+
+/* --- Página de envíos --- */
+.shipping-price {
+  font-family: var(--font-serif);
+  font-size: clamp(24px, 4vw, 32px);
+  font-weight: 600;
+  color: var(--gold);
+  margin: 6px 0 10px;
+}
+
+.shipping-price.is-free {
+  color: var(--brand);
+}
+
+.shipping-howto {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shipping-howto li {
+  padding-left: 22px;
+  position: relative;
+}
+
+.shipping-howto li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
 /* Radios de método de pago */
 .pay-methods {
   display: flex;

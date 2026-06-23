@@ -58,6 +58,11 @@
           {{ form.postal_code.label_tag }}
           {{ form.postal_code }}
           {{ form.postal_code.errors }}
+          <div id="ship-confirm" class="ship-confirm" hidden></div>
+          <p class="muted tiny mt-6">
+            Calculamos el envío según tu código postal.
+            <a href="{% url 'shipping_info' %}" target="_blank" rel="noopener">Ver zonas y costos</a>
+          </p>
         </div>
 
         <hr class="divider-gold">
@@ -107,12 +112,99 @@
         </div>
         {% endfor %}
       </div>
+
+      <div class="ship-summary" data-subtotal="{{ cart.total }}" data-quote-url="{% url 'shipping:quote' %}">
+        <div class="row">
+          <span class="label-sm">Subtotal</span>
+          <span id="sum-subtotal">$ {{ cart.total }}</span>
+        </div>
+        <div class="row">
+          <span class="label-sm">Envío</span>
+          <span id="sum-shipping" class="muted">Ingresá tu CP</span>
+        </div>
+      </div>
+
       <div class="cart-footer">
         <span class="label-sm">Total</span>
-        <span class="summary-total">$ {{ cart.total }}</span>
+        <span class="summary-total" id="sum-total">$ {{ cart.total }}</span>
       </div>
     </div>
   </div>
 
 </div>
+
+<script>
+(function () {
+  var cpInput = document.getElementById("id_postal_code");
+  var summary = document.querySelector(".ship-summary");
+  if (!cpInput || !summary) return;
+
+  var confirmEl = document.getElementById("ship-confirm");
+  var sumSubtotal = document.getElementById("sum-subtotal");
+  var sumShipping = document.getElementById("sum-shipping");
+  var sumTotal = document.getElementById("sum-total");
+  var quoteUrl = summary.getAttribute("data-quote-url");
+  var subtotal = parseFloat(summary.getAttribute("data-subtotal")) || 0;
+  var timer;
+
+  function money(n) {
+    return "$ " + new Intl.NumberFormat("es-AR").format(n);
+  }
+
+  // Subtotal con formato consistente desde el primer render.
+  sumSubtotal.textContent = money(subtotal);
+  sumTotal.textContent = money(subtotal);
+
+  function reset(msg) {
+    confirmEl.hidden = true;
+    confirmEl.className = "ship-confirm";
+    sumShipping.textContent = msg || "Ingresá tu CP";
+    sumShipping.className = "muted";
+    sumTotal.textContent = money(subtotal);
+  }
+
+  function render(data) {
+    if (!data || !data.ok) {
+      reset();
+      return;
+    }
+    var cost = parseFloat(data.cost) || 0;
+    var loc = data.location_label || ("CP " + data.cp);
+    var label = data.free ? "Envío gratis" : money(cost);
+
+    confirmEl.hidden = false;
+    confirmEl.className = "ship-confirm" + (data.free ? " is-free" : "");
+    confirmEl.innerHTML =
+      '<span class="ship-pin">📍</span> <strong>' + loc + "</strong> — <strong>" +
+      label + "</strong>" +
+      '<div class="muted tiny">' + data.zone_name + "</div>";
+
+    sumShipping.textContent = data.free ? "Gratis" : money(cost);
+    sumShipping.className = data.free ? "ship-free" : "";
+    sumTotal.textContent = money(subtotal + cost);
+  }
+
+  function fetchQuote() {
+    var cp = cpInput.value.trim();
+    if (cp.replace(/\D/g, "").length < 4) {
+      reset();
+      return;
+    }
+    fetch(quoteUrl + "?postal_code=" + encodeURIComponent(cp), {
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    })
+      .then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function () { /* silencioso: no rompe el checkout */ });
+  }
+
+  cpInput.addEventListener("input", function () {
+    clearTimeout(timer);
+    timer = setTimeout(fetchQuote, 400);
+  });
+
+  // Si el CP ya viene cargado (re-render por error de validación), resolver al cargar.
+  if (cpInput.value.trim().replace(/\D/g, "").length >= 4) fetchQuote();
+})();
+</script>
 {% endblock %}

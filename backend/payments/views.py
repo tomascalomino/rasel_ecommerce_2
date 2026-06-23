@@ -51,6 +51,18 @@ def _build_preference_payload(draft: PaymentDraft) -> dict:
         if int(row.get("quantity", 0) or 0) > 0
     ]
 
+    # Cobrar el envío: MercadoPago calcula el total a partir de `items`, así que
+    # si no agregamos esta línea el envío no se cobra. Zona gratis (cost 0) = sin línea.
+    if draft.shipping_cost and float(draft.shipping_cost) > 0:
+        items.append(
+            {
+                "title": f"Envío — {draft.shipping_zone or 'Envío'}",
+                "quantity": 1,
+                "unit_price": float(draft.shipping_cost),
+                "currency_id": "ARS",
+            }
+        )
+
     base = _site_url().rstrip("/")
 
     payload = {
@@ -187,6 +199,8 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
                 address_line=draft.address_line,
                 city=draft.city,
                 postal_code=draft.postal_code,
+                shipping_cost=draft.shipping_cost,
+                shipping_zone=draft.shipping_zone,
                 total_amount=draft.total_amount,
                 status="paid",
                 mp_preference_id=draft.mp_preference_id,

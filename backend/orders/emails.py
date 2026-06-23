@@ -66,6 +66,18 @@ def _build_lines(order) -> str:
     return "\n".join(rows)
 
 
+def _totals_block(order) -> str:
+    shipping = order.shipping_cost or 0
+    subtotal = order.total_amount - shipping
+    envio = f"${shipping}" if shipping and shipping > 0 else "Gratis"
+    zona = f" ({order.shipping_zone})" if order.shipping_zone else ""
+    return (
+        f"Subtotal: ${subtotal}\n"
+        f"Envío{zona}: {envio}\n"
+        f"Total: ${order.total_amount}"
+    )
+
+
 def _bank_block() -> str:
     bank = getattr(settings, "BANK_TRANSFER", {}) or {}
     lines = []
@@ -103,7 +115,7 @@ def _customer_body(order) -> str:
         f"Recibimos tu pedido #{order.id}.\n\n"
         f"{estado}\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
-        f"Total: ${order.total_amount}\n\n"
+        f"{_totals_block(order)}\n\n"
         f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n\n"
         f"Gracias por tu compra.\nRaSel — Aceite de Oliva\n"
     )
@@ -116,7 +128,7 @@ def _owner_body(order) -> str:
         f"Cliente: {order.full_name} <{order.email}> {order.phone}\n"
         f"Envío: {order.address_line}, {order.city} ({order.postal_code})\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
-        f"Total: ${order.total_amount}\n"
+        f"{_totals_block(order)}\n"
     )
 
 
@@ -144,7 +156,7 @@ def _paid_body(order) -> str:
         f"¡Confirmamos la recepción de tu pago del pedido #{order.id}!\n"
         f"Ya lo estamos preparando para el envío.\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
-        f"Total: ${order.total_amount}\n\n"
+        f"{_totals_block(order)}\n\n"
         f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n\n"
         f"¡Gracias por tu compra!\nRaSel — Aceite de Oliva\n"
     )

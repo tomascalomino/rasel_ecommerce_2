@@ -38,6 +38,10 @@ class PaymentDraft(models.Model):
     city = models.CharField(max_length=100)
     postal_code = models.CharField(max_length=20)
 
+    # Envío: se copia al Order al finalizar el pago. total_amount ya incluye el envío.
+    shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    shipping_zone = models.CharField(max_length=80, blank=True, default="")
+
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     items = models.JSONField(default=list, blank=True)
 

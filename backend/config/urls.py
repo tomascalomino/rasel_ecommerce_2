@@ -22,6 +22,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
 from shop.views import robots_txt, sitemap_xml, healthz
+from shipping.views import shipping_info
 
 urlpatterns = [
     path("healthz", healthz),
@@ -30,6 +31,7 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
+    path("envios/", shipping_info, name="shipping_info"),
     # Legales
     path("terminos/", TemplateView.as_view(template_name="legal/terms.html"), name="terms"),
     path("privacidad/", TemplateView.as_view(template_name="legal/privacy.html"), name="privacy"),
@@ -39,6 +41,7 @@ urlpatterns = [
     path("cart/", include("cart.urls")),
     path("orders/", include("orders.urls")),
     path("payments/", include("payments.urls")),
+    path("shipping/", include("shipping.urls")),
     path("admin/", admin.site.urls),
 ]
 

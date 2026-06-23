@@ -5,6 +5,7 @@ from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
 from payments.models import PaymentDraft
+from shipping.services import resolve_shipping
 from .models import Order, OrderItem
 from .emails import send_order_confirmation
 from shop.models import Variant
@@ -23,6 +24,12 @@ def checkout(request):
         form = CheckoutForm(request.POST)
         if form.is_valid():
             payment_method = form.cleaned_data.get("payment_method", "mp")
+
+            # Costo de envío resuelto del lado del servidor (fuente de verdad):
+            # nunca se confía en lo que mande el cliente.
+            quote = resolve_shipping(form.cleaned_data["postal_code"])
+            subtotal = cart.total()
+            grand_total = subtotal + quote.cost
 
             if payment_method == "transfer":
                 # Implementación para Transferencia Bancaria
@@ -51,7 +58,9 @@ def checkout(request):
                             address_line=form.cleaned_data["address_line"],
                             city=form.cleaned_data["city"],
                             postal_code=form.cleaned_data["postal_code"],
-                            total_amount=cart.total(),
+                            shipping_cost=quote.cost,
+                            shipping_zone=quote.zone_name,
+                            total_amount=grand_total,
                             status="pending",
                             payment_method="transfer",
                         )
@@ -104,7 +113,9 @@ def checkout(request):
                     address_line=form.cleaned_data["address_line"],
                     city=form.cleaned_data["city"],
                     postal_code=form.cleaned_data["postal_code"],
-                    total_amount=cart.total(),
+                    shipping_cost=quote.cost,
+                    shipping_zone=quote.zone_name,
+                    total_amount=grand_total,
                     items=draft_items,
                 )
 

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Envíos — RaSel{% endblock %}
+{% block meta_description %}Conocé nuestras zonas de envío: CABA y Moreno sin cargo, AMBA y resto del país por encomienda de correo.{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker">
+            <span class="dot"></span>
+            <span>Cómo te lo enviamos</span>
+        </div>
+        <h1 class="h1">Envíos</h1>
+        <p class="p page-subtitle">
+            Calculamos el costo de tu envío automáticamente según tu código postal.
+            Lo vas a ver en el checkout, antes de pagar, sin sorpresas.
+        </p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── ZONAS ── -->
+<section class="content-section">
+    <h2 class="h2">Nuestras zonas</h2>
+    <div class="spacer"></div>
+
+    <div class="feature-grid">
+        {% for zone in zones %}
+        <div class="card feature-card">
+            <div class="card-inner">
+                <h3 class="feature-title">{{ zone.name }}</h3>
+                <p class="shipping-price {% if zone.is_free %}is-free{% endif %}">
+                    {% if zone.is_free %}Gratis{% else %}$ {{ zone.price|floatformat:0 }}{% endif %}
+                </p>
+                <p class="feature-desc">{{ zone.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── CÓMO FUNCIONA ── -->
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner">
+            <h2 class="h2">¿Cómo funciona?</h2>
+            <div class="spacer"></div>
+            <ul class="shipping-howto">
+                <li>
+                    <strong>CABA y Partido de Moreno:</strong> los pedidos dentro de la Ciudad
+                    de Buenos Aires y del Partido de Moreno se entregan <strong>sin cargo</strong>.
+                </li>
+                <li>
+                    <strong>AMBA:</strong> los envíos al Área Metropolitana de Buenos Aires
+                    (conurbano y La Plata) tienen un valor fijo.
+                </li>
+                <li>
+                    <strong>Resto del país:</strong> se gestionan a través de
+                    <strong>encomiendas de correo</strong>, con un valor fijo.
+                </li>
+            </ul>
+            <p class="muted mt-6">
+                Al ingresar tu código postal en el checkout te confirmamos la localidad y el
+                costo del envío antes de finalizar la compra.
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── CTA ── -->
+<section class="content-section">
+    <div class="card">
+        <div class="card-inner" style="text-align:center">
+            <h2 class="h2">¿Listo para tu pedido?</h2>
+            <p class="p">Elegí tu aceite y calculá el envío a tu código postal.</p>
+            <div class="cta-row" style="justify-content:center">
+                <a class="btn btn-primary" href="{% url 'shop:product_list' %}">
+                    {% include "partials/icons/cart.svg" %}
+                    Ver Tienda
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

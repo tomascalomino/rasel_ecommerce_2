@@ -1,0 +1,125 @@
+"""
+Resolución de envío por código postal.
+
+Esta es la *fuente de verdad* del costo de envío: se usa tanto en el endpoint
+AJAX (`/shipping/quote/`) como en el POST del checkout, así que el precio nunca
+depende de lo que mande el cliente. Es determinístico y no llama a servicios
+externos: si el dataset de localidades no tiene el CP, igual resolvemos la zona
+y el precio por rango (degradación elegante).
+"""
+from __future__ import annotations
+
+import functools
+import json
+import re
+from dataclasses import dataclass
+from decimal import Decimal
+from pathlib import Path
+from typing import Optional
+
+from .models import PostalCodeRule, ShippingZone
+
+_DATA_FILE = Path(__file__).resolve().parent / "data" / "postal_codes.json"
+
+
+@dataclass(frozen=True)
+class ShippingQuote:
+    cp: Optional[int]
+    zone_code: str
+    zone_name: str
+    cost: Decimal
+    is_free: bool
+    locality: str
+    province: str
+
+    @property
+    def cost_display(self) -> str:
+        return "Gratis" if self.is_free else f"$ {self.cost:.0f}"
+
+    @property
+    def location_label(self) -> str:
+        parts = [p for p in (self.locality, self.province) if p]
+        return ", ".join(parts)
+
+
+def normalize_cp(raw) -> Optional[int]:
+    """
+    Extrae el núcleo numérico de 4 dígitos de un código postal.
+    Acepta CPA ("C1425ABC" -> 1425), numérico ("1425") y con espacios/guiones.
+    Devuelve None si no hay 4 dígitos.
+    """
+    if raw is None:
+        return None
+    match = re.search(r"\d{4}", str(raw).strip().upper())
+    if not match:
+        return None
+    return int(match.group(0))
+
+
+@functools.lru_cache(maxsize=1)
+def _localities() -> dict:
+    try:
+        with open(_DATA_FILE, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+def lookup_locality(cp: Optional[int]) -> tuple[str, str]:
+    """Devuelve (localidad, provincia) para un CP normalizado, o ('', '')."""
+    if cp is None:
+        return ("", "")
+    record = _localities().get(str(cp))
+    if record:
+        return (record.get("localidad", ""), record.get("provincia", ""))
+    # Fallback: todo el rango de CABA es la Ciudad de Buenos Aires.
+    if 1000 <= cp <= 1499:
+        return ("Ciudad Autónoma de Buenos Aires", "CABA")
+    return ("", "")
+
+
+def _zone_for_cp(cp: Optional[int]) -> Optional[ShippingZone]:
+    if cp is not None:
+        rule = (
+            PostalCodeRule.objects.filter(
+                cp_from__lte=cp, cp_to__gte=cp, zone__is_active=True
+            )
+            .select_related("zone")
+            .order_by("zone__sort_order", "id")
+            .first()
+        )
+        if rule:
+            return rule.zone
+    return (
+        ShippingZone.objects.filter(is_default=True, is_active=True)
+        .order_by("sort_order")
+        .first()
+    )
+
+
+def resolve_shipping(raw_cp) -> ShippingQuote:
+    cp = normalize_cp(raw_cp)
+    locality, province = lookup_locality(cp)
+    zone = _zone_for_cp(cp)
+
+    if zone is None:
+        # No hay zonas configuradas: no rompemos el checkout, envío a coordinar.
+        return ShippingQuote(
+            cp=cp,
+            zone_code="",
+            zone_name="Envío a coordinar",
+            cost=Decimal("0.00"),
+            is_free=True,
+            locality=locality,
+            province=province,
+        )
+
+    return ShippingQuote(
+        cp=cp,
+        zone_code=zone.code,
+        zone_name=zone.name,
+        cost=zone.price,
+        is_free=zone.is_free,
+        locality=locality,
+        province=province,
+    )

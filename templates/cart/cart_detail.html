@@ -83,9 +83,15 @@
         </table>
       </div>
 
+      <p class="muted tiny mt-6">
+        El costo de envío se calcula en el checkout según tu código postal.
+        <strong>CABA y Moreno: gratis.</strong>
+        <a href="{% url 'shipping_info' %}">Ver zonas y costos</a>
+      </p>
+
       <div class="cart-footer">
         <div>
-          <div class="label-sm">Total</div>
+          <div class="label-sm">Subtotal</div>
           <div class="cart-total">$ {{ cart.total }}</div>
         </div>
 
