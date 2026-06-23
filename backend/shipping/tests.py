@@ -29,13 +29,14 @@ class ResolveShippingTests(TestCase):
     """Las zonas se siembran en la migración shipping.0002_seed_zones."""
 
     def test_caba_is_free(self):
-        q = resolve_shipping("C1425ABC")
+        # Gratis solo si se alcanza el mínimo de compra.
+        q = resolve_shipping("C1425ABC", subtotal=Decimal("30000"))
         self.assertTrue(q.is_free)
         self.assertEqual(q.cost, Decimal("0.00"))
         self.assertEqual(q.zone_code, "free")
 
     def test_moreno_is_free(self):
-        q = resolve_shipping("1744")
+        q = resolve_shipping("1744", subtotal=Decimal("30000"))
         self.assertTrue(q.is_free)
         self.assertEqual(q.zone_code, "free")
         self.assertEqual(q.locality, "Moreno")
@@ -79,15 +80,66 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(resolve_shipping("1925").zone_code, "amba")
 
 
+class FreeShippingThresholdTests(TestCase):
+    """Mínimo de compra para envío gratis en CABA/Moreno (free_over=30000)."""
+
+    def test_caba_free_when_subtotal_reaches_min(self):
+        q = resolve_shipping("1425", subtotal=Decimal("30000"))
+        self.assertTrue(q.is_free)
+        self.assertEqual(q.cost, Decimal("0.00"))
+        self.assertIsNone(q.remaining_for_free)
+
+    def test_caba_charges_amba_below_min(self):
+        q = resolve_shipping("1425", subtotal=Decimal("20000"))
+        self.assertFalse(q.is_free)
+        self.assertEqual(q.cost, Decimal("5000.00"))
+        self.assertEqual(q.free_over, Decimal("30000.00"))
+        self.assertEqual(q.remaining_for_free, Decimal("10000.00"))
+
+    def test_moreno_shares_the_threshold(self):
+        below = resolve_shipping("1744", subtotal=Decimal("10000"))
+        self.assertFalse(below.is_free)
+        self.assertEqual(below.cost, Decimal("5000.00"))
+        above = resolve_shipping("1744", subtotal=Decimal("50000"))
+        self.assertTrue(above.is_free)
+
+    def test_no_subtotal_charges_below_min_price(self):
+        # Sin subtotal asumimos que no alcanza el mínimo (default seguro).
+        q = resolve_shipping("1425")
+        self.assertFalse(q.is_free)
+        self.assertEqual(q.cost, Decimal("5000.00"))
+
+    def test_threshold_does_not_affect_amba_or_national(self):
+        self.assertEqual(
+            resolve_shipping("1828", subtotal=Decimal("1")).cost, Decimal("5000.00")
+        )
+        self.assertEqual(
+            resolve_shipping("5000", subtotal=Decimal("999999")).cost,
+            Decimal("12000.00"),
+        )
+
+
 class QuoteEndpointTests(TestCase):
-    def test_quote_json(self):
-        resp = self.client.get(reverse("shipping:quote"), {"postal_code": "1744"})
+    def test_quote_json_free_with_subtotal(self):
+        resp = self.client.get(
+            reverse("shipping:quote"), {"postal_code": "1744", "subtotal": "30000"}
+        )
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertTrue(data["ok"])
         self.assertTrue(data["free"])
         self.assertEqual(data["cp"], 1744)
         self.assertEqual(data["locality"], "Moreno")
+
+    def test_quote_json_below_min_returns_nudge(self):
+        resp = self.client.get(
+            reverse("shipping:quote"), {"postal_code": "1744", "subtotal": "10000"}
+        )
+        data = resp.json()
+        self.assertFalse(data["free"])
+        self.assertEqual(data["cost"], "5000.00")
+        self.assertEqual(data["free_over"], "30000.00")
+        self.assertEqual(data["remaining_for_free"], "20000.00")
 
 
 class ShippingInfoPageTests(TestCase):

@@ -31,6 +31,11 @@ class ShippingQuote:
     is_free: bool
     locality: str
     province: str
+    # Mínimo de compra para envío gratis en esta zona (None si no tiene mínimo).
+    free_over: Optional[Decimal] = None
+    # Cuánto falta de subtotal para alcanzar el envío gratis (None si ya es
+    # gratis, si la zona no tiene mínimo, o si no se pasó el subtotal).
+    remaining_for_free: Optional[Decimal] = None
 
     @property
     def cost_display(self) -> str:
@@ -97,7 +102,15 @@ def _zone_for_cp(cp: Optional[int]) -> Optional[ShippingZone]:
     )
 
 
-def resolve_shipping(raw_cp) -> ShippingQuote:
+def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
+    """
+    Resuelve la zona y el costo de envío para un CP.
+
+    `subtotal` (subtotal de productos, sin envío) se usa para las zonas con
+    mínimo de compra (`free_over`): si el subtotal lo alcanza, el envío es
+    gratis; si no, se cobra `below_min_price`. Si no se pasa el subtotal, se
+    asume que NO alcanza el mínimo (default seguro: cobra `below_min_price`).
+    """
     cp = normalize_cp(raw_cp)
     locality, province = lookup_locality(cp)
     zone = _zone_for_cp(cp)
@@ -114,12 +127,26 @@ def resolve_shipping(raw_cp) -> ShippingQuote:
             province=province,
         )
 
+    cost = zone.price
+    free_over = zone.free_over
+    remaining_for_free = None
+
+    if free_over and free_over > 0:
+        sub = Decimal(subtotal) if subtotal is not None else Decimal("0.00")
+        if sub >= free_over:
+            cost = zone.price  # alcanzó el mínimo -> precio base (0 = gratis)
+        else:
+            cost = zone.below_min_price
+            remaining_for_free = free_over - sub
+
     return ShippingQuote(
         cp=cp,
         zone_code=zone.code,
         zone_name=zone.name,
-        cost=zone.price,
-        is_free=zone.is_free,
+        cost=cost,
+        is_free=cost <= Decimal("0.00"),
         locality=locality,
         province=province,
+        free_over=free_over,
+        remaining_for_free=remaining_for_free,
     )

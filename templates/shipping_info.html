@@ -36,6 +36,12 @@
                 <p class="shipping-price {% if zone.is_free %}is-free{% endif %}">
                     {% if zone.is_free %}Gratis{% else %}$ {{ zone.price|floatformat:0 }}{% endif %}
                 </p>
+                {% if zone.free_over %}
+                <p class="muted tiny mt-6">
+                    En compras desde $ {{ zone.free_over|floatformat:0 }}.
+                    Por debajo: $ {{ zone.below_min_price|floatformat:0 }}.
+                </p>
+                {% endif %}
                 <p class="feature-desc">{{ zone.description }}</p>
             </div>
         </div>
@@ -54,7 +60,9 @@
             <ul class="shipping-howto">
                 <li>
                     <strong>CABA y Partido de Moreno:</strong> los pedidos dentro de la Ciudad
-                    de Buenos Aires y del Partido de Moreno se entregan <strong>sin cargo</strong>.
+                    de Buenos Aires y del Partido de Moreno se entregan <strong>sin cargo a partir
+                    de un monto mínimo de compra</strong>. Por debajo de ese monto, se aplica la
+                    tarifa de AMBA.
                 </li>
                 <li>
                     <strong>AMBA:</strong> los envíos al Área Metropolitana de Buenos Aires

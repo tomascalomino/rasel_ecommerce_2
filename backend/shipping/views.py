@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
@@ -6,14 +8,26 @@ from .models import ShippingZone
 from .services import resolve_shipping
 
 
+def _parse_subtotal(raw):
+    if raw in (None, ""):
+        return None
+    try:
+        value = Decimal(str(raw))
+    except (InvalidOperation, ValueError):
+        return None
+    return value if value >= 0 else None
+
+
 @require_GET
 def quote(request):
     """
-    Endpoint AJAX para el checkout: dado un código postal devuelve la zona,
-    el costo y la localidad/provincia para confirmar en vivo de dónde es.
+    Endpoint AJAX para el checkout: dado un código postal (y el subtotal del
+    carrito) devuelve la zona, el costo y la localidad/provincia para confirmar
+    en vivo de dónde es y cuánto sale el envío.
     """
     raw_cp = request.GET.get("postal_code", "") or request.GET.get("cp", "")
-    q = resolve_shipping(raw_cp)
+    subtotal = _parse_subtotal(request.GET.get("subtotal"))
+    q = resolve_shipping(raw_cp, subtotal=subtotal)
     return JsonResponse(
         {
             "ok": q.cp is not None,
@@ -26,6 +40,12 @@ def quote(request):
             "cost": str(q.cost),
             "cost_display": q.cost_display,
             "free": q.is_free,
+            "free_over": str(q.free_over) if q.free_over is not None else None,
+            "remaining_for_free": (
+                str(q.remaining_for_free)
+                if q.remaining_for_free is not None
+                else None
+            ),
         }
     )
 

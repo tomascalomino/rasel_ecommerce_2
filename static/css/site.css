@@ -1814,6 +1814,14 @@ textarea:focus {
   font-style: normal;
 }
 
+.ship-nudge {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+  font-size: 13px;
+  color: var(--gold);
+}
+
 /* --- Página de envíos --- */
 .shipping-price {
   font-family: var(--font-serif);

@@ -25,6 +25,25 @@ class ShippingZone(models.Model):
         default=Decimal("0.00"),
         help_text="Costo del envío. 0 = gratis.",
     )
+    free_over = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=(
+            "Envío gratis a partir de este subtotal de compra. "
+            "Vacío = siempre gratis (sin mínimo)."
+        ),
+    )
+    below_min_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text=(
+            "Costo de envío cuando el subtotal no alcanza el mínimo "
+            "('Free over'). Solo aplica si 'Free over' está seteado."
+        ),
+    )
     description = models.TextField(
         blank=True,
         default="",

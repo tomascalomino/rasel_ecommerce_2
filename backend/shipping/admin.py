@@ -10,8 +10,11 @@ class PostalCodeRuleInline(admin.TabularInline):
 
 @admin.register(ShippingZone)
 class ShippingZoneAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "price", "is_default", "is_active", "sort_order")
-    list_editable = ("price", "is_active", "sort_order")
+    list_display = (
+        "name", "code", "price", "free_over", "below_min_price",
+        "is_default", "is_active", "sort_order",
+    )
+    list_editable = ("price", "free_over", "below_min_price", "is_active", "sort_order")
     list_filter = ("is_active", "is_default")
     search_fields = ("name", "code")
     inlines = [PostalCodeRuleInline]

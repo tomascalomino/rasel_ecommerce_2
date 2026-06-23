@@ -172,12 +172,20 @@
     var loc = data.location_label || ("CP " + data.cp);
     var label = data.free ? "Envío gratis" : money(cost);
 
+    // Nudge: cuánto falta para alcanzar el envío gratis en esta zona.
+    var remaining = parseFloat(data.remaining_for_free);
+    var nudge = "";
+    if (!data.free && remaining > 0) {
+      nudge = '<div class="ship-nudge">🎁 Agregá <strong>' + money(remaining) +
+        "</strong> para envío gratis</div>";
+    }
+
     confirmEl.hidden = false;
     confirmEl.className = "ship-confirm" + (data.free ? " is-free" : "");
     confirmEl.innerHTML =
       '<span class="ship-pin">📍</span> <strong>' + loc + "</strong> — <strong>" +
       label + "</strong>" +
-      '<div class="muted tiny">' + data.zone_name + "</div>";
+      '<div class="muted tiny">' + data.zone_name + "</div>" + nudge;
 
     sumShipping.textContent = data.free ? "Gratis" : money(cost);
     sumShipping.className = data.free ? "ship-free" : "";
@@ -190,9 +198,11 @@
       reset();
       return;
     }
-    fetch(quoteUrl + "?postal_code=" + encodeURIComponent(cp), {
-      headers: { "X-Requested-With": "XMLHttpRequest" },
-    })
+    fetch(
+      quoteUrl + "?postal_code=" + encodeURIComponent(cp) +
+        "&subtotal=" + encodeURIComponent(subtotal),
+      { headers: { "X-Requested-With": "XMLHttpRequest" } }
+    )
       .then(function (r) { return r.json(); })
       .then(render)
       .catch(function () { /* silencioso: no rompe el checkout */ });

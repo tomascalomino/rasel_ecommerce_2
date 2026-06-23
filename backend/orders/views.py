@@ -26,9 +26,10 @@ def checkout(request):
             payment_method = form.cleaned_data.get("payment_method", "mp")
 
             # Costo de envío resuelto del lado del servidor (fuente de verdad):
-            # nunca se confía en lo que mande el cliente.
-            quote = resolve_shipping(form.cleaned_data["postal_code"])
+            # nunca se confía en lo que mande el cliente. El subtotal define si
+            # se alcanza el mínimo de compra para envío gratis (zonas con free_over).
             subtotal = cart.total()
+            quote = resolve_shipping(form.cleaned_data["postal_code"], subtotal=subtotal)
             grand_total = subtotal + quote.cost
 
             if payment_method == "transfer":
