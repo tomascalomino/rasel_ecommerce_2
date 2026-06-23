@@ -3,7 +3,7 @@
   "1743": {"localidad": "Cuartel V", "provincia": "Buenos Aires"},
   "1744": {"localidad": "Moreno", "provincia": "Buenos Aires"},
   "1746": {"localidad": "Francisco Álvarez", "provincia": "Buenos Aires"},
-  "1763": {"localidad": "La Reja", "provincia": "Buenos Aires"},
+  "1763": {"localidad": "Virrey del Pino", "provincia": "Buenos Aires"},
 
   "1602": {"localidad": "Florida", "provincia": "Buenos Aires"},
   "1605": {"localidad": "Munro", "provincia": "Buenos Aires"},
@@ -82,6 +82,7 @@
   "1886": {"localidad": "Ranelagh", "provincia": "Buenos Aires"},
   "1888": {"localidad": "Florencio Varela", "provincia": "Buenos Aires"},
   "1900": {"localidad": "La Plata", "provincia": "Buenos Aires"},
+  "1913": {"localidad": "Magdalena", "provincia": "Buenos Aires"},
   "1923": {"localidad": "Berisso", "provincia": "Buenos Aires"},
   "1925": {"localidad": "Ensenada", "provincia": "Buenos Aires"},
 

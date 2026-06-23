@@ -56,6 +56,28 @@ class ResolveShippingTests(TestCase):
         self.assertIsNone(q.cp)
         self.assertEqual(q.zone_code, "national")
 
+    def test_1763_is_amba_not_free(self):
+        # 1763 = Virrey del Pino (La Matanza), no La Reja: debe cobrar AMBA.
+        q = resolve_shipping("1763")
+        self.assertEqual(q.zone_code, "amba")
+        self.assertEqual(q.cost, Decimal("5000.00"))
+
+    def test_la_reja_still_free(self):
+        # La Reja (Moreno) usa 1743/1744: sigue gratis por el rango 1742-1746.
+        self.assertEqual(resolve_shipping("1744").zone_code, "free")
+        self.assertEqual(resolve_shipping("1743").zone_code, "free")
+
+    def test_magdalena_is_national_not_amba(self):
+        # 1913 = Magdalena (partido rural costero): no es AMBA.
+        q = resolve_shipping("1913")
+        self.assertEqual(q.zone_code, "national")
+        self.assertEqual(q.cost, Decimal("12000.00"))
+
+    def test_la_plata_neighbors_still_amba(self):
+        # Los bordes del corte 1913 siguen siendo AMBA.
+        self.assertEqual(resolve_shipping("1912").zone_code, "amba")
+        self.assertEqual(resolve_shipping("1925").zone_code, "amba")
+
 
 class QuoteEndpointTests(TestCase):
     def test_quote_json(self):
