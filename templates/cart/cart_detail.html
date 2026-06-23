@@ -15,10 +15,10 @@
 <div class="spacer"></div>
 
 {% if cart|length > 0 %}
-  <div class="card">
+  <div class="card cart-card">
     <div class="card-inner">
       <div class="table-wrap">
-        <table class="table">
+        <table class="table cart-table">
           <thead>
             <tr>
               <th>Producto</th>
@@ -32,7 +32,7 @@
           <tbody>
             {% for item in cart.items %}
               <tr>
-                <td>
+                <td data-label="Producto">
                   <div class="name-row">
                     {% if item.variant.product.image %}
                       <img class="cart-thumb" src="{{ item.variant.product.image.url }}" alt="{{ item.variant.product.name }}">
@@ -46,17 +46,17 @@
                   </div>
                 </td>
 
-                <td>
+                <td data-label="Variante">
                   <span class="pill">
                     {{ item.variant.name }}
                   </span>
                 </td>
 
-                <td class="num">
+                <td class="num" data-label="Precio">
                   $ {{ item.unit_price }}
                 </td>
 
-                <td class="num">
+                <td class="num" data-label="Cantidad">
                   <form method="post" action="{% url 'cart:update' %}" class="qtyform">
                     {% csrf_token %}
                     <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
@@ -66,11 +66,11 @@
                   <div class="muted tiny mt-6">0 elimina</div>
                 </td>
 
-                <td class="num">
+                <td class="num" data-label="Total">
                   <strong>$ {{ item.line_total }}</strong>
                 </td>
 
-                <td class="num">
+                <td class="num cart-remove-cell" data-label="">
                   <form method="post" action="{% url 'cart:remove' %}">
                     {% csrf_token %}
                     <input type="hidden" name="variant_id" value="{{ item.variant.id }}" />
@@ -107,7 +107,7 @@
   </div>
 
 {% else %}
-  <div class="card">
+  <div class="card cart-card">
     <div class="card-inner empty-state">
       <span class="empty-ic"><span class="icon">{% include "partials/icons/bottle.svg" %}</span></span>
       <h2 class="h2">Tu carrito está vacío</h2>

@@ -743,6 +743,26 @@ select {
   font-size: 15px;
 }
 
+/* Select elegante: ocultamos la flecha nativa y usamos un chevron propio (dorado). */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: rgba(255, 255, 255, .85);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a98545' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px;
+  padding-right: 40px;
+  cursor: pointer;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
 input:focus,
 select:focus {
   border-color: var(--brand);
@@ -1100,7 +1120,8 @@ select:focus {
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(14, 22, 18, 0.02);
+  /* background-color (no shorthand) para no pisar el chevron del select base */
+  background-color: rgba(14, 22, 18, 0.02);
   font-weight: 600;
   cursor: pointer;
 }
@@ -1458,6 +1479,89 @@ textarea:focus {
   font-weight: 600;
   color: var(--gold);
   line-height: 1;
+}
+
+/* --- Carrito: card contenida y centrada (no se estira a todo el ancho) --- */
+.cart-card {
+  max-width: 880px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Columnas balanceadas: Producto crece, el resto se ajusta al contenido */
+.cart-table th:first-child,
+.cart-table td:first-child {
+  width: 40%;
+}
+
+.cart-table .qtyform {
+  justify-content: flex-start;
+}
+
+.cart-remove-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Apilado en pantallas chicas/medianas: cada fila se vuelve una tarjeta con
+   etiquetas. Cortamos en 900px para no entrar en la zona donde la tabla de 6
+   columnas queda apretada y necesitaría scroll horizontal. */
+@media (max-width: 900px) {
+  .cart-table thead {
+    display: none;
+  }
+
+  .cart-table,
+  .cart-table tbody,
+  .cart-table tr,
+  .cart-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .cart-table tr {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 6px 14px;
+    margin-bottom: 14px;
+    background: rgba(255, 255, 255, .6);
+  }
+
+  .cart-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    text-align: right;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(14, 22, 18, .08);
+  }
+
+  .cart-table tr td:last-child {
+    border-bottom: 0;
+  }
+
+  .cart-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 800;
+    color: var(--muted);
+    text-align: left;
+  }
+
+  .cart-table td.num {
+    text-align: right;
+  }
+
+  .cart-table .qtyform {
+    justify-content: flex-end;
+  }
+
+  .cart-remove-cell {
+    width: 100%;
+  }
 }
 
 /* Estado vacío genérico */
