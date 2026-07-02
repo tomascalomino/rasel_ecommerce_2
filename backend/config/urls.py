@@ -30,6 +30,7 @@ urlpatterns = [
     path("sitemap.xml", sitemap_xml),
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
+    path("virgen-extra/", TemplateView.as_view(template_name="virgen_extra.html"), name="virgen_extra"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
     path("envios/", shipping_info, name="shipping_info"),
     # Legales

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Virgen Extra (AOVE) — RaSel{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker">
+            <span class="dot"></span>
+            <span>Virgen Extra</span>
+        </div>
+        <h1 class="h1">¿Sabés qué significa que un aceite de oliva sea virgen extra (AOVE)?</h1>
+        <p class="p page-subtitle">
+            El aceite de oliva virgen extra, también conocido como AOVE, es la categoría más alta
+            dentro de los aceites de oliva. Se obtiene directamente de aceitunas y solo mediante
+            procedimientos mecánicos, sin refinado ni correcciones industriales. Para ser virgen
+            extra, debe provenir de frutos sanos, tener una acidez menor a 0,8 y superar una
+            evaluación sensorial de aroma, sabor y ausencia de defectos. En RaSel vamos un paso
+            más allá: nuestro aceite tiene una acidez menor a 0,3, reflejo del cuidado del fruto
+            y de cada etapa del proceso. Virgen extra es calidad, pureza y respeto por el origen.
+        </p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── IMÁGENES ── -->
+<section class="content-section">
+    <div class="gallery-grid">
+        <div class="gallery-item card">
+            <img src="{% static 'img/virgen-extra-1.webp' %}" alt="Aceite de oliva virgen extra RaSel" class="gallery-img">
+        </div>
+        <div class="gallery-item card">
+            <img src="{% static 'img/virgen-extra-2.webp' %}" alt="Aceite de oliva virgen extra RaSel" class="gallery-img">
+        </div>
+    </div>
+</section>
+
+{% endblock %}
