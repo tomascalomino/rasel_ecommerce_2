@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load money %}
 
 {% block title %}RaSel — Aceite de Oliva Premium{% endblock %}
 
@@ -45,6 +46,133 @@
         <span class="icon">{% include "partials/icons/shield.svg" %}</span>
         Compra segura
       </span>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+
+{% if featured_products %}
+<section class="content-section">
+  <div class="related-head">
+    <div class="eyebrow"><span class="dot"></span><span>Nuestra selección</span></div>
+    <h2 class="h2 page-intro">Del olivar a tu mesa</h2>
+    {% include "partials/divider_olive.html" %}
+  </div>
+
+  <div class="grid">
+    {% for p in featured_products %}
+    <div class="card product">
+      <a href="{% url 'shop:product_detail' p.slug %}" class="product-media" aria-label="Ver {{ p.name }}">
+        {% if p.image %}
+          <img class="product-img" src="{{ p.image.url }}" alt="{{ p.name }}">
+        {% else %}
+          <div class="ph"></div>
+        {% endif %}
+      </a>
+      <div class="product-body">
+        <div class="row">
+          <div class="name-row">
+            <span class="icon">{% include "partials/icons/bottle.svg" %}</span>
+            {{ p.name }}
+          </div>
+          {% if p.in_stock %}
+            <span class="badge">Stock</span>
+          {% else %}
+            <span class="badge stock-off">Sin stock</span>
+          {% endif %}
+        </div>
+        <div class="spacer"></div>
+        <div class="row">
+          <div>
+            <div class="price-meta">Precio</div>
+            <div class="price">
+              {% if p.min_price_ars %}Desde {{ p.min_price_ars|ars }}{% else %}—{% endif %}
+            </div>
+          </div>
+          <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="spacer"></div>
+  <div class="cta-row" style="justify-content:center">
+    <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Ver toda la tienda</a>
+  </div>
+</section>
+
+<div class="spacer"></div>
+{% endif %}
+
+<section class="content-section">
+  <div class="card home-origin">
+    <img class="home-origin-img" src="{% static 'img/gallery-1.webp' %}" alt="Olivar en Andalgalá, Catamarca">
+    <div class="card-inner">
+      <div class="eyebrow"><span class="dot"></span><span>Nuestra historia</span></div>
+      <h2 class="h2">De Andalgalá a tu mesa</h2>
+      <p class="p">
+        Producimos de manera artesanal en Andalgalá, Catamarca, mediante extracción en frío.
+        Valles áridos, clima seco y suelos bien drenados: un entorno único para olivares
+        sanos y con identidad propia.
+      </p>
+      <div class="spacer"></div>
+      <div>
+        <a class="btn" href="{% url 'about' %}">Conocé quiénes somos</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="spacer"></div>
+
+<section class="content-section">
+  <div class="related-head">
+    <div class="eyebrow"><span class="dot"></span><span>Virgen extra</span></div>
+    <h2 class="h2 page-intro">Por qué elegir nuestro aceite</h2>
+    {% include "partials/divider_olive.html" %}
+  </div>
+
+  <div class="feature-grid">
+    <div class="card feature-card">
+      <div class="card-inner">
+        <div class="feature-icon">
+          <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
+        </div>
+        <h3 class="feature-title">100% Virgen Extra</h3>
+        <p class="feature-desc">
+          Extracción mediante centrifugado en frío. Sin refinar, sin mezclar, sin aditivos.
+          Pura esencia del olivo catamarqueño.
+        </p>
+      </div>
+    </div>
+
+    <div class="card feature-card">
+      <div class="card-inner">
+        <div class="feature-icon">
+          <span class="icon">{% include "partials/icons/drop.svg" %}</span>
+        </div>
+        <h3 class="feature-title">Perfil Suave</h3>
+        <p class="feature-desc">
+          Blend equilibrado con notas frutadas y un toque de hierba fresca.
+          Ideal para ensaladas, pastas y uso diario.
+        </p>
+      </div>
+    </div>
+
+    <div class="card feature-card">
+      <div class="card-inner">
+        <div class="feature-icon">
+          <span class="icon">{% include "partials/icons/shield.svg" %}</span>
+        </div>
+        <h3 class="feature-title">Calidad Garantizada</h3>
+        <p class="feature-desc">
+          Acidez menor a 0,3%. Alto contenido de polifenoles y antioxidantes
+          naturales. Análisis de laboratorio en cada lote.
+        </p>
+      </div>
     </div>
   </div>
 </section>

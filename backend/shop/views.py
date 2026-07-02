@@ -46,6 +46,18 @@ def sitemap_xml(request):
     return HttpResponse(xml, content_type="application/xml")
 
 
+def home(request):
+    """Home con productos destacados para la sección "Nuestra selección"."""
+    featured = list(
+        Product.objects.filter(is_active=True).prefetch_related("variants")[:3]
+    )
+    for p in featured:
+        active_vars = [v for v in p.variants.all() if v.is_active]
+        p.min_price_ars = min((v.price_ars for v in active_vars), default=None)
+        p.in_stock = any(v.stock_qty > 0 for v in active_vars)
+    return render(request, "home.html", {"featured_products": featured})
+
+
 def product_list(request):
     query = (request.GET.get("q") or "").strip()
     in_stock_only = (request.GET.get("in_stock") or "") in {"1", "true", "on"}

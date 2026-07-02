@@ -33,7 +33,7 @@
   --radius: 16px;
   --max: 1100px;
   --pad: 18px;
-  --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans";
+  --font: "Karla", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans";
   --font-serif: "Fraunces", Georgia, "Times New Roman", serif;
 }
 
@@ -94,7 +94,7 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: .3px;
 }
 
@@ -530,7 +530,7 @@ a {
   border: 1px solid var(--border);
   cursor: pointer;
   color: var(--text);
-  font-weight: 700;
+  font-weight: 600;
   transition: all .2s ease;
 }
 
@@ -1243,6 +1243,30 @@ select:focus {
   background: linear-gradient(to right, var(--gold-2), rgba(201, 169, 106, 0) 70%);
 }
 
+/* Divisor con rama de olivo — firma visual de la marca */
+.divider-olive {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0 0;
+  color: var(--gold);
+}
+
+.divider-olive svg {
+  flex: 0 0 auto;
+}
+
+.divider-olive-line {
+  width: 64px;
+  height: 1px;
+  background: var(--gold-2);
+}
+
+.divider-olive-line.is-fade {
+  flex: 1;
+  background: linear-gradient(to right, var(--gold-2), rgba(201, 169, 106, 0) 70%);
+}
+
 .gold {
   color: var(--gold);
 }
@@ -1702,8 +1726,8 @@ textarea:focus {
   justify-content: center;
   padding: 36px;
   background:
-    radial-gradient(160px 120px at 50% 30%, rgba(122, 168, 106, .16), transparent 70%),
-    linear-gradient(135deg, #f5f0e6 0%, #eef1ec 100%);
+    radial-gradient(160px 120px at 50% 30%, rgba(156, 163, 106, .16), transparent 70%),
+    linear-gradient(135deg, var(--bg) 0%, #ece4d0 100%);
   border-right: 1px solid var(--border);
 }
 
@@ -2175,6 +2199,39 @@ textarea:focus {
 
 .footer-legal a:hover {
   color: var(--gold);
+}
+
+/* ── Home: banda de origen (foto de olivar + historia) ── */
+.home-origin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.home-origin-img {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  object-fit: cover;
+}
+
+.home-origin .card-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 34px;
+}
+
+@media (max-width: 768px) {
+  .home-origin {
+    grid-template-columns: 1fr;
+  }
+
+  .home-origin-img {
+    min-height: 220px;
+    max-height: 260px;
+  }
 }
 
 /* ── Ajustes mobile menores (footer, paddings en pantallas chicas) ── */

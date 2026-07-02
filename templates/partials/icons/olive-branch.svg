@@ -1,0 +1,9 @@
+<svg viewBox="0 0 120 16" width="120" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" aria-hidden="true">
+  <path d="M8 8 C 36 6.5, 84 9.5, 112 8" />
+  <path d="M26 8 C 28 3.5, 33 1.5, 37 2.5 C 35 6.5, 30 8.2, 26 8 Z" fill="currentColor" stroke="none" opacity=".8" />
+  <path d="M46 8 C 48 12.5, 53 14.5, 57 13.5 C 55 9.5, 50 7.8, 46 8 Z" fill="currentColor" stroke="none" opacity=".8" />
+  <circle cx="60" cy="5.4" r="2.4" fill="currentColor" stroke="none" />
+  <circle cx="65" cy="8.6" r="2.4" fill="currentColor" stroke="none" opacity=".65" />
+  <path d="M74 8 C 76 3.5, 81 1.5, 85 2.5 C 83 6.5, 78 8.2, 74 8 Z" fill="currentColor" stroke="none" opacity=".8" />
+  <path d="M92 8 C 94 12.5, 99 14.5, 103 13.5 C 101 9.5, 96 7.8, 92 8 Z" fill="currentColor" stroke="none" opacity=".8" />
+</svg>

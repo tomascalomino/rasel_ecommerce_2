@@ -21,14 +21,14 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.static import serve
-from shop.views import robots_txt, sitemap_xml, healthz
+from shop.views import robots_txt, sitemap_xml, healthz, home
 from shipping.views import shipping_info
 
 urlpatterns = [
     path("healthz", healthz),
     path("robots.txt", robots_txt),
     path("sitemap.xml", sitemap_xml),
-    path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("", home, name="home"),
     path("about/", TemplateView.as_view(template_name="about.html"), name="about"),
     path("virgen-extra/", TemplateView.as_view(template_name="virgen_extra.html"), name="virgen_extra"),
     path("contact/", TemplateView.as_view(template_name="contact.html"), name="contact"),
