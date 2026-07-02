@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load money %}
 
 {% block title %}RaSel — Detalles de Transferencia{% endblock %}
 
@@ -26,7 +27,7 @@
     <div class="result-list">
       <div class="row">
         <span class="muted">Total a transferir</span>
-        <strong class="cart-total">$ {{ order.total_amount }}</strong>
+        <strong class="cart-total">{{ order.total_amount|ars }}</strong>
       </div>
     </div>
 

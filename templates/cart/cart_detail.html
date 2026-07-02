@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load money %}
 {% block title %}Carrito · RaSel{% endblock %}
 
 {% block content %}
@@ -53,7 +54,7 @@
                 </td>
 
                 <td class="num" data-label="Precio">
-                  $ {{ item.unit_price }}
+                  {{ item.unit_price|ars }}
                 </td>
 
                 <td class="num" data-label="Cantidad">
@@ -66,7 +67,7 @@
                 </td>
 
                 <td class="num" data-label="Total">
-                  <strong>$ {{ item.line_total }}</strong>
+                  <strong>{{ item.line_total|ars }}</strong>
                 </td>
 
                 <td class="num cart-remove-cell" data-label="">
@@ -91,7 +92,7 @@
       <div class="cart-footer">
         <div>
           <div class="label-sm">Subtotal</div>
-          <div class="cart-total">$ {{ cart.total }}</div>
+          <div class="cart-total">{{ cart.total|ars }}</div>
         </div>
 
         <div class="stack">
@@ -111,7 +112,7 @@
       <span class="empty-ic"><span class="icon">{% include "partials/icons/bottle.svg" %}</span></span>
       <h2 class="h2">Tu carrito está vacío</h2>
       <p class="muted">Descubrí nuestro aceite de oliva premium y empezá tu pedido.</p>
-      <a class="btn btn-gold" href="{% url 'shop:product_list' %}">Ver la tienda</a>
+      <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Ver la tienda</a>
     </div>
   </div>
 {% endif %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load money %}
 
 {% block title %}RaSel — {{ product.name }}{% endblock %}
 
@@ -32,7 +33,7 @@
     </div>
 
     {% if product.min_price_ars %}
-      <div class="detail-price">Desde $ {{ product.min_price_ars }}</div>
+      <div class="detail-price">Desde {{ product.min_price_ars|ars }}</div>
     {% endif %}
 
     <div class="spacer"></div>
@@ -48,7 +49,7 @@
             {% for v in product.variants.all %}
               <option value="{{ v.id }}" {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}>
                 {{ v.name }}
-                — $ {{ v.price_ars }}
+                — {{ v.price_ars|ars }}
                 {% if v.stock_qty|default:0 <= 0 %}(Sin stock){% endif %}
               </option>
             {% empty %}
@@ -133,7 +134,7 @@
           <div>
             <div class="price-meta">Precio</div>
             <div class="price">
-              {% if p.min_price_ars %}Desde $ {{ p.min_price_ars }}{% else %}—{% endif %}
+              {% if p.min_price_ars %}Desde {{ p.min_price_ars|ars }}{% else %}—{% endif %}
             </div>
           </div>
           <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>

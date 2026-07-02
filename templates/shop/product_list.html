@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load money %}
 
 {% block title %}RaSel — Tienda{% endblock %}
 
@@ -153,7 +154,7 @@
           <div class="muted price-meta">Precio</div>
           <div class="price">
             {% if p.min_price_ars %}
-            Desde $ {{ p.min_price_ars }}
+            Desde {{ p.min_price_ars|ars }}
             {% else %}
             —
             {% endif %}

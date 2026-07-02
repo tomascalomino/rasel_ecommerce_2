@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load money %}
 
 {% block title %}Checkout · RaSel{% endblock %}
 
@@ -108,7 +109,7 @@
             <div>{{ item.variant.product.name }}</div>
             <div class="muted tiny">{{ item.variant.name }} × {{ item.qty }}</div>
           </div>
-          <strong>$ {{ item.line_total }}</strong>
+          <strong>{{ item.line_total|ars }}</strong>
         </div>
         {% endfor %}
       </div>
@@ -116,7 +117,7 @@
       <div class="ship-summary" data-subtotal="{{ cart.total }}" data-quote-url="{% url 'shipping:quote' %}">
         <div class="row">
           <span class="label-sm">Subtotal</span>
-          <span id="sum-subtotal">$ {{ cart.total }}</span>
+          <span id="sum-subtotal">{{ cart.total|ars }}</span>
         </div>
         <div class="row">
           <span class="label-sm">Envío</span>
@@ -126,7 +127,7 @@
 
       <div class="cart-footer">
         <span class="label-sm">Total</span>
-        <span class="summary-total" id="sum-total">$ {{ cart.total }}</span>
+        <span class="summary-total" id="sum-total">{{ cart.total|ars }}</span>
       </div>
     </div>
   </div>

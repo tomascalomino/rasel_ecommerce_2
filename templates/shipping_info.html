@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load money %}
 
 {% block title %}Envíos — RaSel{% endblock %}
 {% block meta_description %}Conocé nuestras zonas de envío: CABA y Moreno sin cargo, AMBA y resto del país por encomienda de correo.{% endblock %}
@@ -34,12 +35,12 @@
             <div class="card-inner">
                 <h3 class="feature-title">{{ zone.name }}</h3>
                 <p class="shipping-price {% if zone.is_free %}is-free{% endif %}">
-                    {% if zone.carrier_arranged %}A coordinar{% elif zone.is_free %}Gratis{% else %}$ {{ zone.price|floatformat:0 }}{% endif %}
+                    {% if zone.carrier_arranged %}A coordinar{% elif zone.is_free %}Gratis{% else %}{{ zone.price|ars }}{% endif %}
                 </p>
                 {% if zone.free_over %}
                 <p class="muted tiny mt-6">
-                    En compras desde $ {{ zone.free_over|floatformat:0 }}.
-                    Por debajo: $ {{ zone.below_min_price|floatformat:0 }}.
+                    En compras desde {{ zone.free_over|ars }}.
+                    Por debajo: {{ zone.below_min_price|ars }}.
                 </p>
                 {% endif %}
                 <p class="feature-desc">{{ zone.description }}</p>

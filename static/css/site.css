@@ -102,10 +102,6 @@ a {
   width: 220px;
   height: 110px;
   object-fit: contain;
-  border-radius: 7px;
-  padding: 1px;
-  background: rgba(255, 255, 255, .05);
-  border: 1px solid var(--border);
 }
 
 .navlinks {
@@ -206,8 +202,7 @@ a {
     padding: 12px;
     flex-wrap: wrap;
     white-space: normal;
-    background: rgba(245, 240, 230, 0.97);
-    backdrop-filter: blur(10px);
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-soft);
   }
@@ -776,6 +771,8 @@ select:focus {
 
 .table-wrap {
   overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-3) transparent;
 }
 
 .table {
