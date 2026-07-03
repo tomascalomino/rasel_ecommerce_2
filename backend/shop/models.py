@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 from django.utils.text import slugify
 
@@ -60,9 +62,40 @@ class Variant(models.Model):
     stock_qty = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
 
+    pack_units = models.PositiveIntegerField(
+        default=1, help_text="Unidades por caja (1 = no es pack)"
+    )
+    unit_variant = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="packs",
+        help_text="Variante unitaria equivalente, para calcular el ahorro del pack",
+    )
+
     class Meta:
         unique_together = [("product", "name")]
         ordering = ["product__name", "price_ars"]
 
     def __str__(self) -> str:
         return f"{self.product.name} - {self.name}"
+
+    @property
+    def pack_savings_ars(self):
+        """Ahorro vs. comprar las unidades sueltas (None si no aplica)."""
+        if not self.unit_variant_id or self.pack_units <= 1:
+            return None
+        savings = self.unit_variant.price_ars * self.pack_units - self.price_ars
+        return savings if savings > 0 else None
+
+    @property
+    def unit_size_label(self):
+        """Tamaño de la unidad, ej: '250ml' (extraído del nombre de la variante unitaria)."""
+        if not self.unit_variant_id:
+            return ""
+        name = self.unit_variant.name
+        match = re.search(r"(\d+(?:[.,]\d+)?)\s*(ml|cc|l)\b", name, re.IGNORECASE)
+        if match:
+            return f"{match.group(1)}{match.group(2).lower()}"
+        return name

@@ -36,6 +36,15 @@
       <div class="detail-price">Desde {{ product.min_price_ars|ars }}</div>
     {% endif %}
 
+    {% for v in product.variants.all %}
+      {% if v.pack_savings_ars %}
+        <div class="savings-note">
+          <span class="icon">{% include "partials/icons/leaf.svg" %}</span>
+          Llevando una caja cerrada de {{ v.pack_units }} unidades de {{ v.unit_size_label }} estás ahorrando {{ v.pack_savings_ars|miles }} pesos.
+        </div>
+      {% endif %}
+    {% endfor %}
+
     <div class="spacer"></div>
 
     <form action="{% url 'cart:add' %}" method="post" class="buybox">

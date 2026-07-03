@@ -14,3 +14,13 @@ def ars(value):
     except (TypeError, ValueError):
         return value
     return "$ " + f"{n:,}".replace(",", ".")
+
+
+@register.filter
+def miles(value):
+    """Formatea un monto como '6.000' (es-AR, sin decimales ni símbolo)."""
+    try:
+        n = int(round(float(value)))
+    except (TypeError, ValueError):
+        return value
+    return f"{n:,}".replace(",", ".")

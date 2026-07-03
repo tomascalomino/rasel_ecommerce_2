@@ -1788,6 +1788,24 @@ textarea:focus {
   color: var(--gold);
 }
 
+.savings-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--gold-soft);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+.savings-note .icon {
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
 .buybox {
   display: flex;
   flex-direction: column;
