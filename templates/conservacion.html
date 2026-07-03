@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Conservación — RaSel{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="page-header">
+    <div class="page-header-inner">
+        <div class="kicker">
+            <span class="dot"></span>
+            <span>Conservación</span>
+        </div>
+        <h1 class="h1">¿Cómo conservar tu aceite de oliva?</h1>
+        {% include "partials/divider_olive.html" %}
+        <p class="p page-subtitle">
+            Para preservar mejor su frescura, aroma y sabor, conservá RaSel en un lugar fresco,
+            seco y protegido de la luz. Mantené la botella bien cerrada y evitá exponerla a
+            fuentes de calor.
+        </p>
+        <p class="p page-subtitle">
+            Si el aceite se expone a bajas temperaturas, puede cambiar de apariencia, volverse
+            más denso o solidificarse total o parcialmente. Esto es normal en el aceite de oliva
+            virgen extra e incluso refleja pureza. Al colocarlo nuevamente en un ambiente más
+            cálido, recuperará su estado original sin alterar su calidad.
+        </p>
+    </div>
+</section>
+
+<div class="spacer"></div>
+
+<!-- ── IMÁGENES ── -->
+<section class="content-section">
+    <div class="gallery-grid">
+        <div class="gallery-item card">
+            <img src="{% static 'img/virgen-extra-1.webp' %}" alt="Conservación del aceite de oliva RaSel" class="gallery-img">
+        </div>
+        <div class="gallery-item card">
+            <img src="{% static 'img/virgen-extra-2.webp' %}" alt="Conservación del aceite de oliva RaSel" class="gallery-img">
+        </div>
+    </div>
+</section>
+
+{% endblock %}

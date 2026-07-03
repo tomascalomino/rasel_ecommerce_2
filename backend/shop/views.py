@@ -31,7 +31,8 @@ def robots_txt(request):
 
 def sitemap_xml(request):
     urls = [request.build_absolute_uri(reverse(name)) for name in (
-        "home", "about", "contact", "terms", "privacy", "returns", "regret",
+        "home", "about", "virgen_extra", "conservacion", "contact",
+        "terms", "privacy", "returns", "regret",
         "shop:product_list",
     )]
     for product in Product.objects.filter(is_active=True):
