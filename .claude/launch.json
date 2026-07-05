@@ -9,6 +9,15 @@
       "env": {
         "DEBUG": "1"
       }
+    },
+    {
+      "name": "django-8002",
+      "runtimeExecutable": "backend/venv/Scripts/python.exe",
+      "runtimeArgs": ["backend/manage.py", "runserver", "8002"],
+      "port": 8002,
+      "env": {
+        "DEBUG": "1"
+      }
     }
   ]
 }

@@ -1,30 +1,38 @@
 from django import forms
 from django.conf import settings
 
+from shipping.models import PickupPoint
 from shipping.services import normalize_cp
 
 
 class CheckoutForm(forms.Form):
+    DELIVERY_CHOICES = [
+        ("ship", "Envío a domicilio"),
+        ("pickup", "Retiro sin cargo en punto de retiro"),
+    ]
+    delivery_method = forms.ChoiceField(
+        choices=DELIVERY_CHOICES, widget=forms.RadioSelect, initial="ship"
+    )
+    pickup_point = forms.ModelChoiceField(
+        queryset=PickupPoint.objects.none(),
+        required=False,
+        widget=forms.RadioSelect,
+        empty_label=None,
+    )
+
     full_name = forms.CharField(max_length=120)
     email = forms.EmailField()
     phone = forms.CharField(max_length=30, required=False)
 
-    address_line = forms.CharField(max_length=200)
-    city = forms.CharField(max_length=100)
-    postal_code = forms.CharField(max_length=20)
-
-    def clean_postal_code(self):
-        raw = self.cleaned_data["postal_code"]
-        if normalize_cp(raw) is None:
-            raise forms.ValidationError(
-                "Ingresá un código postal válido (ej. 1744 o C1744)."
-            )
-        return raw
+    # Requeridos solo para envío a domicilio (ver clean()).
+    address_line = forms.CharField(max_length=200, required=False)
+    city = forms.CharField(max_length=100, required=False)
+    postal_code = forms.CharField(max_length=20, required=False)
 
     PAYMENT_CHOICES = [
         ("mp", "Mercado Pago"),
         ("transfer", "Transferencia Bancaria"),
-        ("cod", "Efectivo a contraentrega"),
+        ("cod", "Efectivo (al recibir o al retirar)"),
     ]
     payment_method = forms.ChoiceField(
         choices=PAYMENT_CHOICES, widget=forms.RadioSelect, initial="mp"
@@ -32,10 +40,36 @@ class CheckoutForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Con MercadoPago apagado quedan transferencia y contraentrega.
+        # Queryset fresco en cada instancia (no a nivel de clase).
+        self.fields["pickup_point"].queryset = PickupPoint.objects.filter(
+            is_active=True
+        )
+        # Con MercadoPago apagado quedan transferencia y efectivo.
         if not settings.MP_ENABLED:
             self.fields["payment_method"].choices = [
                 ("transfer", "Transferencia Bancaria"),
-                ("cod", "Efectivo a contraentrega"),
+                ("cod", "Efectivo (al recibir o al retirar)"),
             ]
             self.fields["payment_method"].initial = "transfer"
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("delivery_method") == "pickup":
+            if not cleaned.get("pickup_point"):
+                self.add_error("pickup_point", "Elegí el punto de retiro.")
+            # La orden de retiro no usa dirección: se guarda vacía.
+            cleaned["address_line"] = ""
+            cleaned["city"] = ""
+            cleaned["postal_code"] = ""
+        else:
+            for field in ("address_line", "city", "postal_code"):
+                if not cleaned.get(field):
+                    self.add_error(
+                        field, "Este campo es obligatorio para envío a domicilio."
+                    )
+            if cleaned.get("postal_code") and normalize_cp(cleaned["postal_code"]) is None:
+                self.add_error(
+                    "postal_code",
+                    "Ingresá un código postal válido (ej. 1744 o C1744).",
+                )
+        return cleaned

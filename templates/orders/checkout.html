@@ -26,7 +26,7 @@
   <!-- Columna izquierda: datos de envío -->
   <div class="card">
     <div class="card-inner">
-      <h2 class="h2">Datos de envío</h2>
+      <h2 class="h2">Datos de contacto y entrega</h2>
       <div class="spacer"></div>
       <form method="post">
         {% csrf_token %}
@@ -45,25 +45,63 @@
           {{ form.phone }}
           {{ form.phone.errors }}
         </div>
-        <div class="field-wrap">
-          {{ form.address_line.label_tag }}
-          {{ form.address_line }}
-          {{ form.address_line.errors }}
+
+        <hr class="divider-gold">
+        <div class="spacer"></div>
+        <h2 class="h2">¿Cómo lo recibís?</h2>
+        <div class="pay-methods">
+          {% for radio in form.delivery_method %}
+          <label class="checkbox-container">
+            {{ radio.tag }}
+            <span class="checkmark"></span>
+            <span class="checkbox-label">{{ radio.choice_label }}</span>
+          </label>
+          {% endfor %}
+          {{ form.delivery_method.errors }}
         </div>
-        <div class="field-wrap">
-          {{ form.city.label_tag }}
-          {{ form.city }}
-          {{ form.city.errors }}
+
+        <div class="spacer"></div>
+
+        <div id="ship-fields">
+          <div class="field-wrap">
+            {{ form.address_line.label_tag }}
+            {{ form.address_line }}
+            {{ form.address_line.errors }}
+          </div>
+          <div class="field-wrap">
+            {{ form.city.label_tag }}
+            {{ form.city }}
+            {{ form.city.errors }}
+          </div>
+          <div class="field-wrap">
+            {{ form.postal_code.label_tag }}
+            {{ form.postal_code }}
+            {{ form.postal_code.errors }}
+            <div id="ship-confirm" class="ship-confirm" hidden></div>
+            <p class="muted tiny mt-6">
+              Calculamos el envío según tu código postal.
+              <a href="{% url 'shipping_info' %}" target="_blank" rel="noopener">Ver zonas y costos</a>
+            </p>
+          </div>
         </div>
-        <div class="field-wrap">
-          {{ form.postal_code.label_tag }}
-          {{ form.postal_code }}
-          {{ form.postal_code.errors }}
-          <div id="ship-confirm" class="ship-confirm" hidden></div>
-          <p class="muted tiny mt-6">
-            Calculamos el envío según tu código postal.
-            <a href="{% url 'shipping_info' %}" target="_blank" rel="noopener">Ver zonas y costos</a>
-          </p>
+
+        <div id="pickup-fields" hidden>
+          <span class="label-sm">Elegí el punto de retiro</span>
+          <div class="pay-methods">
+            {% for p in pickup_points %}
+            <label class="checkbox-container">
+              <input type="radio" name="pickup_point" value="{{ p.id }}"
+                {% if form.pickup_point.value|stringformat:"s" == p.id|stringformat:"s" %}checked{% endif %}>
+              <span class="checkmark"></span>
+              <span class="checkbox-label">
+                <strong>{{ p.name }}</strong><br>
+                <span class="muted tiny">{{ p.address }}{% if p.schedule_notes %} · {{ p.schedule_notes }}{% endif %}</span>
+              </span>
+            </label>
+            {% endfor %}
+            {{ form.pickup_point.errors }}
+          </div>
+          <p class="muted tiny mt-6">Retiro sin cargo. Te avisamos cuando el pedido esté listo.</p>
         </div>
 
         <hr class="divider-gold">
@@ -150,6 +188,15 @@
   var COD_HINT_DEFAULT =
     "Disponible solo en CABA y AMBA (entrega en persona). Ingresá tu código postal.";
 
+  var deliveryRadios = document.querySelectorAll('input[name="delivery_method"]');
+  var shipFields = document.getElementById("ship-fields");
+  var pickupFields = document.getElementById("pickup-fields");
+
+  function deliveryMode() {
+    var checked = document.querySelector('input[name="delivery_method"]:checked');
+    return checked ? checked.value : "ship";
+  }
+
   function money(n) {
     return "$ " + new Intl.NumberFormat("es-AR").format(n);
   }
@@ -171,7 +218,29 @@
     if (codHint) codHint.textContent = msg || COD_HINT_DEFAULT;
   }
 
-  setCod(false, COD_HINT_DEFAULT);
+  // Alterna entre envío a domicilio (cotización por CP) y retiro sin cargo.
+  function applyDelivery(mode) {
+    if (mode === "pickup") {
+      shipFields.hidden = true;
+      pickupFields.hidden = false;
+      confirmEl.hidden = true;
+      sumShipping.textContent = "Retiro sin cargo";
+      sumShipping.className = "ship-free";
+      sumTotal.textContent = money(subtotal);
+      setCod(true, "Pagás en efectivo al retirar tu pedido. Sin recargo.");
+    } else {
+      shipFields.hidden = false;
+      pickupFields.hidden = true;
+      reset();
+      if (cpInput.value.trim().replace(/\D/g, "").length >= 4) fetchQuote();
+    }
+  }
+
+  deliveryRadios.forEach(function (radio) {
+    radio.addEventListener("change", function () {
+      applyDelivery(deliveryMode());
+    });
+  });
 
   // Subtotal con formato consistente desde el primer render.
   sumSubtotal.textContent = money(subtotal);
@@ -187,6 +256,8 @@
   }
 
   function render(data) {
+    // Una respuesta en vuelo no debe pisar el resumen en modo retiro.
+    if (deliveryMode() === "pickup") return;
     if (!data || !data.ok) {
       reset();
       return;
@@ -239,6 +310,7 @@
   }
 
   function fetchQuote() {
+    if (deliveryMode() === "pickup") return;
     var cp = cpInput.value.trim();
     if (cp.replace(/\D/g, "").length < 4) {
       reset();
@@ -259,8 +331,9 @@
     timer = setTimeout(fetchQuote, 400);
   });
 
-  // Si el CP ya viene cargado (re-render por error de validación), resolver al cargar.
-  if (cpInput.value.trim().replace(/\D/g, "").length >= 4) fetchQuote();
+  // Estado inicial según el radio marcado (importa en re-renders con errores):
+  // en envío re-cotiza si el CP ya viene cargado; en retiro aplica el modo.
+  applyDelivery(deliveryMode());
 })();
 </script>
 {% endblock %}

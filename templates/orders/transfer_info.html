@@ -31,6 +31,14 @@
       </div>
     </div>
 
+    {% if order.delivery_method == "pickup" %}
+    <div class="spacer"></div>
+    <div class="alert" style="border-color: var(--gold);">
+      <strong>Retiro en:</strong> {{ order.pickup_point_label }}.
+      Te avisamos cuando el pedido esté listo para retirar.
+    </div>
+    {% endif %}
+
     {% if shipping_legend %}
     <div class="spacer"></div>
     <div class="alert" style="border-color: var(--gold);">

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django.contrib import messages
@@ -5,12 +7,26 @@ from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
 from payments.models import PaymentDraft
+from shipping.models import PickupPoint
 from shipping.services import resolve_shipping
 from .models import Order, OrderItem
 from .emails import send_order_confirmation
 from shop.models import Variant
 from .forms import CheckoutForm
 from django.db import transaction
+
+
+def _render_checkout(request, cart, form):
+    return render(
+        request,
+        "orders/checkout.html",
+        {
+            "cart": cart,
+            "form": form,
+            "mp_enabled": settings.MP_ENABLED,
+            "pickup_points": PickupPoint.objects.filter(is_active=True),
+        },
+    )
 
 
 @require_http_methods(["GET", "POST"])
@@ -24,23 +40,43 @@ def checkout(request):
         form = CheckoutForm(request.POST)
         if form.is_valid():
             payment_method = form.cleaned_data.get("payment_method", "mp")
-
-            # Costo de envío resuelto del lado del servidor (fuente de verdad):
-            # nunca se confía en lo que mande el cliente. El subtotal define si
-            # se alcanza el mínimo de compra para envío gratis (zonas con free_over).
+            delivery_method = form.cleaned_data["delivery_method"]
             subtotal = cart.total()
-            quote = resolve_shipping(form.cleaned_data["postal_code"], subtotal=subtotal)
-            grand_total = subtotal + quote.cost
+
+            if delivery_method == "pickup":
+                # Retiro sin cargo: el cliente pasa a buscar el pedido, no hay
+                # envío que cotizar. Efectivo siempre permitido (paga al retirar).
+                point = form.cleaned_data["pickup_point"]
+                pickup_label = f"{point.name} — {point.address}"
+                shipping_cost = Decimal("0.00")
+                shipping_zone = ""
+                carrier_arranged = False
+                cod_allowed = True
+                grand_total = subtotal
+            else:
+                # Costo de envío resuelto del lado del servidor (fuente de verdad):
+                # nunca se confía en lo que mande el cliente. El subtotal define si
+                # se alcanza el mínimo de compra para envío gratis (zonas con free_over).
+                point = None
+                pickup_label = ""
+                quote = resolve_shipping(
+                    form.cleaned_data["postal_code"], subtotal=subtotal
+                )
+                shipping_cost = quote.cost
+                shipping_zone = quote.zone_name
+                carrier_arranged = quote.carrier_arranged
+                cod_allowed = quote.cod_allowed
+                grand_total = subtotal + quote.cost
 
             # Contraentrega solo en zonas de reparto propio (el JS del checkout
-            # deshabilita la opción, pero la fuente de verdad es esta quote).
-            if payment_method == "cod" and not quote.cod_allowed:
+            # deshabilita la opción, pero la fuente de verdad está acá).
+            if payment_method == "cod" and not cod_allowed:
                 form.add_error(
                     "payment_method",
                     "El pago en efectivo a contraentrega está disponible solo "
                     "para CABA y AMBA. Elegí otro método de pago.",
                 )
-                return render(request, "orders/checkout.html", {"cart": cart, "form": form, "mp_enabled": settings.MP_ENABLED})
+                return _render_checkout(request, cart, form)
 
             if payment_method in ("transfer", "cod"):
                 # Transferencia y contraentrega comparten flujo: la orden queda
@@ -70,9 +106,12 @@ def checkout(request):
                             address_line=form.cleaned_data["address_line"],
                             city=form.cleaned_data["city"],
                             postal_code=form.cleaned_data["postal_code"],
-                            shipping_cost=quote.cost,
-                            shipping_zone=quote.zone_name,
-                            shipping_carrier_arranged=quote.carrier_arranged,
+                            delivery_method=delivery_method,
+                            pickup_point=point,
+                            pickup_point_label=pickup_label,
+                            shipping_cost=shipping_cost,
+                            shipping_zone=shipping_zone,
+                            shipping_carrier_arranged=carrier_arranged,
                             total_amount=grand_total,
                             status="pending",
                             payment_method=payment_method,
@@ -97,7 +136,7 @@ def checkout(request):
                         str(exc) if isinstance(exc, ValueError)
                         else "Uno de los productos ya no está disponible.",
                     )
-                    return render(request, "orders/checkout.html", {"cart": cart, "form": form, "mp_enabled": settings.MP_ENABLED})
+                    return _render_checkout(request, cart, form)
 
                 # 4. Limpiar el carrito, notificar por email y redirigir
                 cart.clear()
@@ -128,9 +167,12 @@ def checkout(request):
                     address_line=form.cleaned_data["address_line"],
                     city=form.cleaned_data["city"],
                     postal_code=form.cleaned_data["postal_code"],
-                    shipping_cost=quote.cost,
-                    shipping_zone=quote.zone_name,
-                    shipping_carrier_arranged=quote.carrier_arranged,
+                    delivery_method=delivery_method,
+                    pickup_point=point,
+                    pickup_point_label=pickup_label,
+                    shipping_cost=shipping_cost,
+                    shipping_zone=shipping_zone,
+                    shipping_carrier_arranged=carrier_arranged,
                     total_amount=grand_total,
                     items=draft_items,
                 )
@@ -146,11 +188,16 @@ def checkout(request):
     else:
         form = CheckoutForm()
 
-    return render(request, "orders/checkout.html", {"cart": cart, "form": form, "mp_enabled": settings.MP_ENABLED})
+    return _render_checkout(request, cart, form)
 
 
 def confirmation(request, order_id):
-    return render(request, "orders/confirmation.html", {"order_id": order_id})
+    order = Order.objects.filter(id=order_id).first()
+    return render(
+        request,
+        "orders/confirmation.html",
+        {"order_id": order_id, "order": order},
+    )
 
 
 def transfer_info(request, order_id):

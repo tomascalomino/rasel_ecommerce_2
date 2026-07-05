@@ -69,6 +69,12 @@ def _build_lines(order) -> str:
 def _totals_block(order) -> str:
     shipping = order.shipping_cost or 0
     subtotal = order.total_amount - shipping
+    if getattr(order, "delivery_method", "ship") == "pickup":
+        return (
+            f"Subtotal: ${subtotal}\n"
+            f"Retiro en punto de retiro: Sin cargo\n"
+            f"Total: ${order.total_amount}"
+        )
     zona = f" ({order.shipping_zone})" if order.shipping_zone else ""
     if getattr(order, "shipping_carrier_arranged", False):
         envio = "a cargo del comprador (a coordinar con el correo)"
@@ -81,6 +87,13 @@ def _totals_block(order) -> str:
         f"Envío{zona}: {envio}\n"
         f"Total: ${order.total_amount}"
     )
+
+
+def _delivery_block(order) -> str:
+    """Bloque de entrega: dirección de envío o punto de retiro (snapshot)."""
+    if getattr(order, "delivery_method", "ship") == "pickup":
+        return f"Retiro en:\n  {order.pickup_point_label}\n"
+    return f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n"
 
 
 def _shipping_legend(order) -> str:
@@ -123,10 +136,17 @@ def _customer_body(order) -> str:
             f"{datos}{comprobante}"
         )
     elif order.payment_method == "cod":
-        estado = (
-            "Tu pedido quedó CONFIRMADO. Nos contactamos para coordinar la "
-            "entrega y lo abonás en EFECTIVO al recibirlo. Sin recargos.\n"
-        )
+        if order.delivery_method == "pickup":
+            estado = (
+                f"Tu pedido quedó CONFIRMADO. Retiralo en "
+                f"{order.pickup_point_label} y abonalo en EFECTIVO al retirar. "
+                "Sin recargos. Te avisamos cuando esté listo.\n"
+            )
+        else:
+            estado = (
+                "Tu pedido quedó CONFIRMADO. Nos contactamos para coordinar la "
+                "entrega y lo abonás en EFECTIVO al recibirlo. Sin recargos.\n"
+            )
     else:
         estado = "¡Tu pago fue confirmado! Estamos preparando tu pedido.\n"
 
@@ -136,18 +156,22 @@ def _customer_body(order) -> str:
         f"{estado}\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n\n"
-        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n"
+        f"{_delivery_block(order)}"
         f"{_shipping_legend(order)}\n"
         f"Gracias por tu compra.\nRaSel — Aceite de Oliva\n"
     )
 
 
 def _owner_body(order) -> str:
+    if order.delivery_method == "pickup":
+        entrega = f"Retiro en: {order.pickup_point_label}"
+    else:
+        entrega = f"Envío: {order.address_line}, {order.city} ({order.postal_code})"
     return (
         f"Nueva orden #{order.id} ({order.get_status_display()})\n"
         f"Método de pago: {order.payment_method}\n\n"
         f"Cliente: {order.full_name} <{order.email}> {order.phone}\n"
-        f"Envío: {order.address_line}, {order.city} ({order.postal_code})\n\n"
+        f"{entrega}\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n"
     )
@@ -172,13 +196,17 @@ def _send(order) -> None:
 
 
 def _paid_body(order) -> str:
+    if order.delivery_method == "pickup":
+        preparando = "Ya lo estamos preparando para que lo retires."
+    else:
+        preparando = "Ya lo estamos preparando para el envío."
     return (
         f"Hola {order.full_name},\n\n"
         f"¡Confirmamos la recepción de tu pago del pedido #{order.id}!\n"
-        f"Ya lo estamos preparando para el envío.\n\n"
+        f"{preparando}\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n\n"
-        f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n"
+        f"{_delivery_block(order)}"
         f"{_shipping_legend(order)}\n"
         f"¡Gracias por tu compra!\nRaSel — Aceite de Oliva\n"
     )

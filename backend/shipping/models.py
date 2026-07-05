@@ -87,6 +87,33 @@ class ShippingZone(models.Model):
         return self.price <= Decimal("0.00")
 
 
+class PickupPoint(models.Model):
+    """
+    Punto de retiro sin cargo. Editable desde el Admin: el negocio puede
+    actualizar dirección y horarios sin redeployar (mismo criterio que
+    ShippingZone). Las órdenes guardan un snapshot de texto, así el dato
+    histórico no cambia si el punto se edita o desactiva.
+    """
+
+    name = models.CharField(max_length=80, help_text="Ej. 'Punto de retiro CABA'.")
+    address = models.CharField(max_length=200, help_text="Dirección completa del punto.")
+    schedule_notes = models.TextField(
+        blank=True,
+        default="",
+        help_text="Horarios o indicaciones para el retiro (se muestran en el checkout).",
+    )
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=100)
+
+    class Meta:
+        ordering = ["sort_order", "name"]
+        verbose_name = "Punto de retiro"
+        verbose_name_plural = "Puntos de retiro"
+
+    def __str__(self) -> str:
+        return f"{self.name} — {self.address}"
+
+
 class PostalCodeRule(models.Model):
     """
     Asocia un rango de códigos postales (numéricos) a una zona.

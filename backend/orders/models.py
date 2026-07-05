@@ -10,6 +10,11 @@ class Order(models.Model):
         ("cancelled", "Cancelled"),
     ]
 
+    DELIVERY_CHOICES = [
+        ("ship", "Envío a domicilio"),
+        ("pickup", "Retiro en punto de retiro"),
+    ]
+
     created_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     payment_method = models.CharField(max_length=20, default="mp")
@@ -19,9 +24,25 @@ class Order(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=30, blank=True)
 
-    address_line = models.CharField(max_length=200)
-    city = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=20)
+    # Con retiro en punto la dirección queda vacía.
+    address_line = models.CharField(max_length=200, blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
+    postal_code = models.CharField(max_length=20, blank=True, default="")
+
+    # Modalidad de entrega. Con "pickup" el envío es sin cargo y el cliente
+    # retira en el punto elegido; pickup_point_label es el snapshot histórico
+    # (los emails/páginas usan siempre el label, nunca el FK).
+    delivery_method = models.CharField(
+        max_length=10, choices=DELIVERY_CHOICES, default="ship"
+    )
+    pickup_point = models.ForeignKey(
+        "shipping.PickupPoint",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+    )
+    pickup_point_label = models.CharField(max_length=300, blank=True, default="")
 
     # Envío: costo y nombre de la zona resuelta a partir del CP.
     # total_amount = subtotal (items) + shipping_cost.

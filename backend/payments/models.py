@@ -34,9 +34,20 @@ class PaymentDraft(models.Model):
     full_name = models.CharField(max_length=120)
     email = models.EmailField()
     phone = models.CharField(max_length=30, blank=True)
-    address_line = models.CharField(max_length=200)
-    city = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=20)
+    address_line = models.CharField(max_length=200, blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
+    postal_code = models.CharField(max_length=20, blank=True, default="")
+
+    # Modalidad de entrega (se copia al Order al finalizar el pago).
+    delivery_method = models.CharField(max_length=10, default="ship")
+    pickup_point = models.ForeignKey(
+        "shipping.PickupPoint",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payment_drafts",
+    )
+    pickup_point_label = models.CharField(max_length=300, blank=True, default="")
 
     # Envío: se copia al Order al finalizar el pago. total_amount ya incluye el envío.
     shipping_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)

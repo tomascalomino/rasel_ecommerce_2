@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import PostalCodeRule, ShippingZone
+from .models import PickupPoint, PostalCodeRule, ShippingZone
 
 
 class PostalCodeRuleInline(admin.TabularInline):
@@ -28,3 +28,10 @@ class PostalCodeRuleAdmin(admin.ModelAdmin):
     list_display = ("cp_from", "cp_to", "zone", "note")
     list_filter = ("zone",)
     search_fields = ("note",)
+
+
+@admin.register(PickupPoint)
+class PickupPointAdmin(admin.ModelAdmin):
+    list_display = ("name", "address", "is_active", "sort_order")
+    list_editable = ("is_active", "sort_order")
+    search_fields = ("name", "address")

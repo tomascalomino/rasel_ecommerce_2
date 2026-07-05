@@ -52,10 +52,14 @@ class OrderAdmin(admin.ModelAdmin):
         "email",
         "status",
         "payment_method",
+        "delivery_method",
         "total_amount",
         "created_at",
     )
-    list_filter = ("status", "payment_method", "created_at")
-    search_fields = ("full_name", "email", "mp_preference_id", "mp_payment_id")
+    list_filter = ("status", "payment_method", "delivery_method", "created_at")
+    search_fields = (
+        "full_name", "email", "mp_preference_id", "mp_payment_id",
+        "pickup_point_label",
+    )
     inlines = [OrderItemInline]
     actions = [mark_paid, cancel_and_restore_stock]
