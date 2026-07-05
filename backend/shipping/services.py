@@ -40,6 +40,8 @@ class ShippingQuote:
     carrier_arranged: bool = False
     # Leyenda a mostrar cuando carrier_arranged.
     note: str = ""
+    # La zona admite pago en efectivo a contraentrega (reparto en persona).
+    cod_allowed: bool = False
 
     @property
     def cost_display(self) -> str:
@@ -169,6 +171,7 @@ def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
         province=province,
         free_over=free_over,
         remaining_for_free=remaining_for_free,
+        cod_allowed=zone.cod_allowed,
     )
 
 

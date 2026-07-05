@@ -32,8 +32,19 @@ def checkout(request):
             quote = resolve_shipping(form.cleaned_data["postal_code"], subtotal=subtotal)
             grand_total = subtotal + quote.cost
 
-            if payment_method == "transfer":
-                # Implementación para Transferencia Bancaria
+            # Contraentrega solo en zonas de reparto propio (el JS del checkout
+            # deshabilita la opción, pero la fuente de verdad es esta quote).
+            if payment_method == "cod" and not quote.cod_allowed:
+                form.add_error(
+                    "payment_method",
+                    "El pago en efectivo a contraentrega está disponible solo "
+                    "para CABA y AMBA. Elegí otro método de pago.",
+                )
+                return render(request, "orders/checkout.html", {"cart": cart, "form": form, "mp_enabled": settings.MP_ENABLED})
+
+            if payment_method in ("transfer", "cod"):
+                # Transferencia y contraentrega comparten flujo: la orden queda
+                # pendiente y el pago se resuelve fuera del sitio.
                 try:
                     with transaction.atomic():
                         # 1. Validar stock de TODOS los items antes de crear la orden
@@ -64,7 +75,7 @@ def checkout(request):
                             shipping_carrier_arranged=quote.carrier_arranged,
                             total_amount=grand_total,
                             status="pending",
-                            payment_method="transfer",
+                            payment_method=payment_method,
                         )
 
                         # 3. Guardar Items y descontar stock (ya validado arriba)
@@ -92,6 +103,8 @@ def checkout(request):
                 cart.clear()
                 request.session.modified = True
                 send_order_confirmation(order.id)
+                if payment_method == "cod":
+                    return redirect("orders:cod_info", order_id=order.id)
                 return redirect("orders:transfer_info", order_id=order.id)
             else:
                 # Implementación para Mercado Pago
@@ -155,5 +168,19 @@ def transfer_info(request, order_id):
             "shipping_legend": (
                 carrier_arranged_legend() if order.shipping_carrier_arranged else ""
             ),
+        },
+    )
+
+
+def cod_info(request, order_id):
+    from django.shortcuts import get_object_or_404
+
+    order = get_object_or_404(Order, id=order_id)
+    return render(
+        request,
+        "orders/cod_info.html",
+        {
+            "order": order,
+            "notify_email": settings.ORDER_NOTIFICATION_EMAIL,
         },
     )

@@ -84,6 +84,26 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(resolve_shipping("1925").zone_code, "amba")
 
 
+class CodAllowedTests(TestCase):
+    """Contraentrega habilitada solo en zonas de reparto propio (CABA/AMBA)."""
+
+    def test_free_zone_allows_cod(self):
+        self.assertTrue(resolve_shipping("1425").cod_allowed)
+        self.assertTrue(resolve_shipping("1744").cod_allowed)
+
+    def test_amba_allows_cod(self):
+        self.assertTrue(resolve_shipping("1828").cod_allowed)
+
+    def test_national_zone_disallows_cod(self):
+        self.assertFalse(resolve_shipping("5000").cod_allowed)
+
+    def test_quote_endpoint_exposes_cod_allowed(self):
+        resp = self.client.get(reverse("shipping:quote"), {"postal_code": "1425"})
+        self.assertTrue(resp.json()["cod_allowed"])
+        resp = self.client.get(reverse("shipping:quote"), {"postal_code": "5000"})
+        self.assertFalse(resp.json()["cod_allowed"])
+
+
 class FreeShippingThresholdTests(TestCase):
     """Mínimo de compra para envío gratis en CABA/Moreno (free_over=30000)."""
 

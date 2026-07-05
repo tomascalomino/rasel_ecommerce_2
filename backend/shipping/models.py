@@ -61,6 +61,13 @@ class ShippingZone(models.Model):
             "y se muestra la leyenda de 'Description'."
         ),
     )
+    cod_allowed = models.BooleanField(
+        default=False,
+        help_text=(
+            "Permite pagar en efectivo a contraentrega en esta zona (solo zonas "
+            "donde RaSel reparte en persona, ej. CABA/AMBA)."
+        ),
+    )
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveIntegerField(
         default=100,

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block title %}RaSel — Pago en efectivo al recibir{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="eyebrow"><span class="dot"></span><span>Último paso</span></div>
+  <div class="section-head page-intro">
+    <h1 class="h1 section-title">Pago en efectivo al recibir</h1>
+    <span class="badge">Orden #{{ order.id }}</span>
+  </div>
+  <hr class="divider-gold">
+</div>
+
+<div class="spacer"></div>
+
+<div class="card">
+  <div class="card-inner">
+    <div class="alerts mb-4">
+      <div class="alert alert-success">
+        <p>Tu pedido fue registrado correctamente. Nos vamos a contactar por
+          teléfono o WhatsApp para coordinar el día y horario de entrega.</p>
+      </div>
+    </div>
+
+    <div class="result-list">
+      <div class="row">
+        <span class="muted">Total a abonar en efectivo</span>
+        <strong class="cart-total">{{ order.total_amount|ars }}</strong>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="alerts">
+      <div class="alert" style="text-align: center; border-color: var(--gold);">
+        <p>Pagás en efectivo al recibir el pedido. <strong>Sin recargos.</strong></p>
+        <p class="muted tiny mt-6">
+          ¿Consultas sobre tu orden <strong>#{{ order.id }}</strong>? Escribinos a
+          <strong>{{ notify_email|default:"raseloliva@gmail.com" }}</strong>.
+        </p>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div class="stack-row">
+      <a class="btn btn-lite" href="{% url 'shop:product_list' %}">Volver a la tienda</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

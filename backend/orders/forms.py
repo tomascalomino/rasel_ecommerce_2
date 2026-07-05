@@ -24,6 +24,7 @@ class CheckoutForm(forms.Form):
     PAYMENT_CHOICES = [
         ("mp", "Mercado Pago"),
         ("transfer", "Transferencia Bancaria"),
+        ("cod", "Efectivo a contraentrega"),
     ]
     payment_method = forms.ChoiceField(
         choices=PAYMENT_CHOICES, widget=forms.RadioSelect, initial="mp"
@@ -31,9 +32,10 @@ class CheckoutForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Con MercadoPago apagado, la única opción válida es transferencia.
+        # Con MercadoPago apagado quedan transferencia y contraentrega.
         if not settings.MP_ENABLED:
             self.fields["payment_method"].choices = [
                 ("transfer", "Transferencia Bancaria"),
+                ("cod", "Efectivo a contraentrega"),
             ]
             self.fields["payment_method"].initial = "transfer"

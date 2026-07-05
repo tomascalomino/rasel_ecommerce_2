@@ -48,6 +48,7 @@ def quote(request):
             ),
             "carrier_arranged": q.carrier_arranged,
             "note": q.note,
+            "cod_allowed": q.cod_allowed,
         }
     )
 

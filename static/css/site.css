@@ -2051,6 +2051,11 @@ textarea:focus {
   border-radius: 50%;
 }
 
+.pay-methods .checkbox-container.is-disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 .checkbox-container input[type="radio"]:checked ~ .checkmark {
   background-color: var(--brand);
   border-color: var(--brand);

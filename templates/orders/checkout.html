@@ -69,7 +69,6 @@
         <hr class="divider-gold">
         <div class="spacer"></div>
         <h2 class="h2">Método de pago</h2>
-        {% if mp_enabled %}
         <div class="pay-methods">
           {% for radio in form.payment_method %}
           <label class="checkbox-container">
@@ -77,16 +76,14 @@
             <span class="checkmark"></span>
             <span class="checkbox-label">{{ radio.choice_label }}</span>
           </label>
+          {% if radio.data.value == "cod" %}
+          <p id="cod-hint" class="muted tiny">
+            Disponible solo en CABA y AMBA (entrega en persona). Ingresá tu código postal.
+          </p>
+          {% endif %}
           {% endfor %}
           {{ form.payment_method.errors }}
         </div>
-        {% else %}
-        <p class="muted mt-6">
-          Tu pedido se abona por <strong>Transferencia Bancaria</strong>. Al confirmar te
-          mostramos los datos para transferir y te los enviamos por email.
-        </p>
-        <div class="sr-only">{{ form.payment_method }}</div>
-        {% endif %}
 
         <div class="spacer"></div>
         <div class="stack-row">
@@ -148,9 +145,33 @@
   var subtotal = parseFloat(summary.getAttribute("data-subtotal")) || 0;
   var timer;
 
+  var codRadio = document.querySelector('input[name="payment_method"][value="cod"]');
+  var codHint = document.getElementById("cod-hint");
+  var COD_HINT_DEFAULT =
+    "Disponible solo en CABA y AMBA (entrega en persona). Ingresá tu código postal.";
+
   function money(n) {
     return "$ " + new Intl.NumberFormat("es-AR").format(n);
   }
+
+  // Habilita/deshabilita contraentrega según la zona del CP. Si estaba
+  // seleccionada y deja de estar disponible, cae al primer método habilitado.
+  // El servidor re-valida igual en el POST.
+  function setCod(enabled, msg) {
+    if (!codRadio) return;
+    codRadio.disabled = !enabled;
+    var label = codRadio.closest("label");
+    if (label) label.classList.toggle("is-disabled", !enabled);
+    if (!enabled && codRadio.checked) {
+      codRadio.checked = false;
+      var fallback = document.querySelector('input[name="payment_method"]:not([disabled])');
+      if (fallback) fallback.checked = true;
+      msg = "Contraentrega no disponible para tu código postal. Cambiamos el método de pago.";
+    }
+    if (codHint) codHint.textContent = msg || COD_HINT_DEFAULT;
+  }
+
+  setCod(false, COD_HINT_DEFAULT);
 
   // Subtotal con formato consistente desde el primer render.
   sumSubtotal.textContent = money(subtotal);
@@ -162,6 +183,7 @@
     sumShipping.textContent = msg || "Ingresá tu CP";
     sumShipping.className = "muted";
     sumTotal.textContent = money(subtotal);
+    setCod(false, COD_HINT_DEFAULT);
   }
 
   function render(data) {
@@ -174,6 +196,7 @@
 
     // Envío a cargo del comprador (resto del país): costo 0 pero no es "gratis".
     if (data.carrier_arranged) {
+      setCod(false, "No disponible para envíos por correo (resto del país).");
       confirmEl.hidden = false;
       confirmEl.className = "ship-confirm";
       confirmEl.innerHTML =
@@ -185,6 +208,13 @@
       sumTotal.textContent = money(subtotal);
       return;
     }
+
+    setCod(
+      !!data.cod_allowed,
+      data.cod_allowed
+        ? "Pagás en efectivo al recibir el pedido. Sin recargo."
+        : "No disponible para tu zona."
+    );
 
     var label = data.free ? "Envío gratis" : money(cost);
 

@@ -122,6 +122,11 @@ def _customer_body(order) -> str:
             "Tu pedido quedó RESERVADO y está pendiente de pago por transferencia.\n"
             f"{datos}{comprobante}"
         )
+    elif order.payment_method == "cod":
+        estado = (
+            "Tu pedido quedó CONFIRMADO. Nos contactamos para coordinar la "
+            "entrega y lo abonás en EFECTIVO al recibirlo. Sin recargos.\n"
+        )
     else:
         estado = "¡Tu pago fue confirmado! Estamos preparando tu pedido.\n"
 
