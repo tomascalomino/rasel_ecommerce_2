@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core import mail
 from django.test import RequestFactory, TestCase
@@ -66,6 +67,24 @@ class TransferCheckoutTests(TestCase):
         # Email de "pedido reservado" al cliente (owner email no configurado en tests).
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("buyer@example.com", mail.outbox[0].to)
+        body = mail.outbox[0].body
+        self.assertIn("RESERVADO", body)
+        self.assertIn(settings.WHATSAPP_NUMBER, body)
+        # CABA/AMBA: promesa de entrega en 48hs desde el pago.
+        self.assertIn("48hs", body)
+
+    def test_transfer_interior_email_coordinates_by_whatsapp(self):
+        # Interior (carrier_arranged): sin promesa de 48hs, la entrega se
+        # coordina por el mismo WhatsApp del comprobante.
+        self._add_to_cart(2)
+        data = self._checkout_data()
+        data.update({"postal_code": "5000", "city": "Córdoba"})
+        resp = self.client.post(reverse("orders:checkout"), data)
+        self.assertEqual(resp.status_code, 302)
+
+        body = mail.outbox[0].body
+        self.assertIn("se coordina por el mismo WhatsApp", body)
+        self.assertNotIn("48hs", body)
 
     def test_transfer_blocks_when_insufficient_stock(self):
         self._add_to_cart(10)  # solo hay 5
@@ -127,7 +146,10 @@ class CodCheckoutTests(TestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("buyer@example.com", mail.outbox[0].to)
-        self.assertIn("EFECTIVO", mail.outbox[0].body)
+        body = mail.outbox[0].body
+        self.assertIn("efectivo al momento de la entrega", body)
+        self.assertIn("48hs", body)
+        self.assertIn(settings.WHATSAPP_NUMBER, body)
 
     def test_cod_rejected_in_national_zone(self):
         self._add_to_cart(2)
@@ -204,8 +226,12 @@ class PickupCheckoutTests(TestCase):
         self.assertRedirects(resp, reverse("orders:cod_info", args=[order.id]))
         self.assertEqual(order.payment_method, "cod")
         self.assertEqual(order.delivery_method, "pickup")
-        self.assertIn("EFECTIVO", mail.outbox[0].body)
-        self.assertIn("Retiro", mail.outbox[0].body)
+        body = mail.outbox[0].body
+        self.assertIn("efectivo al momento del retiro", body)
+        # Retiro: se coordina por WhatsApp, sin promesa de 48hs.
+        self.assertIn(settings.WHATSAPP_NUMBER, body)
+        self.assertNotIn("48hs", body)
+        self.assertIn("Retiro", body)
 
     def test_pickup_requires_pickup_point(self):
         self._add_to_cart(1)

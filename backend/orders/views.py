@@ -212,6 +212,7 @@ def transfer_info(request, order_id):
             "order": order,
             "bank": settings.BANK_TRANSFER,
             "notify_email": settings.ORDER_NOTIFICATION_EMAIL,
+            "whatsapp": settings.WHATSAPP_NUMBER,
             "shipping_legend": (
                 carrier_arranged_legend() if order.shipping_carrier_arranged else ""
             ),
@@ -229,5 +230,6 @@ def cod_info(request, order_id):
         {
             "order": order,
             "notify_email": settings.ORDER_NOTIFICATION_EMAIL,
+            "whatsapp": settings.WHATSAPP_NUMBER,
         },
     )

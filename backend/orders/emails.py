@@ -120,45 +120,71 @@ def _bank_block() -> str:
     return "\n".join(lines)
 
 
+def _whatsapp() -> str:
+    return getattr(settings, "WHATSAPP_NUMBER", "") or ""
+
+
 def _customer_body(order) -> str:
+    whatsapp = _whatsapp()
     if order.payment_method == "transfer":
         bank_block = _bank_block()
         datos = (
             f"\nDatos para transferir:\n{bank_block}\n" if bank_block else ""
         )
-        notify = getattr(settings, "ORDER_NOTIFICATION_EMAIL", "") or ""
         comprobante = (
-            f"Enviá el comprobante a {notify} indicando tu orden #{order.id}.\n"
-            if notify else ""
+            f"\nEnviá el comprobante de pago vía WhatsApp al {whatsapp} "
+            f"indicando tu número de orden (#{order.id}).\n"
         )
+        if order.delivery_method == "pickup":
+            entrega = (
+                "\nEl retiro se coordina por el mismo WhatsApp donde envíes "
+                "el comprobante.\n"
+                f"Te avisamos cuando tu pedido esté listo para retirar en "
+                f"{order.pickup_point_label}.\n"
+            )
+        elif order.shipping_carrier_arranged:
+            entrega = (
+                "\nLa entrega se coordina por el mismo WhatsApp donde envíes "
+                "el comprobante.\n"
+            )
+        else:
+            entrega = (
+                "\nTu pedido será entregado dentro de las 48hs, contadas "
+                "desde que hayamos recibido el pago realizado.\n"
+            )
         estado = (
             "Tu pedido quedó RESERVADO y está pendiente de pago por transferencia.\n"
-            f"{datos}{comprobante}"
+            f"{datos}{comprobante}{entrega}"
         )
     elif order.payment_method == "cod":
         if order.delivery_method == "pickup":
             estado = (
-                f"Tu pedido quedó CONFIRMADO. Retiralo en "
-                f"{order.pickup_point_label} y abonalo en EFECTIVO al retirar. "
-                "Sin recargos. Te avisamos cuando esté listo.\n"
+                "Tu pedido ha sido realizado y será abonado en efectivo al "
+                "momento del retiro.\n\n"
+                f"Contactanos vía WhatsApp al {whatsapp} indicando tu número "
+                f"de orden (#{order.id}) para coordinar el retiro en "
+                f"{order.pickup_point_label}.\n"
             )
         else:
             estado = (
-                "Tu pedido quedó CONFIRMADO. Nos contactamos para coordinar la "
-                "entrega y lo abonás en EFECTIVO al recibirlo. Sin recargos.\n"
+                "Tu pedido ha sido realizado y será abonado en efectivo al "
+                "momento de la entrega.\n\n"
+                "Tu pedido será entregado dentro de las 48hs de realizado.\n\n"
+                f"Contactanos vía WhatsApp al {whatsapp} indicando tu número "
+                f"de orden (#{order.id}) para coordinar la entrega.\n"
             )
     else:
         estado = "¡Tu pago fue confirmado! Estamos preparando tu pedido.\n"
 
     return (
-        f"Hola {order.full_name},\n\n"
-        f"Recibimos tu pedido #{order.id}.\n\n"
+        f"Hola {order.full_name}!\n\n"
+        f"Recibimos tu pedido Orden N° #{order.id}.\n\n"
         f"{estado}\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n\n"
         f"{_delivery_block(order)}"
         f"{_shipping_legend(order)}\n"
-        f"Gracias por tu compra.\nRaSel — Aceite de Oliva\n"
+        f"Gracias por elegirnos!\nRaSel — Aceite de Oliva\n"
     )
 
 
@@ -196,19 +222,26 @@ def _send(order) -> None:
 
 
 def _paid_body(order) -> str:
+    whatsapp = _whatsapp()
     if order.delivery_method == "pickup":
-        preparando = "Ya lo estamos preparando para que lo retires."
+        proximo = (
+            f"Coordinamos el retiro por WhatsApp al {whatsapp}. "
+            f"Te avisamos cuando esté listo para retirar en "
+            f"{order.pickup_point_label}."
+        )
+    elif getattr(order, "shipping_carrier_arranged", False):
+        proximo = f"Coordinamos la entrega por WhatsApp al {whatsapp}."
     else:
-        preparando = "Ya lo estamos preparando para el envío."
+        proximo = "Tu pedido será entregado dentro de las 48hs."
     return (
-        f"Hola {order.full_name},\n\n"
-        f"¡Confirmamos la recepción de tu pago del pedido #{order.id}!\n"
-        f"{preparando}\n\n"
+        f"Hola {order.full_name}!\n\n"
+        f"¡Confirmamos la recepción de tu pago del pedido Orden N° #{order.id}!\n"
+        f"{proximo}\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n\n"
         f"{_delivery_block(order)}"
         f"{_shipping_legend(order)}\n"
-        f"¡Gracias por tu compra!\nRaSel — Aceite de Oliva\n"
+        f"Gracias por elegirnos!\nRaSel — Aceite de Oliva\n"
     )
 
 

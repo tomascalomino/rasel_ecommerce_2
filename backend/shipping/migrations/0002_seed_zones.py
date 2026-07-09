@@ -23,21 +23,24 @@ ZONES = [
     {
         "code": "amba",
         "name": "AMBA",
-        "price": Decimal("5000.00"),
+        "price": Decimal("7000.00"),
         "is_default": False,
         "sort_order": 2,
         "description": (
-            "Área Metropolitana de Buenos Aires (conurbano y La Plata). "
+            "Área Metropolitana de Buenos Aires. "
             "Envío con un valor fijo."
         ),
         "rules": [
-            (1500, 1929, "Conurbano y La Plata"),
+            # El Gran La Plata (City Bell 1896, La Plata 1900, Berisso 1923,
+            # Ensenada 1925) quedó fuera del reparto propio: el rango corta
+            # en 1893 y esos CPs caen en la zona default (resto del país).
+            (1500, 1893, "Conurbano"),
         ],
     },
     {
         "code": "national",
         "name": "Resto del país",
-        "price": Decimal("12000.00"),
+        "price": Decimal("20000.00"),
         "is_default": True,
         "sort_order": 3,
         "description": (

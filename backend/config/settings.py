@@ -76,6 +76,10 @@ BANK_TRANSFER = {
     "bank": os.getenv("BANK_NAME", "").strip(),
 }
 
+# WhatsApp de atención: recibe comprobantes de transferencia y coordina
+# entregas/retiros (emails y páginas post-checkout).
+WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER", "1162002357").strip()
+
 if DEBUG and MP_ENABLED and not os.getenv("MP_ACCESS_TOKEN"):
     print(
         "[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará)."

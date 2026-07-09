@@ -35,14 +35,20 @@
     <div class="spacer"></div>
     <div class="alert" style="border-color: var(--gold);">
       <strong>Retiro en:</strong> {{ order.pickup_point_label }}.
-      Te avisamos cuando el pedido esté listo para retirar.
+      El retiro se coordina por el mismo WhatsApp donde envíes el comprobante.
+      Te avisamos cuando tu pedido esté listo para retirar.
     </div>
-    {% endif %}
-
-    {% if shipping_legend %}
+    {% elif order.shipping_carrier_arranged %}
     <div class="spacer"></div>
     <div class="alert" style="border-color: var(--gold);">
       <strong>Envío a coordinar.</strong> {{ shipping_legend }}
+      La entrega se coordina por el mismo WhatsApp donde envíes el comprobante.
+    </div>
+    {% else %}
+    <div class="spacer"></div>
+    <div class="alert" style="border-color: var(--gold);">
+      Tu pedido será entregado dentro de las <strong>48hs</strong>, contadas
+      desde que hayamos recibido el pago realizado.
     </div>
     {% endif %}
 
@@ -99,11 +105,11 @@
 
     <div class="alerts">
       <div class="alert" style="text-align: center; border-color: var(--gold);">
-        <p>Una vez realizada la transferencia, enviá el comprobante por mail a:<br>
-          <strong style="font-size: 1.1em; color: var(--text);">{{ notify_email|default:"raseloliva@gmail.com" }}</strong>
+        <p>Una vez realizada la transferencia, enviá el comprobante de pago vía WhatsApp al:<br>
+          <strong style="font-size: 1.1em; color: var(--text);">{{ whatsapp }}</strong>
         </p>
         <p class="muted tiny mt-6">
-          (Incluí el número de orden <strong>#{{ order.id }}</strong> en el asunto).<br>
+          (Indicá tu número de orden <strong>#{{ order.id }}</strong>).<br>
           <strong>Recibirás un mail de confirmación en cuanto validemos el pago.</strong>
         </p>
       </div>

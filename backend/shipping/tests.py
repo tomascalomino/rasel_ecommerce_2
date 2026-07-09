@@ -44,7 +44,7 @@ class ResolveShippingTests(TestCase):
     def test_amba_fixed_price(self):
         q = resolve_shipping("1828")
         self.assertFalse(q.is_free)
-        self.assertEqual(q.cost, Decimal("5000.00"))
+        self.assertEqual(q.cost, Decimal("7000.00"))
         self.assertEqual(q.zone_code, "amba")
 
     def test_rest_of_country_is_carrier_arranged(self):
@@ -65,7 +65,7 @@ class ResolveShippingTests(TestCase):
         # 1763 = Virrey del Pino (La Matanza), no La Reja: debe cobrar AMBA.
         q = resolve_shipping("1763")
         self.assertEqual(q.zone_code, "amba")
-        self.assertEqual(q.cost, Decimal("5000.00"))
+        self.assertEqual(q.cost, Decimal("7000.00"))
 
     def test_la_reja_still_free(self):
         # La Reja (Moreno) usa 1743/1744: sigue gratis por el rango 1742-1746.
@@ -78,10 +78,18 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(q.zone_code, "national")
         self.assertTrue(q.carrier_arranged)
 
-    def test_la_plata_neighbors_still_amba(self):
-        # Los bordes del corte 1913 siguen siendo AMBA.
-        self.assertEqual(resolve_shipping("1912").zone_code, "amba")
-        self.assertEqual(resolve_shipping("1925").zone_code, "amba")
+    def test_gran_la_plata_is_national(self):
+        # Desde 2026-07 el Gran La Plata (City Bell, La Plata, Berisso,
+        # Ensenada) quedó fuera del reparto propio: cotiza como resto del país.
+        for cp in ("1896", "1900", "1912", "1925"):
+            q = resolve_shipping(cp)
+            self.assertEqual(q.zone_code, "national", cp)
+            self.assertTrue(q.carrier_arranged, cp)
+
+    def test_amba_boundary_at_1893(self):
+        # El rango AMBA corta en 1893 (igual que en el admin de producción).
+        self.assertEqual(resolve_shipping("1893").zone_code, "amba")
+        self.assertEqual(resolve_shipping("1894").zone_code, "national")
 
 
 class CodAllowedTests(TestCase):
@@ -116,14 +124,14 @@ class FreeShippingThresholdTests(TestCase):
     def test_caba_charges_amba_below_min(self):
         q = resolve_shipping("1425", subtotal=Decimal("20000"))
         self.assertFalse(q.is_free)
-        self.assertEqual(q.cost, Decimal("5000.00"))
+        self.assertEqual(q.cost, Decimal("7000.00"))
         self.assertEqual(q.free_over, Decimal("30000.00"))
         self.assertEqual(q.remaining_for_free, Decimal("10000.00"))
 
     def test_moreno_shares_the_threshold(self):
         below = resolve_shipping("1744", subtotal=Decimal("10000"))
         self.assertFalse(below.is_free)
-        self.assertEqual(below.cost, Decimal("5000.00"))
+        self.assertEqual(below.cost, Decimal("7000.00"))
         above = resolve_shipping("1744", subtotal=Decimal("50000"))
         self.assertTrue(above.is_free)
 
@@ -131,12 +139,12 @@ class FreeShippingThresholdTests(TestCase):
         # Sin subtotal asumimos que no alcanza el mínimo (default seguro).
         q = resolve_shipping("1425")
         self.assertFalse(q.is_free)
-        self.assertEqual(q.cost, Decimal("5000.00"))
+        self.assertEqual(q.cost, Decimal("7000.00"))
 
     def test_threshold_does_not_affect_amba_or_national(self):
         # AMBA sigue fijo sin importar el subtotal.
         self.assertEqual(
-            resolve_shipping("1828", subtotal=Decimal("1")).cost, Decimal("5000.00")
+            resolve_shipping("1828", subtotal=Decimal("1")).cost, Decimal("7000.00")
         )
         # Nacional sigue "a coordinar" sin importar el subtotal.
         nat = resolve_shipping("5000", subtotal=Decimal("999999"))
@@ -162,7 +170,7 @@ class QuoteEndpointTests(TestCase):
         )
         data = resp.json()
         self.assertFalse(data["free"])
-        self.assertEqual(data["cost"], "5000.00")
+        self.assertEqual(data["cost"], "7000.00")
         self.assertEqual(data["free_over"], "30000.00")
         self.assertEqual(data["remaining_for_free"], "20000.00")
 
@@ -199,10 +207,10 @@ class MercadoPagoShippingLineTests(TestCase):
         )
 
     def test_shipping_line_added_when_cost_positive(self):
-        payload = _build_preference_payload(self._draft(Decimal("5000.00")))
+        payload = _build_preference_payload(self._draft(Decimal("7000.00")))
         ship = [i for i in payload["items"] if i["title"].startswith("Envío")]
         self.assertEqual(len(ship), 1)
-        self.assertEqual(ship[0]["unit_price"], 5000.0)
+        self.assertEqual(ship[0]["unit_price"], 7000.0)
 
     def test_no_shipping_line_when_free(self):
         payload = _build_preference_payload(self._draft(Decimal("0.00")))

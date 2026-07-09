@@ -22,12 +22,16 @@
     <div class="alerts mb-4">
       <div class="alert alert-success">
         {% if order.delivery_method == "pickup" %}
-        <p>Tu pedido fue registrado correctamente. Retiralo en
-          <strong>{{ order.pickup_point_label }}</strong>. Te avisamos por
-          teléfono o WhatsApp cuando esté listo.</p>
+        <p>Tu pedido ha sido realizado y será abonado en efectivo al momento
+          del retiro. Contactanos vía WhatsApp al <strong>{{ whatsapp }}</strong>
+          indicando tu número de orden (<strong>#{{ order.id }}</strong>) para
+          coordinar el retiro en <strong>{{ order.pickup_point_label }}</strong>.</p>
         {% else %}
-        <p>Tu pedido fue registrado correctamente. Nos vamos a contactar por
-          teléfono o WhatsApp para coordinar el día y horario de entrega.</p>
+        <p>Tu pedido ha sido realizado y será abonado en efectivo al momento
+          de la entrega. Será entregado dentro de las <strong>48hs</strong> de
+          realizado. Contactanos vía WhatsApp al <strong>{{ whatsapp }}</strong>
+          indicando tu número de orden (<strong>#{{ order.id }}</strong>) para
+          coordinar la entrega.</p>
         {% endif %}
       </div>
     </div>
@@ -44,9 +48,9 @@
     <div class="alerts">
       <div class="alert" style="text-align: center; border-color: var(--gold);">
         {% if order.delivery_method == "pickup" %}
-        <p>Pagás en efectivo al retirar el pedido. <strong>Sin recargos.</strong></p>
+        <p>Pagás en efectivo al momento del retiro. <strong>Sin recargos.</strong></p>
         {% else %}
-        <p>Pagás en efectivo al recibir el pedido. <strong>Sin recargos.</strong></p>
+        <p>Pagás en efectivo al momento de la entrega. <strong>Sin recargos.</strong></p>
         {% endif %}
         <p class="muted tiny mt-6">
           ¿Consultas sobre tu orden <strong>#{{ order.id }}</strong>? Escribinos a
