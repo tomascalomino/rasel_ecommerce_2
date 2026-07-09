@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.db import transaction
 from django.db.models import F
+from django.utils.html import format_html
 
 from shop.models import Variant
 from .models import Order, OrderItem
@@ -13,7 +14,7 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = ("variant", "product_name", "variant_name", "unit_price", "quantity", "line_total")
 
 
-@admin.action(description="Marcar como pagada y avisar al cliente")
+@admin.action(description="Marcar como pagada y avisar al cliente", permissions=["change"])
 def mark_paid(modeladmin, request, queryset):
     count = 0
     for order in queryset:
@@ -25,7 +26,7 @@ def mark_paid(modeladmin, request, queryset):
     messages.success(request, f"{count} orden(es) marcadas como pagadas y notificadas al cliente.")
 
 
-@admin.action(description="Cancelar y devolver stock")
+@admin.action(description="Cancelar y devolver stock", permissions=["change"])
 def cancel_and_restore_stock(modeladmin, request, queryset):
     restored = 0
     for order in queryset:
@@ -48,18 +49,27 @@ def cancel_and_restore_stock(modeladmin, request, queryset):
 class OrderAdmin(admin.ModelAdmin):
     list_display = (
         "id",
+        "created_at",
         "full_name",
         "email",
-        "status",
+        "status_badge",
         "payment_method",
         "delivery_method",
         "total_amount",
-        "created_at",
     )
     list_filter = ("status", "payment_method", "delivery_method", "created_at")
+    date_hierarchy = "created_at"
     search_fields = (
         "full_name", "email", "mp_preference_id", "mp_payment_id",
         "pickup_point_label",
     )
     inlines = [OrderItemInline]
     actions = [mark_paid, cancel_and_restore_stock]
+
+    @admin.display(description="Estado", ordering="status")
+    def status_badge(self, obj):
+        return format_html(
+            '<span class="rasel-status rasel-status-{}">{}</span>',
+            obj.status,
+            obj.get_status_display(),
+        )

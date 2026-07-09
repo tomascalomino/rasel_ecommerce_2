@@ -5,12 +5,13 @@ from django.utils.text import slugify
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=80, unique=True)
+    name = models.CharField("nombre", max_length=80, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField("activa", default=True)
 
     class Meta:
-        verbose_name_plural = "Categories"
+        verbose_name = "categoría"
+        verbose_name_plural = "categorías"
         ordering = ["name"]
 
     def save(self, *args, **kwargs):
@@ -24,19 +25,26 @@ class Category(models.Model):
 
 class Product(models.Model):
     category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, related_name="products", null=True, blank=True
+        Category,
+        on_delete=models.PROTECT,
+        related_name="products",
+        null=True,
+        blank=True,
+        verbose_name="categoría",
     )
 
-    name = models.CharField(max_length=120)
+    name = models.CharField("nombre", max_length=120)
     slug = models.SlugField(max_length=140, unique=True, blank=True)
 
-    short_description = models.CharField(max_length=240, blank=True)
-    description = models.TextField(blank=True)
+    short_description = models.CharField("descripción corta", max_length=240, blank=True)
+    description = models.TextField("descripción", blank=True)
 
-    is_active = models.BooleanField(default=True)
-    image = models.ImageField(upload_to="products/", blank=True, null=True)
+    is_active = models.BooleanField("activo", default=True)
+    image = models.ImageField("imagen", upload_to="products/", blank=True, null=True)
 
     class Meta:
+        verbose_name = "producto"
+        verbose_name_plural = "productos"
         ordering = ["-name"]
 
     def save(self, *args, **kwargs):
@@ -53,17 +61,19 @@ class Variant(models.Model):
     Variante de compra (ej: 250ml, 500ml, pack x2).
     El stock y precio viven acá (MVP).
     """
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="variants")
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="variants", verbose_name="producto"
+    )
 
-    name = models.CharField(max_length=80)  # ej: "250 ml"
-    sku = models.CharField(max_length=64, unique=True)
+    name = models.CharField("nombre", max_length=80)  # ej: "250 ml"
+    sku = models.CharField("SKU", max_length=64, unique=True)
 
-    price_ars = models.DecimalField(max_digits=12, decimal_places=2)
-    stock_qty = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
+    price_ars = models.DecimalField("precio (ARS)", max_digits=12, decimal_places=2)
+    stock_qty = models.PositiveIntegerField("stock", default=0)
+    is_active = models.BooleanField("activa", default=True)
 
     pack_units = models.PositiveIntegerField(
-        default=1, help_text="Unidades por caja (1 = no es pack)"
+        "unidades por caja", default=1, help_text="Unidades por caja (1 = no es pack)"
     )
     unit_variant = models.ForeignKey(
         "self",
@@ -71,10 +81,13 @@ class Variant(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="packs",
+        verbose_name="variante unitaria",
         help_text="Variante unitaria equivalente, para calcular el ahorro del pack",
     )
 
     class Meta:
+        verbose_name = "variante"
+        verbose_name_plural = "stock y precios"
         unique_together = [("product", "name")]
         ordering = ["product__name", "price_ars"]
 

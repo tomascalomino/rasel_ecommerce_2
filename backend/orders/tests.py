@@ -327,3 +327,36 @@ class OrderAdminActionTests(TestCase):
         cancel_and_restore_stock(None, req, Order.objects.filter(id=order.id))
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_qty, 5)
+
+
+class AdminRolesTests(TestCase):
+    """Los grupos de roles se siembran vía post_migrate (config.admin.sync_roles)."""
+
+    def test_operator_group_has_expected_permissions(self):
+        from django.contrib.auth.models import Group
+
+        operator = Group.objects.get(name="Operador")
+        codenames = set(operator.permissions.values_list("codename", flat=True))
+        # Gestiona el día a día...
+        self.assertIn("change_order", codenames)
+        self.assertIn("change_variant", codenames)
+        self.assertIn("add_product", codenames)
+        self.assertIn("change_shippingzone", codenames)
+        # ...pero no borra datos críticos ni administra usuarios.
+        self.assertNotIn("delete_order", codenames)
+        self.assertNotIn("delete_product", codenames)
+        self.assertNotIn("add_user", codenames)
+
+    def test_readonly_group_only_views(self):
+        from django.contrib.auth.models import Group
+
+        readonly = Group.objects.get(name="Solo lectura")
+        codenames = set(readonly.permissions.values_list("codename", flat=True))
+        self.assertIn("view_order", codenames)
+        self.assertTrue(
+            all(codename.startswith("view_") for codename in codenames), codenames
+        )
+
+    def test_order_actions_require_change_permission(self):
+        self.assertEqual(mark_paid.allowed_permissions, ["change"])
+        self.assertEqual(cancel_and_restore_stock.allowed_permissions, ["change"])

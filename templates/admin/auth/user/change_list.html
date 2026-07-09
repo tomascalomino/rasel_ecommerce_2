@@ -1,0 +1,14 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+<div class="rasel-help">
+  <h2>Cómo dar acceso al admin</h2>
+  <ol>
+    <li>Creá el usuario con el botón <strong>«Agregar usuario»</strong>.</li>
+    <li>En la ficha del usuario, tildá la opción de <strong>staff</strong> (permite entrar a este panel).</li>
+    <li>En <strong>Grupos</strong>, asignale <strong>Operador</strong> (gestiona órdenes, stock, productos y envíos; no borra ni administra usuarios) o <strong>Solo lectura</strong> (solo consulta, no edita nada).</li>
+    <li>La tilde de <strong>superusuario</strong> es solo para el dueño: puede hacer absolutamente todo, incluido borrar datos y crear usuarios.</li>
+  </ol>
+</div>
+{{ block.super }}
+{% endblock %}

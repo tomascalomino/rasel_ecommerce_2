@@ -27,6 +27,9 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Variant)
 class VariantAdmin(admin.ModelAdmin):
-    list_display = ("product", "name", "sku", "price_ars", "stock_qty", "pack_units", "unit_variant", "is_active")
+    """Sección "Stock y precios": reposición rápida editando en la lista."""
+
+    list_display = ("product", "name", "sku", "price_ars", "stock_qty", "is_active")
+    list_editable = ("price_ars", "stock_qty", "is_active")
     list_filter = ("is_active", "product")
     search_fields = ("sku", "product__name", "name")

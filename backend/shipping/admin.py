@@ -23,11 +23,8 @@ class ShippingZoneAdmin(admin.ModelAdmin):
     inlines = [PostalCodeRuleInline]
 
 
-@admin.register(PostalCodeRule)
-class PostalCodeRuleAdmin(admin.ModelAdmin):
-    list_display = ("cp_from", "cp_to", "zone", "note")
-    list_filter = ("zone",)
-    search_fields = ("note",)
+# PostalCodeRule no tiene sección propia en el menú: se edita inline
+# dentro de cada zona de envío (PostalCodeRuleInline).
 
 
 @admin.register(PickupPoint)
