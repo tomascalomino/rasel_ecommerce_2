@@ -2278,3 +2278,30 @@ textarea:focus {
     padding: 18px;
   }
 }
+
+/* ── Burbuja flotante de WhatsApp ── */
+.wa-float {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9000;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #25d366;
+  color: #fff;
+  box-shadow: var(--shadow-lifted);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.wa-float:hover {
+  transform: scale(1.06);
+  box-shadow: 0 20px 48px rgba(20, 32, 27, .22);
+}
+
+.wa-float svg {
+  display: block;
+}
