@@ -4,11 +4,26 @@
 <div class="rasel-help">
   <h2>Cómo dar acceso al admin</h2>
   <ol>
-    <li>Creá el usuario con el botón <strong>«Agregar usuario»</strong>.</li>
-    <li>En la ficha del usuario, tildá la opción de <strong>staff</strong> (permite entrar a este panel).</li>
-    <li>En <strong>Grupos</strong>, asignale <strong>Operador</strong> (gestiona órdenes, stock, productos y envíos; no borra ni administra usuarios) o <strong>Solo lectura</strong> (solo consulta, no edita nada).</li>
-    <li>La tilde de <strong>superusuario</strong> es solo para el dueño: puede hacer absolutamente todo, incluido borrar datos y crear usuarios.</li>
+    <li>Creá el usuario con el botón <strong>«Agregar usuario»</strong>. La opción de <strong>staff</strong> ya viene tildada: es la llave de entrada a este panel (sin ella el usuario no puede entrar al admin aunque tenga grupos; destildala solo si esa cuenta no debe entrar). Con staff pero sin grupos, entra pero no ve ninguna sección.</li>
+    <li>En <strong>Grupos</strong>, asignale <strong>Operador</strong> o <strong>Solo lectura</strong>. El grupo define qué puede hacer una vez adentro.</li>
+    <li>La tilde de <strong>superusuario</strong> es solo para el dueño: da todos los permisos sin necesidad de grupos (pero también necesita la tilde de staff para entrar).</li>
   </ol>
+
+  <h3>Qué puede hacer cada rol</h3>
+  <div class="rasel-roles">
+    <table>
+      <thead>
+        <tr><th>Puede…</th><th>Dueño (superusuario)</th><th>Operador</th><th>Solo lectura</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Ver órdenes, productos, stock y envíos</td><td>✔</td><td>✔</td><td>✔</td></tr>
+        <tr><td>Marcar órdenes pagadas / cancelar</td><td>✔</td><td>✔</td><td>—</td></tr>
+        <tr><td>Editar productos, stock, precios y envíos</td><td>✔</td><td>✔</td><td>—</td></tr>
+        <tr><td>Borrar productos, zonas u órdenes</td><td>✔</td><td>—</td><td>—</td></tr>
+        <tr><td>Crear usuarios y asignar roles</td><td>✔</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 {{ block.super }}
 {% endblock %}

@@ -17,13 +17,19 @@ class RaselAdminConfig(AdminConfig):
     def ready(self):
         super().ready()  # autodiscover: registra todos los ModelAdmin
         from django.contrib import admin
-        from django.contrib.auth.models import Group
+        from django.contrib.auth.models import Group, User
 
         from .admin import sync_roles
+        from .user_admin import RaselUserAdmin
 
         # Groups fuera del menú: los roles se asignan desde la ficha del
         # usuario y se siembran solos (sync_roles).
         if admin.site.is_registered(Group):
             admin.site.unregister(Group)
+
+        # Alta de usuario con staff pre-tildado.
+        if admin.site.is_registered(User):
+            admin.site.unregister(User)
+        admin.site.register(User, RaselUserAdmin)
 
         post_migrate.connect(sync_roles, sender=self, dispatch_uid="config.sync_roles")

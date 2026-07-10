@@ -53,32 +53,3 @@
 </div>
 {{ block.super }}
 {% endblock %}
-
-{% block sidebar %}
-<div id="content-related">
-  <div class="module rasel-roles">
-    <h2>Roles y accesos</h2>
-    <p>Cada usuario del admin tiene uno de estos tres roles:</p>
-    <table>
-      <thead>
-        <tr><th>Puede…</th><th>Dueño</th><th>Operador</th><th>Solo lectura</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Ver órdenes, productos, stock y envíos</td><td>✔</td><td>✔</td><td>✔</td></tr>
-        <tr><td>Marcar órdenes pagadas / cancelar</td><td>✔</td><td>✔</td><td>—</td></tr>
-        <tr><td>Editar productos, stock, precios y envíos</td><td>✔</td><td>✔</td><td>—</td></tr>
-        <tr><td>Borrar productos, zonas u órdenes</td><td>✔</td><td>—</td><td>—</td></tr>
-        <tr><td>Crear usuarios y asignar roles</td><td>✔</td><td>—</td><td>—</td></tr>
-      </tbody>
-    </table>
-    {% if user.is_superuser %}
-      <p class="rasel-roles-help">
-        Para dar acceso: <a href="{% url 'admin:auth_user_add' %}">creá un usuario</a>,
-        tildá la opción de <strong>staff</strong> y asignale el grupo
-        <strong>Operador</strong> o <strong>Solo lectura</strong>.
-        El rol Dueño es el usuario con tilde de <strong>superusuario</strong>.
-      </p>
-    {% endif %}
-  </div>
-</div>
-{% endblock %}
