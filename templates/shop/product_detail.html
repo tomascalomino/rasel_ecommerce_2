@@ -33,7 +33,7 @@
     </div>
 
     {% if product.min_price_ars %}
-      <div class="detail-price">Desde {{ product.min_price_ars|ars }}</div>
+      <div class="detail-price">{{ product.min_price_ars|ars }}</div>
     {% endif %}
 
     {% for v in product.variants.all %}
@@ -143,7 +143,7 @@
           <div>
             <div class="price-meta">Precio</div>
             <div class="price">
-              {% if p.min_price_ars %}Desde {{ p.min_price_ars|ars }}{% else %}—{% endif %}
+              {% if p.min_price_ars %}{{ p.min_price_ars|ars }}{% else %}—{% endif %}
             </div>
           </div>
           <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>

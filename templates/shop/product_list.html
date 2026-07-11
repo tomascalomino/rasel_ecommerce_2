@@ -154,7 +154,7 @@
           <div class="muted price-meta">Precio</div>
           <div class="price">
             {% if p.min_price_ars %}
-            Desde {{ p.min_price_ars|ars }}
+            {{ p.min_price_ars|ars }}
             {% else %}
             —
             {% endif %}
