@@ -106,7 +106,9 @@
     <div class="alerts">
       <div class="alert" style="text-align: center; border-color: var(--gold);">
         <p>Una vez realizada la transferencia, enviá el comprobante de pago vía WhatsApp al:<br>
-          <strong style="font-size: 1.1em; color: var(--text);">{{ whatsapp }}</strong>
+          <a href="{{ whatsapp_link }}?text=Hola%20RaSel!%20Te%20env%C3%ADo%20el%20comprobante%20de%20mi%20orden%20%23{{ order.id }}." target="_blank" rel="noopener">
+            <strong style="font-size: 1.1em; color: var(--text);">{{ whatsapp }}</strong>
+          </a>
         </p>
         <p class="muted tiny mt-6">
           (Indicá tu número de orden <strong>#{{ order.id }}</strong>).<br>

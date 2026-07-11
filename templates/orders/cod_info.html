@@ -23,13 +23,15 @@
       <div class="alert alert-success">
         {% if order.delivery_method == "pickup" %}
         <p>Tu pedido ha sido realizado y será abonado en efectivo al momento
-          del retiro. Contactanos vía WhatsApp al <strong>{{ whatsapp }}</strong>
+          del retiro. Contactanos vía WhatsApp al
+          <a href="{{ whatsapp_link }}?text=Hola%20RaSel!%20Quiero%20coordinar%20mi%20orden%20%23{{ order.id }}." target="_blank" rel="noopener"><strong>{{ whatsapp }}</strong></a>
           indicando tu número de orden (<strong>#{{ order.id }}</strong>) para
           coordinar el retiro en <strong>{{ order.pickup_point_label }}</strong>.</p>
         {% else %}
         <p>Tu pedido ha sido realizado y será abonado en efectivo al momento
           de la entrega. Será entregado dentro de las <strong>48hs</strong> de
-          realizado. Contactanos vía WhatsApp al <strong>{{ whatsapp }}</strong>
+          realizado. Contactanos vía WhatsApp al
+          <a href="{{ whatsapp_link }}?text=Hola%20RaSel!%20Quiero%20coordinar%20mi%20orden%20%23{{ order.id }}." target="_blank" rel="noopener"><strong>{{ whatsapp }}</strong></a>
           indicando tu número de orden (<strong>#{{ order.id }}</strong>) para
           coordinar la entrega.</p>
         {% endif %}
