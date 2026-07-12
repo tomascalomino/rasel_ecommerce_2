@@ -77,7 +77,7 @@ def _totals_block(order) -> str:
         )
     zona = f" ({order.shipping_zone})" if order.shipping_zone else ""
     if getattr(order, "shipping_carrier_arranged", False):
-        envio = "a cargo del comprador (a coordinar con el correo)"
+        envio = "a cargo del comprador y a coordinar vía WhatsApp"
     elif shipping and shipping > 0:
         envio = f"${shipping}"
     else:
@@ -196,9 +196,13 @@ def _owner_body(order) -> str:
         extra = f" ({order.address_extra})" if getattr(order, "address_extra", "") else ""
         entrega = f"Envío: {order.address_line}{extra}, {order.city} ({order.postal_code})"
     return (
+        # Sin <email> entre corchetes angulares: Brevo genera una parte HTML
+        # a partir del texto plano y los interpreta como etiquetas (se pierden).
         f"Nueva orden #{order.id} ({order.get_status_display()})\n"
         f"Método de pago: {order.payment_method}\n\n"
-        f"Cliente: {order.full_name} <{order.email}> {order.phone}\n"
+        f"Cliente: {order.full_name}\n"
+        f"Email: {order.email}\n"
+        f"Teléfono: {order.phone or '-'}\n"
         f"{entrega}\n\n"
         f"Detalle:\n{_build_lines(order)}\n\n"
         f"{_totals_block(order)}\n"

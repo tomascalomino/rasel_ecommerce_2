@@ -350,6 +350,15 @@ class OrderAdminActionTests(TestCase):
         model_admin.save_model(req, order, None, change=True)
         self.assertEqual(len(mail.outbox), 2)
 
+    def test_owner_email_shows_customer_email_without_angle_brackets(self):
+        """Brevo genera HTML desde el texto plano: <email> se pierde como etiqueta."""
+        from .emails import _owner_body
+
+        order = self._create_transfer_order()
+        body = _owner_body(order)
+        self.assertIn("Email: buyer@example.com", body)
+        self.assertNotIn("<buyer@example.com>", body)
+
     def test_cancel_restores_stock_once(self):
         order = self._create_transfer_order(qty=2)
         self.variant.refresh_from_db()
