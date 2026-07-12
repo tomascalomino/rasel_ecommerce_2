@@ -1981,6 +1981,17 @@ textarea:focus {
   color: var(--gold);
 }
 
+/* Acción del nudge: vuelve a la tienda para sumar productos. Línea propia
+   (block) para que sea buen tap-target en mobile. */
+.ship-nudge-link {
+  display: block;
+  margin-top: 4px;
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .ship-legend {
   margin-top: 6px;
   padding-top: 6px;

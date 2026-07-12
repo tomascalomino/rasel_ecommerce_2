@@ -154,7 +154,7 @@
         {% endfor %}
       </div>
 
-      <div class="ship-summary" data-subtotal="{{ cart.total }}" data-quote-url="{% url 'shipping:quote' %}">
+      <div class="ship-summary" data-subtotal="{{ cart.total }}" data-quote-url="{% url 'shipping:quote' %}" data-shop-url="{% url 'shop:product_list' %}">
         <div class="row">
           <span class="label-sm">Subtotal</span>
           <span id="sum-subtotal">{{ cart.total|ars }}</span>
@@ -185,6 +185,7 @@
   var sumShipping = document.getElementById("sum-shipping");
   var sumTotal = document.getElementById("sum-total");
   var quoteUrl = summary.getAttribute("data-quote-url");
+  var shopUrl = summary.getAttribute("data-shop-url");
   var subtotal = parseFloat(summary.getAttribute("data-subtotal")) || 0;
   var timer;
 
@@ -299,7 +300,8 @@
     var nudge = "";
     if (!data.free && remaining > 0) {
       nudge = '<div class="ship-nudge">🎁 Agregá <strong>' + money(remaining) +
-        "</strong> para envío gratis</div>";
+        "</strong> para envío gratis" +
+        '<a class="ship-nudge-link" href="' + shopUrl + '">Agregar más productos →</a></div>';
     }
 
     confirmEl.hidden = false;
@@ -336,8 +338,35 @@
     timer = setTimeout(fetchQuote, 400);
   });
 
+  // Persistencia liviana del form (sessionStorage): el link "Agregar más
+  // productos" del nudge saca al cliente del checkout; al volver, los campos
+  // se restauran para no castigarlo con re-tipeo. Solo se llenan campos
+  // vacíos (un POST con errores re-renderiza valores del server y esos ganan).
+  // try/catch silencioso: la persistencia nunca rompe el checkout.
+  var PERSIST_KEY = "rasel_checkout_form";
+  var PERSIST_FIELDS = [
+    "full_name", "email", "phone",
+    "address_line", "address_extra", "city", "postal_code"
+  ];
+  try {
+    var saved = JSON.parse(sessionStorage.getItem(PERSIST_KEY) || "{}");
+    PERSIST_FIELDS.forEach(function (name) {
+      var input = document.getElementById("id_" + name);
+      if (!input) return;
+      if (!input.value && saved[name]) input.value = saved[name];
+      input.addEventListener("input", function () {
+        try {
+          var data = JSON.parse(sessionStorage.getItem(PERSIST_KEY) || "{}");
+          data[name] = input.value;
+          sessionStorage.setItem(PERSIST_KEY, JSON.stringify(data));
+        } catch (e) { /* silencioso */ }
+      });
+    });
+  } catch (e) { /* silencioso */ }
+
   // Estado inicial según el radio marcado (importa en re-renders con errores):
   // en envío re-cotiza si el CP ya viene cargado; en retiro aplica el modo.
+  // Corre después de la restauración para que un CP restaurado re-cotice solo.
   applyDelivery(deliveryMode());
 })();
 </script>
