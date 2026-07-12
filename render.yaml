@@ -43,3 +43,14 @@ services:
       # DB externa (Neon/Supabase): pegar la connection string en el dashboard de Render.
       - key: DATABASE_URL
         sync: false
+      # Email transaccional vía API HTTP de Brevo (Render free bloquea SMTP saliente).
+      # Sin esta key los emails van al backend de consola y NO se entregan.
+      # Crear la key en Brevo (SMTP & API → API Keys) y pegarla en el dashboard.
+      - key: BREVO_API_KEY
+        sync: false
+      # El remitente debe estar verificado en Brevo (dominio o email).
+      - key: DEFAULT_FROM_EMAIL
+        value: "RaSel <no-reply@rasel.ar>"
+      # Aviso de nuevas órdenes al dueño (opcional): email destino.
+      - key: ORDER_NOTIFICATION_EMAIL
+        sync: false

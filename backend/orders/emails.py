@@ -245,57 +245,97 @@ def _paid_body(order) -> str:
     )
 
 
+def _shipped_body(order) -> str:
+    whatsapp = _whatsapp()
+    if order.delivery_method == "pickup":
+        estado = (
+            f"¡Tu pedido está listo para retirar en {order.pickup_point_label}!\n"
+            f"Cualquier duda, escribinos por WhatsApp al {whatsapp} indicando "
+            f"tu número de orden (#{order.id}).\n"
+        )
+    else:
+        estado = "¡Tu pedido fue despachado y está en camino!\n"
+        if getattr(order, "shipping_carrier_arranged", False):
+            estado += (
+                f"Cualquier duda sobre la entrega, escribinos por WhatsApp al "
+                f"{whatsapp} indicando tu número de orden (#{order.id}).\n"
+            )
+    return (
+        f"Hola {order.full_name}!\n\n"
+        f"{estado}\n"
+        f"Detalle:\n{_build_lines(order)}\n\n"
+        f"{_totals_block(order)}\n\n"
+        f"{_delivery_block(order)}\n"
+        f"Gracias por elegirnos!\nRaSel — Aceite de Oliva\n"
+    )
+
+
+def _idempotent_send(order_id: int, flag_field: str, send_fn, label: str) -> None:
+    """
+    Claim atómico: marcamos el flag antes de mandar para evitar reenvíos ante
+    disparadores concurrentes (webhooks repetidos, retorno + webhook, doble clic
+    en el admin). Si el envío falla, se libera el claim para poder reintentar.
+    """
+    from .models import Order
+
+    try:
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(id=order_id)
+            if getattr(order, flag_field):
+                return
+            setattr(order, flag_field, True)
+            order.save(update_fields=[flag_field])
+    except Order.DoesNotExist:
+        return
+
+    try:
+        order.refresh_from_db()
+        send_fn(order)
+        logger.info("Email de %s enviado order=%s", label, order_id)
+    except Exception:
+        Order.objects.filter(id=order_id).update(**{flag_field: False})
+        logger.exception("Error enviando email de %s order %s", label, order_id)
+
+
 def send_payment_confirmed(order_id: int) -> None:
     """
     Email de 'pago confirmado' al cliente (se dispara cuando el dueño valida la
     transferencia en el admin). Idempotente vía Order.paid_email_sent, separado del
     mail de 'pedido reservado' (Order.confirmation_email_sent).
     """
-    from .models import Order
-
-    try:
-        with transaction.atomic():
-            order = Order.objects.select_for_update().get(id=order_id)
-            if order.paid_email_sent:
-                return
-            order.paid_email_sent = True
-            order.save(update_fields=["paid_email_sent"])
-    except Order.DoesNotExist:
-        return
-
-    try:
-        order.refresh_from_db()
-        _send_email(
+    _idempotent_send(
+        order_id,
+        "paid_email_sent",
+        lambda order: _send_email(
             f"RaSel — Pago confirmado · Pedido #{order.id}",
             _paid_body(order),
             order.email,
-        )
-        logger.info("Email de pago confirmado enviado order=%s", order_id)
-    except Exception:
-        Order.objects.filter(id=order_id).update(paid_email_sent=False)
-        logger.exception("Error enviando email de pago confirmado order %s", order_id)
+        ),
+        "pago confirmado",
+    )
+
+
+def send_order_shipped(order_id: int) -> None:
+    """
+    Email de 'pedido enviado' (o 'listo para retirar' si es pickup) al cliente.
+    Se dispara al marcar la orden como enviada en el admin. Idempotente vía
+    Order.shipped_email_sent.
+    """
+    _idempotent_send(
+        order_id,
+        "shipped_email_sent",
+        lambda order: _send_email(
+            (
+                f"RaSel — Tu pedido #{order.id} está listo para retirar"
+                if order.delivery_method == "pickup"
+                else f"RaSel — Tu pedido #{order.id} está en camino"
+            ),
+            _shipped_body(order),
+            order.email,
+        ),
+        "pedido enviado",
+    )
 
 
 def send_order_confirmation(order_id: int) -> None:
-    from .models import Order
-
-    # Claim atómico: marcamos enviado antes de mandar para evitar reenvíos
-    # ante webhooks concurrentes.
-    try:
-        with transaction.atomic():
-            order = Order.objects.select_for_update().get(id=order_id)
-            if order.confirmation_email_sent:
-                return
-            order.confirmation_email_sent = True
-            order.save(update_fields=["confirmation_email_sent"])
-    except Order.DoesNotExist:
-        return
-
-    try:
-        order.refresh_from_db()
-        _send(order)
-        logger.info("Email de confirmación enviado order=%s", order_id)
-    except Exception:
-        # Liberamos el claim para poder reintentar más adelante.
-        Order.objects.filter(id=order_id).update(confirmation_email_sent=False)
-        logger.exception("Error enviando email de orden %s", order_id)
+    _idempotent_send(order_id, "confirmation_email_sent", _send, "confirmación")

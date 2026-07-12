@@ -81,6 +81,8 @@ class Order(models.Model):
     confirmation_email_sent = models.BooleanField(default=False)
     # Email de "pago confirmado" (se envía al marcar la orden como pagada en el admin)
     paid_email_sent = models.BooleanField(default=False)
+    # Email de "pedido enviado / listo para retirar" (al marcar la orden como enviada)
+    shipped_email_sent = models.BooleanField(default=False)
     # Idempotencia de reposición de stock al cancelar (evita devolver stock dos veces)
     stock_restored = models.BooleanField("stock repuesto", default=False)
 

@@ -5,7 +5,7 @@ from django.utils.html import format_html
 
 from shop.models import Variant
 from .models import Order, OrderItem
-from .emails import send_payment_confirmed
+from .emails import send_order_shipped, send_payment_confirmed
 
 
 class OrderItemInline(admin.TabularInline):
@@ -24,6 +24,18 @@ def mark_paid(modeladmin, request, queryset):
         send_payment_confirmed(order.id)
         count += 1
     messages.success(request, f"{count} orden(es) marcadas como pagadas y notificadas al cliente.")
+
+
+@admin.action(description="Marcar como enviada y avisar al cliente", permissions=["change"])
+def mark_shipped(modeladmin, request, queryset):
+    count = 0
+    for order in queryset:
+        if order.status != "shipped":
+            order.status = "shipped"
+            order.save(update_fields=["status"])
+        send_order_shipped(order.id)
+        count += 1
+    messages.success(request, f"{count} orden(es) marcadas como enviadas y notificadas al cliente.")
 
 
 @admin.action(description="Cancelar y devolver stock", permissions=["change"])
@@ -64,7 +76,22 @@ class OrderAdmin(admin.ModelAdmin):
         "pickup_point_label",
     )
     inlines = [OrderItemInline]
-    actions = [mark_paid, cancel_and_restore_stock]
+    actions = [mark_paid, mark_shipped, cancel_and_restore_stock]
+
+    def save_model(self, request, obj, form, change):
+        # Editar el estado desde el formulario también avisa al cliente
+        # (los emails son idempotentes: no se duplican con las acciones).
+        old_status = None
+        if change:
+            old_status = (
+                Order.objects.filter(pk=obj.pk).values_list("status", flat=True).first()
+            )
+        super().save_model(request, obj, form, change)
+        if change and old_status != obj.status:
+            if obj.status == "paid":
+                send_payment_confirmed(obj.id)
+            elif obj.status == "shipped":
+                send_order_shipped(obj.id)
 
     @admin.display(description="Estado", ordering="status")
     def status_badge(self, obj):

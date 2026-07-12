@@ -9,7 +9,9 @@ from django.urls import reverse
 from shipping.models import PickupPoint
 from shipping.services import resolve_shipping
 from shop.models import Category, Product, Variant
-from .admin import mark_paid, cancel_and_restore_stock
+from django.contrib import admin as django_admin
+
+from .admin import OrderAdmin, cancel_and_restore_stock, mark_paid, mark_shipped
 from .models import Order
 
 
@@ -309,6 +311,44 @@ class OrderAdminActionTests(TestCase):
         # Idempotente: repetir la acción no reenvía el email.
         mark_paid(None, req, Order.objects.filter(id=order.id))
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_mark_shipped_sets_status_and_emails_once(self):
+        order = self._create_transfer_order()
+        mail.outbox.clear()
+
+        req = _request_with_messages()
+        mark_shipped(None, req, Order.objects.filter(id=order.id))
+
+        order.refresh_from_db()
+        self.assertEqual(order.status, "shipped")
+        self.assertEqual(len(mail.outbox), 1)  # "pedido enviado" al cliente
+        self.assertIn("en camino", mail.outbox[0].subject)
+        self.assertIn("despachado", mail.outbox[0].body)
+
+        # Idempotente: repetir la acción no reenvía el email.
+        mark_shipped(None, req, Order.objects.filter(id=order.id))
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_status_change_in_admin_form_sends_emails(self):
+        """Editar el estado desde el formulario del admin también avisa al cliente."""
+        order = self._create_transfer_order()
+        mail.outbox.clear()
+        model_admin = OrderAdmin(Order, django_admin.site)
+        req = _request_with_messages()
+
+        order.status = "paid"
+        model_admin.save_model(req, order, None, change=True)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Pago confirmado", mail.outbox[0].subject)
+
+        order.status = "shipped"
+        model_admin.save_model(req, order, None, change=True)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertIn("en camino", mail.outbox[1].subject)
+
+        # Guardar sin cambiar el estado no reenvía nada.
+        model_admin.save_model(req, order, None, change=True)
+        self.assertEqual(len(mail.outbox), 2)
 
     def test_cancel_restores_stock_once(self):
         order = self._create_transfer_order(qty=2)
