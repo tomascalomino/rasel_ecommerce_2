@@ -138,14 +138,14 @@ def _customer_body(order) -> str:
         )
         if order.delivery_method == "pickup":
             entrega = (
-                "\nEl retiro se coordina por el mismo WhatsApp donde envíes "
+                "\nEl retiro se coordina por el mismo WhatsApp cuando envíes "
                 "el comprobante.\n"
                 f"Te avisamos cuando tu pedido esté listo para retirar en "
                 f"{order.pickup_point_label}.\n"
             )
         elif order.shipping_carrier_arranged:
             entrega = (
-                "\nLa entrega se coordina por el mismo WhatsApp donde envíes "
+                "\nLa entrega se coordina por el mismo WhatsApp cuando envíes "
                 "el comprobante.\n"
             )
         else:
