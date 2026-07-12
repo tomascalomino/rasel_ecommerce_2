@@ -197,6 +197,7 @@ def _finalize_approved_payment(external_reference: str, payment_id: str, mp_stat
                 email=draft.email,
                 phone=draft.phone,
                 address_line=draft.address_line,
+                address_extra=draft.address_extra,
                 city=draft.city,
                 postal_code=draft.postal_code,
                 delivery_method=draft.delivery_method,

@@ -69,6 +69,11 @@
             {{ form.address_line.errors }}
           </div>
           <div class="field-wrap">
+            {{ form.address_extra.label_tag }}
+            {{ form.address_extra }}
+            {{ form.address_extra.errors }}
+          </div>
+          <div class="field-wrap">
             {{ form.city.label_tag }}
             {{ form.city }}
             {{ form.city.errors }}

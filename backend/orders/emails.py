@@ -93,7 +93,8 @@ def _delivery_block(order) -> str:
     """Bloque de entrega: dirección de envío o punto de retiro (snapshot)."""
     if getattr(order, "delivery_method", "ship") == "pickup":
         return f"Retiro en:\n  {order.pickup_point_label}\n"
-    return f"Envío a:\n  {order.address_line}, {order.city} ({order.postal_code})\n"
+    extra = f" ({order.address_extra})" if getattr(order, "address_extra", "") else ""
+    return f"Envío a:\n  {order.address_line}{extra}, {order.city} ({order.postal_code})\n"
 
 
 def _shipping_legend(order) -> str:
@@ -192,7 +193,8 @@ def _owner_body(order) -> str:
     if order.delivery_method == "pickup":
         entrega = f"Retiro en: {order.pickup_point_label}"
     else:
-        entrega = f"Envío: {order.address_line}, {order.city} ({order.postal_code})"
+        extra = f" ({order.address_extra})" if getattr(order, "address_extra", "") else ""
+        entrega = f"Envío: {order.address_line}{extra}, {order.city} ({order.postal_code})"
     return (
         f"Nueva orden #{order.id} ({order.get_status_display()})\n"
         f"Método de pago: {order.payment_method}\n\n"

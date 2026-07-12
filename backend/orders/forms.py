@@ -20,14 +20,21 @@ class CheckoutForm(forms.Form):
         empty_label=None,
     )
 
-    full_name = forms.CharField(max_length=120)
-    email = forms.EmailField()
-    phone = forms.CharField(max_length=30, required=False)
+    full_name = forms.CharField(max_length=120, label="Nombre y apellido")
+    email = forms.EmailField(label="Email")
+    phone = forms.CharField(max_length=30, required=False, label="Teléfono")
 
     # Requeridos solo para envío a domicilio (ver clean()).
-    address_line = forms.CharField(max_length=200, required=False)
-    city = forms.CharField(max_length=100, required=False)
-    postal_code = forms.CharField(max_length=20, required=False)
+    address_line = forms.CharField(max_length=200, required=False, label="Dirección")
+    # Opcional: piso, depto, timbre, referencias. Nunca es obligatorio.
+    address_extra = forms.CharField(
+        max_length=200,
+        required=False,
+        label="Piso, depto u otra información (opcional)",
+        widget=forms.TextInput(attrs={"placeholder": "Ej. Piso 3, depto B, timbre 2"}),
+    )
+    city = forms.CharField(max_length=100, required=False, label="Ciudad")
+    postal_code = forms.CharField(max_length=20, required=False, label="Código postal")
 
     PAYMENT_CHOICES = [
         ("mp", "Mercado Pago"),
@@ -59,6 +66,7 @@ class CheckoutForm(forms.Form):
                 self.add_error("pickup_point", "Elegí el punto de retiro.")
             # La orden de retiro no usa dirección: se guarda vacía.
             cleaned["address_line"] = ""
+            cleaned["address_extra"] = ""
             cleaned["city"] = ""
             cleaned["postal_code"] = ""
         else:

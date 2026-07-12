@@ -35,6 +35,7 @@ class PaymentDraft(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=30, blank=True)
     address_line = models.CharField(max_length=200, blank=True, default="")
+    address_extra = models.CharField(max_length=200, blank=True, default="")
     city = models.CharField(max_length=100, blank=True, default="")
     postal_code = models.CharField(max_length=20, blank=True, default="")
 

@@ -37,6 +37,9 @@ class Order(models.Model):
 
     # Con retiro en punto la dirección queda vacía.
     address_line = models.CharField("dirección", max_length=200, blank=True, default="")
+    address_extra = models.CharField(
+        "piso / depto / info adicional", max_length=200, blank=True, default=""
+    )
     city = models.CharField("ciudad", max_length=100, blank=True, default="")
     postal_code = models.CharField("código postal", max_length=20, blank=True, default="")
 
