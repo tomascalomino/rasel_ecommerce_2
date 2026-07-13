@@ -72,7 +72,7 @@ class TransferCheckoutTests(TestCase):
         body = mail.outbox[0].body
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
-        # CABA/AMBA: promesa de entrega en 48hs desde el pago.
+        # CABA/GBA: promesa de entrega en 48hs desde el pago.
         self.assertIn("48hs", body)
 
     def test_transfer_interior_email_coordinates_by_whatsapp(self):
@@ -99,7 +99,7 @@ class TransferCheckoutTests(TestCase):
 
 
 class CodCheckoutTests(TestCase):
-    """Efectivo a contraentrega: solo en zonas con cod_allowed (CABA/AMBA)."""
+    """Efectivo a contraentrega: solo en zonas con cod_allowed (CABA/GBA)."""
 
     def setUp(self):
         self.category = Category.objects.create(name="Aceites")

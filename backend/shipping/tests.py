@@ -62,7 +62,7 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(q.zone_code, "national")
 
     def test_1763_is_amba_not_free(self):
-        # 1763 = Virrey del Pino (La Matanza), no La Reja: debe cobrar AMBA.
+        # 1763 = Virrey del Pino (La Matanza), no La Reja: debe cobrar GBA.
         q = resolve_shipping("1763")
         self.assertEqual(q.zone_code, "amba")
         self.assertEqual(q.cost, Decimal("7000.00"))
@@ -73,7 +73,7 @@ class ResolveShippingTests(TestCase):
         self.assertEqual(resolve_shipping("1743").zone_code, "free")
 
     def test_magdalena_is_national_not_amba(self):
-        # 1913 = Magdalena (partido rural costero): no es AMBA, cae en nacional.
+        # 1913 = Magdalena (partido rural costero): no es GBA, cae en nacional.
         q = resolve_shipping("1913")
         self.assertEqual(q.zone_code, "national")
         self.assertTrue(q.carrier_arranged)
@@ -87,13 +87,13 @@ class ResolveShippingTests(TestCase):
             self.assertTrue(q.carrier_arranged, cp)
 
     def test_amba_boundary_at_1893(self):
-        # El rango AMBA corta en 1893 (igual que en el admin de producción).
+        # El rango GBA corta en 1893 (igual que en el admin de producción).
         self.assertEqual(resolve_shipping("1893").zone_code, "amba")
         self.assertEqual(resolve_shipping("1894").zone_code, "national")
 
 
 class CodAllowedTests(TestCase):
-    """Contraentrega habilitada solo en zonas de reparto propio (CABA/AMBA)."""
+    """Contraentrega habilitada solo en zonas de reparto propio (CABA/GBA)."""
 
     def test_free_zone_allows_cod(self):
         self.assertTrue(resolve_shipping("1425").cod_allowed)
@@ -142,7 +142,7 @@ class FreeShippingThresholdTests(TestCase):
         self.assertEqual(q.cost, Decimal("7000.00"))
 
     def test_threshold_does_not_affect_amba_or_national(self):
-        # AMBA sigue fijo sin importar el subtotal.
+        # GBA sigue fijo sin importar el subtotal.
         self.assertEqual(
             resolve_shipping("1828", subtotal=Decimal("1")).cost, Decimal("7000.00")
         )
@@ -179,7 +179,7 @@ class ShippingInfoPageTests(TestCase):
     def test_page_renders_zones(self):
         resp = self.client.get(reverse("shipping_info"))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "AMBA")
+        self.assertContains(resp, "Gran Buenos Aires")
         self.assertContains(resp, "Resto del país")
 
 
@@ -192,7 +192,7 @@ class MercadoPagoShippingLineTests(TestCase):
             city="Ciudad",
             postal_code="1828",
             shipping_cost=shipping_cost,
-            shipping_zone="AMBA",
+            shipping_zone="Gran Buenos Aires",
             total_amount=Decimal("17000.00"),
             items=[
                 {

@@ -74,7 +74,7 @@ def checkout(request):
                 form.add_error(
                     "payment_method",
                     "El pago en efectivo a contraentrega está disponible solo "
-                    "para CABA y AMBA. Elegí otro método de pago.",
+                    "para CABA y GBA. Elegí otro método de pago.",
                 )
                 return _render_checkout(request, cart, form)
 

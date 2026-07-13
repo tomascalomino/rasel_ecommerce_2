@@ -73,7 +73,7 @@ class ShippingZone(models.Model):
         default=False,
         help_text=(
             "Permite pagar en efectivo a contraentrega en esta zona (solo zonas "
-            "donde RaSel reparte en persona, ej. CABA/AMBA)."
+            "donde RaSel reparte en persona, ej. CABA/GBA)."
         ),
     )
     is_active = models.BooleanField("activa", default=True)

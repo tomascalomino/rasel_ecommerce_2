@@ -22,13 +22,12 @@ ZONES = [
     },
     {
         "code": "amba",
-        "name": "AMBA",
+        "name": "Gran Buenos Aires",
         "price": Decimal("7000.00"),
         "is_default": False,
         "sort_order": 2,
         "description": (
-            "Área Metropolitana de Buenos Aires. "
-            "Envío con un valor fijo."
+            "Gran Buenos Aires. Envío con un valor fijo."
         ),
         "rules": [
             # El Gran La Plata (City Bell 1896, La Plata 1900, Berisso 1923,

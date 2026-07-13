@@ -121,7 +121,7 @@
           </label>
           {% if radio.data.value == "cod" %}
           <p id="cod-hint" class="muted tiny">
-            Disponible solo en CABA y AMBA (entrega en persona). Ingresá tu código postal.
+            Disponible solo en CABA y GBA (entrega en persona). Ingresá tu código postal.
           </p>
           {% endif %}
           {% endfor %}
@@ -192,7 +192,7 @@
   var codRadio = document.querySelector('input[name="payment_method"][value="cod"]');
   var codHint = document.getElementById("cod-hint");
   var COD_HINT_DEFAULT =
-    "Disponible solo en CABA y AMBA (entrega en persona). Ingresá tu código postal.";
+    "Disponible solo en CABA y GBA (entrega en persona). Ingresá tu código postal.";
 
   var deliveryRadios = document.querySelectorAll('input[name="delivery_method"]');
   var shipFields = document.getElementById("ship-fields");
