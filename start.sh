@@ -4,7 +4,9 @@ set -o errexit
 # Ensure we run inside the backend folder where manage.py lives
 cd backend
 
-# Run migrations optionally (Render ya corre preDeployCommand)
+# build.sh ejecuta las migraciones durante el deploy. Esta bandera es un
+# recurso excepcional para arrancar manualmente con migraciones, no el flujo
+# normal de producción.
 if [ "${RUN_MIGRATIONS_ON_START:-0}" = "1" ]; then
 	python manage.py migrate --noinput
 fi

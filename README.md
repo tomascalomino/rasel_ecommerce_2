@@ -1,117 +1,28 @@
-# RaSel E-commerce
+# RaSel
 
-Pequeño proyecto de ejemplo de tienda online construido con Django. Contiene módulos para catálogo, carrito, pagos y pedidos, además de plantillas y estilos básicos para una interfaz ligera y responsiva. Ideal para pruebas, demos o como punto de partida para un e-commerce.
+Tienda online de aceite de oliva. Producción: [rasel.ar](https://rasel.ar).
 
-## Estructura del repo
+RaSel está construida con Django y PostgreSQL, se despliega en Render y usa
+Cloudflare para DNS, proxy e imágenes en R2. El checkout ofrece transferencia y
+efectivo. Mercado Pago Checkout Pro está implementado con reservas, webhooks y
+conciliación, pero queda oculto por defecto hasta completar la configuración
+externa y habilitar `MP_CHECKOUT_ENABLED`.
 
-- `README.md`
-- `pyproject.toml`
-- `requirements.txt`
-- `.gitignore`
-- `docs/`
-  - `DECISIONS.md`
-  - `ROADMAP.md`
-  - `RUNBOOK.md`
-  - `SETUP.md`
-- `backend/`
-  - `db.sqlite3`
-  - `manage.py`
-  - `config/`
-    - `__init__.py`
-    - `asgi.py`
-    - `settings.py`
-    - `urls.py`
-    - `wsgi.py`
-  - `cart/`
-    - `__init__.py`
-    - `admin.py`
-    - `apps.py`
-    - `cart.py`
-    - `context_processors.py`
-    - `models.py`
-    - `tests.py`
-    - `urls.py`
-    - `views.py`
-    - `migrations/`
-      - `__init__.py`
-  - `orders/`
-    - `__init__.py`
-    - `admin.py`
-    - `apps.py`
-    - `forms.py`
-    - `models.py`
-    - `tests.py`
-    - `urls.py`
-    - `views.py`
-    - `migrations/`
-      - `0001_initial.py`
-      - `0002_order_mp_payment_id_order_mp_preference_id_and_more.py`
-      - `__init__.py`
-  - `payments/`
-    - `__init__.py`
-    - `admin.py`
-    - `apps.py`
-    - `mercadopago.py`
-    - `models.py`
-    - `tests.py`
-    - `urls.py`
-    - `views.py`
-    - `migrations/`
-      - `0001_initial.py`
-      - `__init__.py`
-  - `shop/`
-    - `__init__.py`
-    - `admin.py`
-    - `apps.py`
-    - `models.py`
-    - `tests.py`
-    - `urls.py`
-    - `views.py`
-    - `migrations/`
-      - `0001_initial.py`
-      - `__init__.py`
-- `templates/`
-  - `base.html`
-  - `home.html`
-  - `partials/`
-    - `_header.html`
-    - `_footer.html`
-    - `icons/`
-      - `bottle.svg`
-      - `cart.svg`
-      - `credit.svg`
-      - `drop.svg`
-      - `heart.svg`
-      - `leaf.svg`
-      - `pin.svg`
-      - `plus.svg`
-      - `search.svg`
-      - `shield.svg`
-      - `star.svg`
-      - `truck.svg`
-  - `shop/`
-    - `home.html`
-    - `product_list.html`
-    - `product_detail.html`
-  - `orders/`
-    - `checkout.html`
-    - `confirmation.html`
-  - `cart/`
-    - `cart_detail.html`
-  - `payments/`
-    - `payment_result.html`
-- `static/`
-  - `favicon.ico`
-  - `css/`
-    - `site.css`
-- `backend/media/` (carpeta local para archivos subidos)
+## Empezar aquí
 
-## Deploy en Render (resumen)
+- Agentes: leer y seguir [AGENTS.md](AGENTS.md).
+- Funcionamiento actual: [docs/CURRENT_SYSTEM.md](docs/CURRENT_SYSTEM.md).
+- Operación, variables y despliegue: [docs/OPERATIONS.md](docs/OPERATIONS.md).
+- Historial de cambios aplicados: [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
-- `build.sh`: instala dependencias y corre `collectstatic`.
-- `render.yaml`: define `preDeployCommand` para migraciones.
-- Media en producción: usar disco persistente montado en `/var/data/media` y variable `MEDIA_ROOT=/var/data/media`.
-- En producción, habilitar `SERVE_MEDIA=1` para exponer imágenes subidas por admin en `/media/`.
-- Logging estructurado por consola configurable con `LOG_LEVEL`.
-- Monitoreo opcional con Sentry (`SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `SENTRY_ENVIRONMENT`).
-- KPI operativo rápido: `python backend/manage.py ops_kpis --days 7`.
+## Desarrollo local
+
+```powershell
+conda activate rasel_ecommerce_venv
+pip install -r requirements.txt
+python backend/manage.py migrate
+python backend/manage.py runserver
+```
+
+Crear `.env` en la raíz con las variables necesarias; consultar el inventario
+sin secretos en `docs/OPERATIONS.md`.

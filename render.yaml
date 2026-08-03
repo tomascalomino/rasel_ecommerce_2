@@ -5,11 +5,9 @@ services:
     plan: free
     buildCommand: "bash build.sh"
     startCommand: "bash start.sh"
-    # NOTA: en plan free NO hay disco persistente. Las imágenes subidas por el
-    # admin se pierden en cada deploy; sólo persisten las que están commiteadas
-    # en el repo (media/products/*). Para subir imágenes desde el admin y que
-    # persistan, mover MEDIA a un bucket externo (Cloudflare R2 / S3) o pasar a
-    # un plan con disco.
+    # Producción usa Cloudflare R2 para la media cargada desde admin. Las
+    # variables R2 se administran en el dashboard de Render y no se publican
+    # en este archivo. Sin R2, la media local no persiste en el plan free.
     envVars:
       - key: DEBUG
         value: "0"
@@ -19,7 +17,8 @@ services:
         value: ".onrender.com,rasel.ar,www.rasel.ar"
       - key: SITE_URL
         value: "https://rasel.ar"
-      # Sin disco en free: servimos la media commiteada en el repo (default de settings).
+      # Fallback para media local; con R2 configurado las imágenes de producto
+      # se sirven desde el dominio público del bucket.
       - key: SERVE_MEDIA
         value: "1"
       - key: PYTHON_VERSION
