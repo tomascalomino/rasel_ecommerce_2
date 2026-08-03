@@ -1,8 +1,9 @@
 from django.contrib import admin, messages
+from django.utils import timezone
 
 from .mercadopago import MercadoPagoError, get_payment, search_payments
 from .models import PaymentDraft, PaymentEvent
-from .services import PaymentValidationError, process_payment
+from .services import PaymentValidationError, process_payment, release_reserved_stock
 
 
 @admin.action(description="Reconciliar con Mercado Pago")
@@ -34,6 +35,70 @@ def reconcile_with_mercadopago(modeladmin, request, queryset):
         messages.success(request, f"{processed} pago(s) conciliados.")
     if failed:
         messages.warning(request, f"{failed} pago(s) requieren revision o reintento.")
+
+
+@admin.action(description="Conciliar y liberar reservas vencidas")
+def reconcile_expired_reservations(modeladmin, request, queryset):
+    processed = 0
+    released = 0
+    skipped = 0
+    failed = 0
+    now = timezone.now()
+
+    for draft in queryset:
+        if draft.order_id or draft.stock_released_at:
+            skipped += 1
+            continue
+
+        PaymentDraft.objects.filter(pk=draft.pk).update(last_reconciled_at=now)
+        try:
+            if draft.mp_payment_id:
+                payment = get_payment(draft.mp_payment_id)
+            else:
+                candidates = search_payments(str(draft.token))
+                payment = next(
+                    (
+                        row
+                        for row in candidates
+                        if str(row.get("external_reference") or "")
+                        == str(draft.token)
+                    ),
+                    None,
+                )
+
+            if payment:
+                process_payment(
+                    payment,
+                    str(payment.get("id") or ""),
+                    reconciled=True,
+                )
+                processed += 1
+            elif (
+                draft.reservation_expires_at
+                and draft.reservation_expires_at <= now
+                and release_reserved_stock(draft.token, "expired")
+            ):
+                released += 1
+            else:
+                skipped += 1
+        except (MercadoPagoError, PaymentValidationError, OSError) as exc:
+            failed += 1
+            PaymentDraft.objects.filter(pk=draft.pk).update(
+                processing_error=str(exc)[:1000],
+            )
+
+    if processed or released:
+        messages.success(
+            request,
+            f"{processed} pago(s) conciliados; {released} reserva(s) liberadas.",
+        )
+    if skipped:
+        messages.info(request, f"{skipped} borrador(es) no requerian cambios.")
+    if failed:
+        messages.warning(
+            request,
+            f"{failed} borrador(es) conservaron stock por error de conciliacion.",
+        )
 
 
 @admin.register(PaymentEvent)
@@ -108,4 +173,4 @@ class PaymentDraftAdmin(admin.ModelAdmin):
         "order",
     )
     ordering = ("-created_at",)
-    actions = [reconcile_with_mercadopago]
+    actions = [reconcile_with_mercadopago, reconcile_expired_reservations]

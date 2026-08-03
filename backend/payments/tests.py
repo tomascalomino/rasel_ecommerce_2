@@ -23,6 +23,7 @@ from orders.models import Order
 from shipping.models import PickupPoint
 from shop.models import Category, Product, Variant
 
+from .admin import reconcile_expired_reservations
 from .mercadopago import MercadoPagoError, validate_webhook_signature
 from .models import PaymentDraft, PaymentEvent
 from .services import process_payment, release_reserved_stock
@@ -177,6 +178,53 @@ class MercadoPagoIntegrationTests(TestCase):
         self.assertEqual(payload["auto_return"], "approved")
         self.assertNotIn("notification_url", payload)
         self.assertNotIn("binary_mode", payload)
+
+    @patch("payments.admin.messages.success")
+    @patch("payments.admin.search_payments", return_value=[])
+    def test_admin_releases_expired_reservation_only_after_provider_search(
+        self, search, success
+    ):
+        self.draft.state = "preference_created"
+        self.draft.reservation_expires_at = timezone.now() - timedelta(minutes=1)
+        self.draft.save(update_fields=["state", "reservation_expires_at"])
+
+        reconcile_expired_reservations(
+            None,
+            object(),
+            PaymentDraft.objects.filter(pk=self.draft.pk),
+        )
+
+        self.draft.refresh_from_db()
+        self.variant.refresh_from_db()
+        search.assert_called_once_with(str(self.draft.token))
+        self.assertEqual(self.draft.state, "expired")
+        self.assertIsNotNone(self.draft.stock_released_at)
+        self.assertEqual(self.variant.stock_qty, 3)
+        success.assert_called_once()
+
+    @patch("payments.admin.messages.warning")
+    @patch(
+        "payments.admin.search_payments",
+        side_effect=MercadoPagoError("temporary"),
+    )
+    def test_admin_keeps_stock_when_provider_lookup_fails(self, search, warning):
+        self.draft.state = "preference_created"
+        self.draft.reservation_expires_at = timezone.now() - timedelta(minutes=1)
+        self.draft.save(update_fields=["state", "reservation_expires_at"])
+
+        reconcile_expired_reservations(
+            None,
+            object(),
+            PaymentDraft.objects.filter(pk=self.draft.pk),
+        )
+
+        self.draft.refresh_from_db()
+        self.variant.refresh_from_db()
+        search.assert_called_once_with(str(self.draft.token))
+        self.assertIsNone(self.draft.stock_released_at)
+        self.assertEqual(self.variant.stock_qty, 1)
+        self.assertEqual(self.draft.processing_error, "temporary")
+        warning.assert_called_once()
 
     def test_checkout_reserves_stock_before_redirecting_to_mercado_pago(self):
         variant = Variant.objects.create(

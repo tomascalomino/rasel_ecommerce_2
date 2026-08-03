@@ -3,6 +3,19 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-03 — Liberación manual segura de reservas vencidas
+
+- Cambio aplicado: el admin de borradores incorpora **Conciliar y liberar
+  reservas vencidas** para consultar Mercado Pago y reponer stock únicamente
+  cuando la reserva venció y no existe un pago.
+- Seguridad: una falla de API conserva el stock y registra el error; pagos
+  encontrados se procesan mediante el mismo servicio idempotente del webhook.
+- Operación: staging puede omitir un Cron Job pago y usar esta acción para sus
+  pruebas. El Cron cada diez minutos continúa siendo obligatorio en producción.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-08-03 — Validación de entorno de Checkout Pro
 
 - Cambio aplicado: `live_mode` se valida contra el endpoint de Checkout Pro

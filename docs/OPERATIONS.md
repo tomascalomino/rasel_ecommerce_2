@@ -148,6 +148,13 @@ campo contra el host del checkout que devolvió Mercado Pago y mantiene el
 aislamiento mediante credenciales de prueba, collector y base separados; no se
 debe cambiar `MP_ENVIRONMENT` a `production` para corregir una prueba.
 
+Staging no necesita un Cron Job pago permanente. Para una preferencia
+abandonada, esperar que pase `reservation_expires_at`, seleccionar únicamente
+ese borrador en **Payments → Payment drafts** y ejecutar **Conciliar y liberar
+reservas vencidas**. La acción consulta Mercado Pago antes de reponer stock; si
+encuentra un pago lo procesa, y si la API falla conserva la reserva. Nunca
+editar o borrar el borrador ni corregir el stock manualmente.
+
 ## Conciliación automática
 
 Ejecución manual:
@@ -168,6 +175,10 @@ schedule UTC `*/10 * * * *` y comando
 deben cargar separadamente `DATABASE_URL`, token, secret, ambiente, alertas y
 Brevo. Antes de habilitar checkout, ejecutar el job manualmente, comprobar un
 resultado exitoso y revisar su próxima ejecución.
+
+El Cron Job anterior es obligatorio para producción. La acción manual del
+admin es una herramienta de staging e incidentes y no reemplaza la
+conciliación automática productiva.
 
 ## Salida a producción de Mercado Pago
 

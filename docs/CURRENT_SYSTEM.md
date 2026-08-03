@@ -127,6 +127,10 @@ usuarios.
   pendientes, ventas cobradas y órdenes recientes.
 - Borradores y eventos de Mercado Pago siguen visibles aunque el checkout esté
   apagado. La acción **Reconciliar con Mercado Pago** consulta la API.
+- La acción **Conciliar y liberar reservas vencidas** permite operar staging o
+  resolver un incidente manual: consulta Mercado Pago y solo repone stock si
+  la reserva ya venció y no existe un pago. Ante un error del proveedor
+  conserva el stock y registra el error.
 - El admin no permite marcar manualmente como pagada una orden Mercado Pago ni
   cancelar una aprobación como si eso reintegrara dinero. Una orden enviada no
   repone stock por reintegro hasta confirmar la devolución física.
