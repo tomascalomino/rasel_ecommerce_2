@@ -54,8 +54,11 @@
           <label class="checkbox-container">
             {{ radio.tag }}
             <span class="checkmark"></span>
-            <span class="checkbox-label">{{ radio.choice_label }}</span>
+          <span class="checkbox-label">{{ radio.choice_label }}</span>
           </label>
+          {% if radio.data.value == "mp" %}
+          <p class="field-hint">Tarjeta, debito o dinero en cuenta. Hasta {{ mp_max_installments }} cuotas. Seras redirigido a Mercado Pago.</p>
+          {% endif %}
           {% endfor %}
           {{ form.delivery_method.errors }}
         </div>

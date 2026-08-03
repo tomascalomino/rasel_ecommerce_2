@@ -15,6 +15,7 @@ import os
 import sys
 import logging
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 import dj_database_url
 
@@ -40,6 +41,7 @@ ALLOWED_HOSTS = [
 
 # Agregar el host de SITE_URL automáticamente (útil para túneles cloudflared/ngrok y Render)
 _site_url = os.getenv("SITE_URL", "")
+SITE_URL = _site_url.rstrip("/")
 if _site_url:
     from urllib.parse import urlparse as _urlparse
 
@@ -62,10 +64,51 @@ if _site_url.startswith("https"):
         CSRF_TRUSTED_ORIGINS.append(_site_url)
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
-# Feature flag: MercadoPago apagado por defecto (la web cobra solo por transferencia).
-# Para reactivarlo en el futuro: setear MP_ENABLED=1 (y tener MP_ACCESS_TOKEN +
-# MP_WEBHOOK_SECRET productivos). El código de MP queda intacto, solo dormido.
-MP_ENABLED = os.getenv("MP_ENABLED", "0") == "1"
+# Kill switch de nuevos checkouts. Webhooks y conciliación no dependen de esta bandera.
+MP_CHECKOUT_ENABLED = os.getenv("MP_CHECKOUT_ENABLED", "0") == "1"
+MP_ENVIRONMENT = os.getenv("MP_ENVIRONMENT", "").strip().lower()
+MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "").strip()
+MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "").strip()
+PAYMENT_ALERT_EMAIL = os.getenv("PAYMENT_ALERT_EMAIL", "").strip()
+
+
+def _positive_int_env(name, default):
+    try:
+        value = int(os.getenv(name, str(default)))
+    except (TypeError, ValueError) as exc:
+        raise ImproperlyConfigured(f"{name} debe ser un numero entero.") from exc
+    if value <= 0:
+        raise ImproperlyConfigured(f"{name} debe ser mayor que cero.")
+    return value
+
+
+MP_MAX_INSTALLMENTS = _positive_int_env("MP_MAX_INSTALLMENTS", 6)
+MP_RESERVATION_MINUTES = _positive_int_env("MP_RESERVATION_MINUTES", 30)
+MP_PENDING_MAX_HOURS = _positive_int_env("MP_PENDING_MAX_HOURS", 48)
+
+if MP_CHECKOUT_ENABLED:
+    _missing_mp = [
+        name
+        for name, value in {
+            "MP_ACCESS_TOKEN": MP_ACCESS_TOKEN,
+            "MP_WEBHOOK_SECRET": MP_WEBHOOK_SECRET,
+            "MP_ENVIRONMENT": MP_ENVIRONMENT,
+            "PAYMENT_ALERT_EMAIL": PAYMENT_ALERT_EMAIL,
+        }.items()
+        if not value
+    ]
+    if _missing_mp:
+        raise ImproperlyConfigured(
+            "MP_CHECKOUT_ENABLED=1 requiere: " + ", ".join(_missing_mp)
+        )
+    if MP_ENVIRONMENT not in {"test", "production"}:
+        raise ImproperlyConfigured(
+            "MP_ENVIRONMENT debe ser 'test' o 'production'."
+        )
+    if not _site_url.startswith("https://"):
+        raise ImproperlyConfigured(
+            "MP_CHECKOUT_ENABLED=1 requiere una SITE_URL HTTPS."
+        )
 
 # Datos bancarios para el pago por transferencia (no hardcodear en el repo).
 # Cargar en variables de entorno: BANK_HOLDER, BANK_ALIAS, BANK_CBU, BANK_NAME.
@@ -79,11 +122,6 @@ BANK_TRANSFER = {
 # WhatsApp de atención: recibe comprobantes de transferencia y coordina
 # entregas/retiros (emails y páginas post-checkout).
 WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER", "1162002357").strip()
-
-if DEBUG and MP_ENABLED and not os.getenv("MP_ACCESS_TOKEN"):
-    print(
-        "[WARN] MP_ACCESS_TOKEN no está configurado (sandbox MercadoPago no funcionará)."
-    )
 
 # Application definition
 

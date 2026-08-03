@@ -1,10 +1,12 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from payments.models import PaymentDraft
-from payments.views import _build_preference_payload
+from payments.services import build_preference_payload
 
 from .services import normalize_cp, resolve_shipping
 
@@ -185,6 +187,7 @@ class ShippingInfoPageTests(TestCase):
 
 class MercadoPagoShippingLineTests(TestCase):
     def _draft(self, shipping_cost):
+        now = timezone.now()
         return PaymentDraft.objects.create(
             full_name="Test",
             email="t@example.com",
@@ -194,6 +197,8 @@ class MercadoPagoShippingLineTests(TestCase):
             shipping_cost=shipping_cost,
             shipping_zone="Gran Buenos Aires",
             total_amount=Decimal("17000.00"),
+            stock_reserved_at=now,
+            reservation_expires_at=now + timedelta(minutes=30),
             items=[
                 {
                     "variant_id": 1,
@@ -207,13 +212,13 @@ class MercadoPagoShippingLineTests(TestCase):
         )
 
     def test_shipping_line_added_when_cost_positive(self):
-        payload = _build_preference_payload(self._draft(Decimal("7000.00")))
+        payload = build_preference_payload(self._draft(Decimal("7000.00")))
         ship = [i for i in payload["items"] if i["title"].startswith("Envío")]
         self.assertEqual(len(ship), 1)
         self.assertEqual(ship[0]["unit_price"], 7000.0)
 
     def test_no_shipping_line_when_free(self):
-        payload = _build_preference_payload(self._draft(Decimal("0.00")))
+        payload = build_preference_payload(self._draft(Decimal("0.00")))
         ship = [i for i in payload["items"] if i["title"].startswith("Envío")]
         self.assertEqual(len(ship), 0)
 

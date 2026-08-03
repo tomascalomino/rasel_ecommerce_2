@@ -12,7 +12,7 @@ from shop.models import Category, Product, Variant
 from django.contrib import admin as django_admin
 
 from .admin import OrderAdmin, cancel_and_restore_stock, mark_paid, mark_shipped
-from .models import Order
+from .models import Order, OrderItem
 
 
 def _request_with_messages():
@@ -297,6 +297,31 @@ class OrderAdminActionTests(TestCase):
         )
         return Order.objects.get()
 
+    def _create_mp_order(self, *, status="paid", payment_status="approved", qty=2):
+        order = Order.objects.create(
+            full_name="MP User",
+            email="mp@example.com",
+            total_amount=Decimal("200.00"),
+            payment_method="mp",
+            status=status,
+            payment_status=payment_status,
+            mp_payment_id=f"PAY-{status}-{payment_status}",
+            mp_status=payment_status,
+            stock_deducted=True,
+        )
+        OrderItem.objects.create(
+            order=order,
+            variant=self.variant,
+            product_name=self.product.name,
+            variant_name=self.variant.name,
+            unit_price=Decimal("100.00"),
+            quantity=qty,
+            line_total=Decimal("100.00") * qty,
+        )
+        self.variant.stock_qty -= qty
+        self.variant.save(update_fields=["stock_qty"])
+        return order
+
     def test_mark_paid_sets_status_and_emails_once(self):
         order = self._create_transfer_order()
         mail.outbox.clear()
@@ -376,6 +401,48 @@ class OrderAdminActionTests(TestCase):
         cancel_and_restore_stock(None, req, Order.objects.filter(id=order.id))
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_qty, 5)
+
+    def test_mp_review_cannot_be_marked_paid_manually(self):
+        order = self._create_mp_order(
+            status="payment_review", payment_status="review"
+        )
+        mark_paid(None, _request_with_messages(), Order.objects.filter(id=order.id))
+        order.refresh_from_db()
+        self.assertEqual(order.status, "payment_review")
+        self.assertEqual(order.payment_status, "review")
+
+    def test_mp_approved_cannot_be_cancelled_as_if_it_were_a_refund(self):
+        order = self._create_mp_order()
+        cancel_and_restore_stock(
+            None, _request_with_messages(), Order.objects.filter(id=order.id)
+        )
+        order.refresh_from_db()
+        self.variant.refresh_from_db()
+        self.assertEqual(order.status, "paid")
+        self.assertFalse(order.stock_restored)
+        self.assertEqual(self.variant.stock_qty, 3)
+
+    def test_mp_refunded_unshipped_can_be_cancelled_and_restocked(self):
+        order = self._create_mp_order(payment_status="refunded")
+        cancel_and_restore_stock(
+            None, _request_with_messages(), Order.objects.filter(id=order.id)
+        )
+        order.refresh_from_db()
+        self.variant.refresh_from_db()
+        self.assertEqual(order.status, "cancelled")
+        self.assertTrue(order.stock_restored)
+        self.assertEqual(self.variant.stock_qty, 5)
+
+    def test_mp_refunded_shipped_waits_for_physical_return(self):
+        order = self._create_mp_order(status="shipped", payment_status="refunded")
+        cancel_and_restore_stock(
+            None, _request_with_messages(), Order.objects.filter(id=order.id)
+        )
+        order.refresh_from_db()
+        self.variant.refresh_from_db()
+        self.assertEqual(order.status, "shipped")
+        self.assertFalse(order.stock_restored)
+        self.assertEqual(self.variant.stock_qty, 3)
 
 
 class AdminRolesTests(TestCase):

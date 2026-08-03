@@ -52,7 +52,7 @@ class CheckoutForm(forms.Form):
             is_active=True
         )
         # Con MercadoPago apagado quedan transferencia y efectivo.
-        if not settings.MP_ENABLED:
+        if not settings.MP_CHECKOUT_ENABLED:
             self.fields["payment_method"].choices = [
                 ("transfer", "Transferencia Bancaria"),
                 ("cod", "Efectivo (al recibir o al retirar)"),

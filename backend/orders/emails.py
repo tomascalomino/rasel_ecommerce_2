@@ -343,5 +343,17 @@ def send_order_shipped(order_id: int) -> None:
     )
 
 
+def send_payment_alert(subject: str, body: str) -> None:
+    """Send an operational payment alert without exposing credentials or payloads."""
+    recipient = getattr(settings, "PAYMENT_ALERT_EMAIL", "")
+    if not recipient:
+        logger.error("Alerta de pagos sin destinatario configurado: %s", subject)
+        return
+    try:
+        _send_email(f"RaSel - {subject}", body, recipient)
+    except Exception:
+        logger.exception("No se pudo enviar alerta operativa de pagos: %s", subject)
+
+
 def send_order_confirmation(order_id: int) -> None:
     _idempotent_send(order_id, "confirmation_email_sent", _send, "confirmación")

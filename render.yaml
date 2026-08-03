@@ -32,11 +32,23 @@ services:
         value: "0.0"
       - key: SENTRY_ENVIRONMENT
         value: "production"
+      - key: MP_CHECKOUT_ENABLED
+        value: "0"
+      - key: MP_ENVIRONMENT
+        value: "production"
+      - key: MP_MAX_INSTALLMENTS
+        value: "6"
+      - key: MP_RESERVATION_MINUTES
+        value: "30"
+      - key: MP_PENDING_MAX_HOURS
+        value: "48"
       # Credenciales MercadoPago de PRODUCCIÓN (APP_USR-...). Cargar a mano en el dashboard.
       - key: MP_ACCESS_TOKEN
         sync: false
       # Secret del webhook de MercadoPago: OBLIGATORIO en prod (valida la firma).
       - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: PAYMENT_ALERT_EMAIL
         sync: false
       - key: DJANGO_SETTINGS_MODULE
         value: "config.settings"
@@ -54,3 +66,45 @@ services:
       # Aviso de nuevas órdenes al dueño (opcional): email destino.
       - key: ORDER_NOTIFICATION_EMAIL
         sync: false
+
+  - type: cron
+    name: rasel-mp-reconcile
+    runtime: python
+    plan: starter
+    branch: bundle_work
+    schedule: "*/10 * * * *"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python backend/manage.py reconcile_mp_payments --batch-size 100"
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SITE_URL
+        value: "https://rasel.ar"
+      - key: ALLOWED_HOSTS
+        value: "rasel.ar,www.rasel.ar"
+      - key: DATABASE_URL
+        sync: false
+      - key: MP_CHECKOUT_ENABLED
+        value: "0"
+      - key: MP_ENVIRONMENT
+        value: "production"
+      - key: MP_MAX_INSTALLMENTS
+        value: "6"
+      - key: MP_RESERVATION_MINUTES
+        value: "30"
+      - key: MP_PENDING_MAX_HOURS
+        value: "48"
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: PAYMENT_ALERT_EMAIL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        value: "RaSel <no-reply@rasel.ar>"
+      - key: DJANGO_SETTINGS_MODULE
+        value: "config.settings"

@@ -9,6 +9,18 @@ class Order(models.Model):
         ("paid", "Pagada"),
         ("shipped", "Enviada"),
         ("cancelled", "Cancelada"),
+        ("payment_review", "Revision de pago"),
+    ]
+
+    PAYMENT_STATUS_CHOICES = [
+        ("pending", "Pendiente"),
+        ("approved", "Aprobado"),
+        ("rejected", "Rechazado"),
+        ("cancelled", "Cancelado"),
+        ("partially_refunded", "Reintegro parcial"),
+        ("refunded", "Reintegrado"),
+        ("charged_back", "Contracargo"),
+        ("review", "Revision"),
     ]
 
     PAYMENT_CHOICES = [
@@ -79,6 +91,16 @@ class Order(models.Model):
     mp_preference_id = models.CharField(max_length=120, blank=True, default="")
     mp_payment_id = models.CharField(max_length=120, blank=True, default="")
     mp_status = models.CharField(max_length=60, blank=True, default="")
+    payment_status = models.CharField(
+        "estado financiero",
+        max_length=30,
+        choices=PAYMENT_STATUS_CHOICES,
+        default="pending",
+    )
+    mp_refunded_amount = models.DecimalField(
+        "monto reintegrado", max_digits=12, decimal_places=2, default=0
+    )
+    stock_deducted = models.BooleanField("stock descontado", default=True)
 
     # Email de confirmación (idempotencia: evita reenvíos en reintentos de webhook)
     confirmation_email_sent = models.BooleanField(default=False)
@@ -93,6 +115,13 @@ class Order(models.Model):
         verbose_name = "orden"
         verbose_name_plural = "órdenes"
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["mp_payment_id"],
+                condition=~models.Q(mp_payment_id=""),
+                name="orders_unique_mp_payment_id",
+            )
+        ]
 
     def __str__(self):
         return f"Orden #{self.id} - {self.full_name}"
