@@ -311,7 +311,40 @@ class MercadoPagoIntegrationTests(TestCase):
     def test_live_mode_mismatch_is_review_not_fulfilled(self):
         result = process_payment(self.payment(live_mode=True), "PAY-1")
         self.assertEqual(result.state, "review")
+        self.assertEqual(result.error, "live_mode_mismatch")
         self.assertEqual(result.order.status, "payment_review")
+
+    def test_regular_checkout_endpoint_accepts_test_user_live_mode_true(self):
+        self.draft.mp_init_point = "https://www.mercadopago.com.ar/checkout/start"
+        self.draft.save(update_fields=["mp_init_point"])
+
+        result = process_payment(self.payment(live_mode=True), "PAY-1")
+
+        self.assertEqual(result.state, "approved")
+        self.assertEqual(result.order.status, "paid")
+        self.assertEqual(result.order.payment_status, "approved")
+
+    def test_reconciliation_resolves_live_mode_review_once(self):
+        first = process_payment(self.payment(live_mode=True), "PAY-1")
+        self.assertEqual(first.state, "review")
+        self.variant.refresh_from_db()
+        self.assertEqual(self.variant.stock_qty, 1)
+
+        self.draft.mp_init_point = "https://www.mercadopago.com.ar/checkout/start"
+        self.draft.save(update_fields=["mp_init_point"])
+        with self.captureOnCommitCallbacks(execute=True):
+            result = process_payment(self.payment(live_mode=True), "PAY-1", reconciled=True)
+
+        result.draft.refresh_from_db()
+        result.order.refresh_from_db()
+        self.variant.refresh_from_db()
+        self.assertEqual(result.draft.state, "approved")
+        self.assertEqual(result.draft.processing_error, "")
+        self.assertEqual(result.order.status, "paid")
+        self.assertEqual(result.order.payment_status, "approved")
+        self.assertTrue(result.order.confirmation_email_sent)
+        self.assertEqual(self.variant.stock_qty, 1)
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_currency_mismatch_is_review_not_fulfilled(self):
         result = process_payment(self.payment(currency_id="USD"), "PAY-1")

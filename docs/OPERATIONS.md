@@ -118,11 +118,15 @@ proveedor.
    `https://<servicio-staging>.onrender.com/payments/webhook/`.
 3. Guardar, revelar el secret generado y copiarlo directamente a
    `MP_WEBHOOK_SECRET` de staging.
-4. Desplegar con el checkout todavía apagado. Verificar que GET al endpoint
-   responda `405` y que **Simular** produzca un POST firmado con respuesta `200`.
-5. Confirmar en admin que el evento tiene firma válida y resultado procesado.
+4. Desplegar con el checkout todavía apagado y verificar que GET al endpoint
+   responda `405`.
+5. Habilitar temporalmente el checkout y completar un pago sandbox para obtener
+   un `mp_payment_id` real asociado a un borrador. En **Simular**, usar ese ID:
+   un valor inventado no puede superar la consulta estricta a la API.
+6. Confirmar que **Simular** produce un POST firmado con respuesta `200` y que
+   en admin el evento tiene firma válida y resultado procesado.
    Una firma inválida debe responder `401` y no crear `PaymentEvent`.
-6. Recién entonces establecer `MP_CHECKOUT_ENABLED=1` en staging y desplegar.
+7. Mantener `MP_CHECKOUT_ENABLED=1` solo durante la matriz de staging.
 
 ### 4. Matriz obligatoria de staging
 
@@ -137,6 +141,12 @@ incorrectos, reintegros y kill switch. Confirmar visualmente que no aparecen
 Rapipago/Pago Fácil, que sí aparecen tarjeta, débito y dinero en cuenta, y que
 el máximo es seis cuotas. Repetir la matriz completa dos veces antes de
 producción.
+
+En Checkout Pro, las cuentas y tarjetas de prueba pueden usar el `init_point`
+regular y el pago consultado puede informar `live_mode=true`. RaSel valida ese
+campo contra el host del checkout que devolvió Mercado Pago y mantiene el
+aislamiento mediante credenciales de prueba, collector y base separados; no se
+debe cambiar `MP_ENVIRONMENT` a `production` para corregir una prueba.
 
 ## Conciliación automática
 

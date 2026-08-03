@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -220,6 +221,25 @@ def _metadata_token(payment: dict) -> str:
     return str(metadata.get("draft_token") or metadata.get("draft_id") or "")
 
 
+def _expected_live_mode(draft: PaymentDraft) -> bool:
+    """Tie live_mode to the provider-issued checkout endpoint.
+
+    Checkout Pro test users can pay through the regular ``init_point``. Those
+    safe test transactions still report ``live_mode=true``; the test Access
+    Token and collector ID are what isolate them from the real seller account.
+    """
+    host = (urlparse(draft.mp_init_point).hostname or "").lower()
+    if not host:
+        # Compatibilidad con borradores históricos creados antes de guardar la
+        # URL de preferencia. Un checkout actual siempre persiste este campo.
+        return settings.MP_ENVIRONMENT == "production"
+    if host in {"sandbox.mercadopago.com", "sandbox.mercadopago.com.ar"}:
+        return False
+    if host in {"www.mercadopago.com", "www.mercadopago.com.ar"}:
+        return True
+    raise PaymentValidationError("checkout_endpoint_mismatch")
+
+
 def _validate_payment(payment: dict, requested_payment_id: str):
     if settings.MP_ENVIRONMENT not in {"test", "production"}:
         raise PaymentValidationError("environment_not_configured")
@@ -241,7 +261,7 @@ def _validate_payment(payment: dict, requested_payment_id: str):
         raise PaymentValidationError("currency_mismatch")
     if not draft.mp_collector_id or str(payment.get("collector_id") or "") != draft.mp_collector_id:
         raise PaymentValidationError("collector_mismatch")
-    expected_live = settings.MP_ENVIRONMENT == "production"
+    expected_live = _expected_live_mode(draft)
     if not isinstance(payment.get("live_mode"), bool) or payment.get("live_mode") != expected_live:
         raise PaymentValidationError("live_mode_mismatch")
     return draft
@@ -329,12 +349,25 @@ def _approve(draft_id, payment):
                     )
                 )
                 return order
+            resolving_live_mode_review = (
+                order.status == "payment_review"
+                and order.payment_status == "review"
+                and order.stock_deducted
+                and draft.processing_error == "live_mode_mismatch"
+            )
+            if order.status == "payment_review" and not resolving_live_mode_review:
+                return order
             if order.payment_status not in {"refunded", "charged_back"}:
                 order.payment_status = "approved"
-                if order.status == "pending":
+                if order.status == "pending" or resolving_live_mode_review:
                     order.status = "paid"
                 order.mp_status = "approved"
                 order.save(update_fields=["payment_status", "status", "mp_status"])
+            draft.state = "approved"
+            draft.processing_error = ""
+            draft.save(update_fields=["state", "processing_error"])
+            if resolving_live_mode_review:
+                transaction.on_commit(lambda: send_order_confirmation(order.id))
             return order
 
         stock_deducted = _reservation_holds_stock(draft)

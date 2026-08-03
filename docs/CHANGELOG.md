@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-03 — Validación de entorno de Checkout Pro
+
+- Cambio aplicado: `live_mode` se valida contra el endpoint de Checkout Pro
+  emitido por Mercado Pago, ya que una compra con cuentas y tarjetas de prueba
+  mediante el `init_point` regular puede informar `true`.
+- Recuperación: una orden puesta en revisión exclusivamente por la regla
+  anterior puede reconciliarse a pagada sin crear otra orden, descontar stock
+  nuevamente ni repetir el email.
+- Seguridad: siguen siendo obligatorios la referencia, metadata, importe, ARS,
+  collector, token de prueba y aislamiento de la base staging.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-08-02 — Checkout Pro seguro y conciliable
 
 - Cambio aplicado: se reemplazó el flujo legado de Mercado Pago por Checkout

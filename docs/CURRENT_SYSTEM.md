@@ -82,7 +82,11 @@ El retorno del navegador nunca aprueba pedidos: si contiene un `payment_id`,
 RaSel consulta la API y usa el mismo procesador que el webhook. El webhook solo
 acepta POST y valida la firma antes de escribir eventos o consultar pagos. Para
 aceptar un pago se comparan referencia y metadata, importe exacto, ARS,
-collector y `live_mode`. Pagos pendientes conservan la reserva y el comando
+collector y `live_mode` contra el endpoint de checkout emitido por Mercado
+Pago. Checkout Pro puede devolver `live_mode=true` para cuentas y tarjetas de
+prueba que operan mediante el `init_point` regular; el aislamiento se sostiene
+además con token de prueba, collector esperado y base staging separada. Pagos
+pendientes conservan la reserva y el comando
 `reconcile_mp_payments` recupera webhooks perdidos, cancela pendientes al
 cumplir 48 horas y libera stock solamente tras consultar al proveedor.
 
