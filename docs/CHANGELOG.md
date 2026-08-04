@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-04 — Webhook fijado por preferencia de Checkout Pro
+
+- Cambio aplicado: cada preferencia incluye la URL HTTPS del webhook de RaSel
+  con `source_news=webhooks`, que tiene prioridad sobre la ruta general del
+  panel de Mercado Pago.
+- Flujo afectado: los cambios de pago pueden llegar sin que el comprador vuelva
+  al sitio; el retorno y la conciliación continúan como defensas adicionales.
+  Un estado pendiente ahora extiende efectivamente el vencimiento vigente de
+  la reserva, manteniendo el límite operativo máximo de 48 horas.
+- Migraciones o variables: no se agregan migraciones ni variables; la URL se
+  deriva de la `SITE_URL` HTTPS ya obligatoria.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-08-03 — Liberación manual segura de reservas vencidas
 
 - Cambio aplicado: el admin de borradores incorpora **Conciliar y liberar

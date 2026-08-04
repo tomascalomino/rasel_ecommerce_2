@@ -131,6 +131,11 @@ def build_preference_payload(draft: PaymentDraft) -> dict:
             "pending": f"{base}/payments/return/pending/",
             "failure": f"{base}/payments/return/failure/",
         },
+        # Pin the Webhook endpoint to every preference. Mercado Pago gives this
+        # URL precedence over the application-level setting, which prevents a
+        # payment from depending on the buyer returning to RaSel when sandbox
+        # and production notification routes differ in the provider panel.
+        "notification_url": f"{base}/payments/webhook/?source_news=webhooks",
         "auto_return": "approved",
         "expires": True,
         "expiration_date_from": draft.stock_reserved_at.isoformat(),
@@ -503,7 +508,12 @@ def process_payment(payment: dict, requested_payment_id: str, *, reconciled=Fals
         draft.refresh_from_db()
         return PaymentResult(draft, order, draft.state)
     if status in {"pending", "in_process", "authorized"}:
-        extension = now + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
+        # Extend from the current deadline (or from now if it already passed),
+        # so receiving a pending status always adds a real reservation window.
+        extension_base = max(draft.reservation_expires_at or now, now)
+        extension = extension_base + timedelta(
+            minutes=settings.MP_RESERVATION_MINUTES
+        )
         PaymentDraft.objects.filter(pk=draft.pk, stock_released_at__isnull=True).update(
             state="pending", reservation_expires_at=extension, processing_error=""
         )

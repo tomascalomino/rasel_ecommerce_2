@@ -128,6 +128,13 @@ proveedor.
    Una firma inválida debe responder `401` y no crear `PaymentEvent`.
 7. Mantener `MP_CHECKOUT_ENABLED=1` solo durante la matriz de staging.
 
+RaSel también envía en cada preferencia
+`https://<SITE_URL>/payments/webhook/?source_news=webhooks`. Mercado Pago da
+prioridad a esa URL sobre la configurada en el panel. Esto es intencional: las
+operaciones se notifican aunque el comprador cierre el navegador o las rutas
+de prueba y producción del panel no coincidan. La URL del panel y su clave
+secreta siguen siendo obligatorias para validar la firma.
+
 ### 4. Matriz obligatoria de staging
 
 Ejecutar en incógnito con el comprador de prueba: aprobación `APRO`, rechazo
@@ -283,6 +290,7 @@ recuperación de Neon.
 | No llega un email | Revisar `BREVO_API_KEY`, remitente verificado, destinatario y registros de Brevo; buscar la excepción en Render. |
 | Stock incorrecto | Revisar ítems y estado de la orden; cancelar desde admin restaura stock una vez. |
 | Pago aprobado sin orden normal | Buscar el borrador y evento, ejecutar **Reconciliar con Mercado Pago** y revisar `payment_review`; no prometer entrega ni cobrar de nuevo. |
+| Pago cambia solo al volver desde Mercado Pago | Comprobar que la preferencia contiene la `notification_url` HTTPS de `SITE_URL` con `source_news=webhooks`, revisar entregas en Webhooks y reconciliar el borrador. No depender del retorno del navegador. |
 | Webhook MP devuelve `401` | Comparar ambiente y secret de Webhooks con Render; rotar y reemplazar el secret si existe duda de exposición. |
 | Conciliación MP falla | Mantener el checkout apagado si el problema persiste, conservar token/webhook/cron y revisar API, base, alertas y último `processing_error`. Nunca liberar stock suponiendo que no hubo pago. |
 | Cambio de deploy fallido | Revisar logs del deploy, volver al último deploy estable y evitar cambios destructivos en la base. |

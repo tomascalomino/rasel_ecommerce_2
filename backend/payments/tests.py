@@ -176,7 +176,10 @@ class MercadoPagoIntegrationTests(TestCase):
             payload["payment_methods"]["excluded_payment_types"], [{"id": "ticket"}]
         )
         self.assertEqual(payload["auto_return"], "approved")
-        self.assertNotIn("notification_url", payload)
+        self.assertEqual(
+            payload["notification_url"],
+            "https://staging.example.com/payments/webhook/?source_news=webhooks",
+        )
         self.assertNotIn("binary_mode", payload)
 
     @patch("payments.admin.messages.success")

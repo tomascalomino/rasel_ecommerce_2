@@ -75,8 +75,11 @@ con el comprobante por WhatsApp; efectivo se cobra al retirar o recibir.
 Para Mercado Pago, el POST del checkout vuelve a validar precios, envío y
 stock, descuenta las unidades como reserva por 30 minutos y crea un
 `PaymentDraft`. La preferencia vence junto con la reserva y usa una clave de
-idempotencia derivada del UUID. Si Mercado Pago no responde, el comprador puede
-reintentar mediante POST protegido por CSRF mientras la reserva siga vigente.
+idempotencia derivada del UUID. Cada preferencia fija además el webhook HTTPS
+de `SITE_URL` con `source_news=webhooks`; esta ruta específica tiene prioridad
+sobre la configuración general de la aplicación y evita depender del retorno
+del comprador. Si Mercado Pago no responde, el comprador puede reintentar
+mediante POST protegido por CSRF mientras la reserva siga vigente.
 
 El retorno del navegador nunca aprueba pedidos: si contiene un `payment_id`,
 RaSel consulta la API y usa el mismo procesador que el webhook. El webhook solo
