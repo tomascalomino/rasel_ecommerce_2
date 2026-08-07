@@ -1791,22 +1791,21 @@ textarea:focus {
 .mp-payment-note {
   display: flex;
   align-items: center;
-  gap: 14px;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 12px;
-  padding: 10px 14px;
+  gap: 8px;
+  width: min(100%, 340px);
+  margin-top: 8px;
+  padding: 7px 10px;
   border: 1px solid #cce9f3;
-  border-radius: 14px;
+  border-radius: 10px;
   background: #fff;
   color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .mp-brand-logo {
   display: block;
-  width: 108px;
+  width: 80px;
   height: auto;
   flex: none;
 }
@@ -1815,24 +1814,29 @@ textarea:focus {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: 12px;
-  padding: 10px 14px;
+  gap: 8px;
+  width: min(100%, 340px);
+  margin-top: 8px;
+  padding: 6px 10px;
   border: 1px solid rgba(169, 133, 69, .34);
-  border-radius: 14px;
+  border-radius: 10px;
   background: var(--gold-soft);
   color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .offline-payment-note > strong {
   color: var(--text);
   font-family: var(--font-serif);
-  font-size: 18px;
+  font-size: 16px;
   white-space: nowrap;
+}
+
+.offline-payment-note .discount-badge {
+  min-height: 24px;
+  padding: 3px 7px;
+  font-size: 11px;
 }
 
 .discount-badge {
@@ -2333,16 +2337,19 @@ textarea:focus {
 /* Mercado Pago: aviso compacto en home, visible solo con el checkout activo */
 .mp-home-banner {
   display: grid;
-  grid-template-columns: 138px minmax(0, 1fr) auto;
+  grid-template-columns: 96px minmax(0, 1fr);
   align-items: center;
-  gap: 24px;
-  padding: 18px 22px;
+  gap: 14px;
+  width: min(100%, 760px);
+  margin-inline: auto;
+  padding: 11px 15px;
   border-color: #cce9f3;
   background: #fff;
+  box-shadow: 0 5px 14px rgba(46, 51, 36, .06);
 }
 
 .mp-home-banner-logo {
-  width: 138px;
+  width: 96px;
 }
 
 .mp-home-banner-copy {
@@ -2353,16 +2360,16 @@ textarea:focus {
 }
 
 .mp-home-banner-copy strong {
-  color: var(--olive);
+  color: var(--text);
   font-family: var(--font-serif);
-  font-size: 19px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .mp-home-banner-copy span {
   color: var(--text-2);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 /* Transferencia y efectivo: beneficio comercial siempre disponible */
@@ -2434,18 +2441,12 @@ textarea:focus {
   }
 
   .mp-home-banner {
-    grid-template-columns: 120px minmax(0, 1fr);
-    gap: 16px;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 12px;
   }
 
   .mp-home-banner-logo {
-    width: 120px;
-  }
-
-  .mp-home-banner .btn {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    text-align: center;
+    width: 92px;
   }
 
   .home-origin {
@@ -2461,12 +2462,13 @@ textarea:focus {
 /* ── Ajustes mobile menores (footer, paddings en pantallas chicas) ── */
 @media (max-width: 560px) {
   .offline-payment-note {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px;
   }
 
   .offline-payment-note > strong {
-    grid-column: 1 / -1;
-    justify-self: end;
+    grid-column: auto;
+    justify-self: auto;
   }
 
   .offline-home-banner {
@@ -2480,23 +2482,19 @@ textarea:focus {
   }
 
   .mp-payment-note {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    flex-direction: row;
+    gap: 7px;
   }
 
   .mp-home-banner {
-    grid-template-columns: 1fr;
+    grid-template-columns: 82px minmax(0, 1fr);
     gap: 10px;
-    padding: 18px;
+    padding: 11px 13px;
   }
 
   .mp-home-banner-logo {
-    width: 124px;
-  }
-
-  .mp-home-banner .btn {
-    grid-column: auto;
+    width: 82px;
   }
 
   /* El footer apila el bloque de marca y el pill en vez de apretarlos */
