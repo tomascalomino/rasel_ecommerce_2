@@ -8,10 +8,10 @@ documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 - Cambio comercial: transferencia y efectivo aplican un 5% de descuento sobre
   los productos; el envío mantiene su valor y Mercado Pago conserva el precio
   completo.
-- Experiencia: el inicio incorpora un aviso compacto, el detalle de producto
-  muestra en negrita el precio promocional y lo actualiza al cambiar de
-  presentación, y el checkout recalcula visualmente descuento y total al alternar
-  el medio de pago.
+- Experiencia: el inicio incorpora una viñeta compacta y centrada, con el 5%
+  destacado en alto contraste. El detalle de producto muestra en negrita el
+  precio promocional y lo actualiza al cambiar de presentación, y el checkout
+  recalcula visualmente descuento y total al alternar el medio de pago.
 - Seguridad e historial: el servidor recalcula precios y descuento dentro de la
   transacción de stock. La orden guarda `payment_discount_amount`, los emails y
   pantallas posteriores desglosan subtotal, descuento, envío y total, y los
