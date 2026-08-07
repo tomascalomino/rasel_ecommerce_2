@@ -52,7 +52,9 @@ def sitemap_xml(request):
 def home(request):
     """Home con productos destacados para la sección "Nuestra selección"."""
     featured = list(
-        Product.objects.filter(is_active=True).prefetch_related("variants")[:3]
+        Product.objects.filter(is_active=True)
+        .order_by("name")
+        .prefetch_related("variants")[:3]
     )
     for p in featured:
         active_vars = [v for v in p.variants.all() if v.is_active]

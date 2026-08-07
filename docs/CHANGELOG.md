@@ -3,6 +3,15 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-07 — Botellas primero en la selección del inicio
+
+- La sección **Nuestra selección** deja de heredar el orden alfabético
+  inverso del modelo y selecciona hasta tres productos activos por nombre
+  ascendente.
+- Con el catálogo actual aparecen primero las botellas de 250 ml y 500 ml, y
+  luego el primer pack; la tienda conserva sus controles de orden propios.
+- No requiere migraciones ni cambios de datos.
+
 ## 2026-08-07 — Precio offline redondeado por variante
 
 - Cambio comercial: transferencia y efectivo conservan un descuento mínimo del

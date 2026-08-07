@@ -94,3 +94,25 @@ class ProductListViewTests(TestCase):
 			with self.subTest(url=url):
 				response = self.client.get(url)
 				self.assertNotContains(response, "mercado-pago-horizontal.svg")
+
+
+class HomeProductOrderTests(TestCase):
+	def test_bottles_are_selected_before_packs(self):
+		for name in (
+			"Pack 9x250ml Blend",
+			"Botella 500ml RaSel",
+			"Pack 6x500ml Blend",
+			"Botella 250ml RaSel",
+		):
+			Product.objects.create(name=name, is_active=True)
+
+		response = self.client.get(reverse("home"))
+
+		self.assertEqual(
+			[product.name for product in response.context["featured_products"]],
+			[
+				"Botella 250ml RaSel",
+				"Botella 500ml RaSel",
+				"Pack 6x500ml Blend",
+			],
+		)

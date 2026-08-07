@@ -47,6 +47,9 @@ UptimeRobot → GET https://rasel.ar/healthz
 - Un **Producto** puede tener varias **Variantes**. El precio y el stock viven
   en la variante; los packs pueden referenciar una variante unitaria para
   calcular ahorro.
+- La sección **Nuestra selección** del inicio muestra hasta tres productos
+  activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
+  coloca primero las botellas y después los packs.
 - El administrador activa o desactiva productos y variantes. Las imágenes de
   producto se cargan desde el admin y quedan en R2 en producción.
 - El carrito se guarda en la sesión del navegador con `variant_id` como clave.
