@@ -111,22 +111,34 @@ proveedor.
 
 ### 3. Webhook de pruebas
 
-1. En la aplicación de Mercado Pago abrir **Webhooks → Configurar
-   notificaciones**, seleccionar modo de pruebas y exclusivamente el evento
-   **Pagos**.
-2. Registrar
-   `https://<servicio-staging>.onrender.com/payments/webhook/`.
-3. Guardar, revelar el secret generado y copiarlo directamente a
-   `MP_WEBHOOK_SECRET` de staging.
-4. Desplegar con el checkout todavía apagado y verificar que GET al endpoint
+1. En la aplicación principal abrir **Credenciales de prueba** y localizar los
+   datos de la cuenta vendedora de prueba asociada al Access Token. No usar la
+   cuenta compradora ni compartir usuario, contraseña o código.
+2. En una sesión de navegador separada, iniciar sesión en Mercado Pago
+   Developers con esa cuenta vendedora. Abrir su aplicación automática
+   `TestApp-*` → **Webhooks → Configurar notificaciones**.
+3. En `TestApp-*`, seleccionar **Modo productivo**, registrar
+   `https://<servicio-staging>.onrender.com/payments/webhook/` y dejar marcado
+   exclusivamente **Pagos (legacy)**. Las compras Checkout Pro sandbox se
+   muestran como productivas dentro de esta cuenta ficticia.
+4. Revelar la clave secreta de `TestApp-*` en modo productivo y copiarla
+   directamente a `MP_WEBHOOK_SECRET` de staging. Las claves de Webhooks de la
+   aplicación principal pueden validar su simulador, pero no las notificaciones
+   reales emitidas por el vendedor de prueba.
+5. Desplegar con el checkout todavía apagado y verificar que GET al endpoint
    responda `405`.
-5. Habilitar temporalmente el checkout y completar un pago sandbox para obtener
+6. Habilitar temporalmente el checkout y completar un pago sandbox para obtener
    un `mp_payment_id` real asociado a un borrador. En **Simular**, usar ese ID:
    un valor inventado no puede superar la consulta estricta a la API.
-6. Confirmar que **Simular** produce un POST firmado con respuesta `200` y que
-   en admin el evento tiene firma válida y resultado procesado.
-   Una firma inválida debe responder `401` y no crear `PaymentEvent`.
-7. Mantener `MP_CHECKOUT_ENABLED=1` solo durante la matriz de staging.
+7. Confirmar con una compra real sandbox, sin usar **Volver al sitio**, que el
+   POST responde `200`, el borrador cambia de estado y en admin el evento tiene
+   firma válida y resultado procesado. Una firma inválida debe responder `401`
+   y no crear `PaymentEvent`.
+8. El simulador reutiliza el identificador de notificación `123456`; una vez
+   procesado, nuevas simulaciones pueden responder `200` como duplicadas sin
+   volver a consultar otro Data ID. Para validar el flujo completo usar un pago
+   sandbox nuevo o un reintento real visible en el panel de `TestApp-*`.
+9. Mantener `MP_CHECKOUT_ENABLED=1` solo durante la matriz de staging.
 
 RaSel también envía en cada preferencia
 `https://<SITE_URL>/payments/webhook/?source_news=webhooks`. Mercado Pago da
@@ -291,7 +303,8 @@ recuperación de Neon.
 | Stock incorrecto | Revisar ítems y estado de la orden; cancelar desde admin restaura stock una vez. |
 | Pago aprobado sin orden normal | Buscar el borrador y evento, ejecutar **Reconciliar con Mercado Pago** y revisar `payment_review`; no prometer entrega ni cobrar de nuevo. |
 | Pago cambia solo al volver desde Mercado Pago | Comprobar que la preferencia contiene la `notification_url` HTTPS de `SITE_URL` con `source_news=webhooks`, revisar entregas en Webhooks y reconciliar el borrador. No depender del retorno del navegador. |
-| Webhook MP devuelve `401` | Comparar ambiente y secret de Webhooks con Render; rotar y reemplazar el secret si existe duda de exposición. |
+| Webhook sandbox MP devuelve `401` | Abrir el evento en la `TestApp-*` del vendedor de prueba y comparar su clave de **Modo productivo** con `MP_WEBHOOK_SECRET` de staging. No usar las claves de la aplicación principal. |
+| Webhook productivo MP devuelve `401` | Comparar la clave de modo productivo de la aplicación real con Render; rotar y reemplazarla si existe duda de exposición. |
 | Conciliación MP falla | Mantener el checkout apagado si el problema persiste, conservar token/webhook/cron y revisar API, base, alertas y último `processing_error`. Nunca liberar stock suponiendo que no hubo pago. |
 | Cambio de deploy fallido | Revisar logs del deploy, volver al último deploy estable y evitar cambios destructivos en la base. |
 

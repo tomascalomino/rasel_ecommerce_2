@@ -3,6 +3,21 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-07 — Firma sandbox vinculada al vendedor de prueba
+
+- Cambio operativo: se comprobó que las notificaciones reales de Checkout Pro
+  sandbox pertenecen a la `TestApp-*` de la cuenta vendedora de prueba y se
+  firman con su clave de Webhooks en modo productivo.
+- Verificación: un rechazo `OTHE` llegó sin retorno del navegador, respondió
+  `200`, liberó stock y creó un evento con firma válida y procesamiento
+  correcto.
+- Incidente resuelto: usar claves de la aplicación principal producía `401`,
+  aunque sus simuladores fueran exitosos. El simulador además reutiliza el ID
+  `123456`, por lo que no sustituye una compra sandbox real.
+- Migraciones o variables: no se agregan migraciones ni variables; se corrigió
+  el origen operativo del valor existente `MP_WEBHOOK_SECRET` de staging.
+- Documentación actualizada: `docs/OPERATIONS.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-04 — Webhook fijado por preferencia de Checkout Pro
 
 - Cambio aplicado: cada preferencia incluye la URL HTTPS del webhook de RaSel
