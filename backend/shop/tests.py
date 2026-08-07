@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from .models import Category, Product, Variant
@@ -66,3 +66,18 @@ class ProductListViewTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		products = list(response.context["page_obj"])
 		self.assertGreaterEqual(products[0].min_price_ars, products[1].min_price_ars)
+
+	@override_settings(MP_CHECKOUT_ENABLED=True)
+	def test_mp_brand_is_visible_on_home_and_product_when_checkout_is_enabled(self):
+		for url in (reverse("home"), reverse("shop:product_detail", args=[self.p1.slug])):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				self.assertContains(response, "mercado-pago-horizontal.svg")
+				self.assertContains(response, "Hasta 6 cuotas")
+
+	@override_settings(MP_CHECKOUT_ENABLED=False)
+	def test_mp_brand_is_hidden_when_checkout_is_disabled(self):
+		for url in (reverse("home"), reverse("shop:product_detail", args=[self.p1.slug])):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				self.assertNotContains(response, "mercado-pago-horizontal.svg")

@@ -36,6 +36,17 @@
       <div class="detail-price">{{ product.min_price_ars|ars }}</div>
     {% endif %}
 
+    {% if mp_checkout_enabled %}
+      <div class="mp-payment-note">
+        <img
+          class="mp-brand-logo"
+          src="{% static 'img/mercado-pago-horizontal.svg' %}"
+          alt="Mercado Pago"
+        >
+        <span>Pagá con tarjeta, débito o dinero en cuenta. Hasta 6 cuotas.</span>
+      </div>
+    {% endif %}
+
     {% for v in product.variants.all %}
       {% if v.pack_savings_ars %}
         <div class="savings-note">

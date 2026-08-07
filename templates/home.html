@@ -107,6 +107,23 @@
 <div class="spacer"></div>
 {% endif %}
 
+{% if mp_checkout_enabled %}
+<section class="card mp-home-banner" aria-label="Mercado Pago disponible">
+  <img
+    class="mp-brand-logo mp-home-banner-logo"
+    src="{% static 'img/mercado-pago-horizontal.svg' %}"
+    alt="Mercado Pago"
+  >
+  <div class="mp-home-banner-copy">
+    <strong>Pagá como preferís</strong>
+    <span>Tarjetas, débito o dinero en cuenta · Hasta 6 cuotas.</span>
+  </div>
+  <a class="btn btn-small" href="{% url 'shop:product_list' %}">Ver productos</a>
+</section>
+
+<div class="spacer"></div>
+{% endif %}
+
 <section class="content-section">
   <div class="card home-origin">
     <img class="home-origin-img" src="{% static 'img/gallery-1.webp' %}" alt="Olivar en Andalgalá, Catamarca">

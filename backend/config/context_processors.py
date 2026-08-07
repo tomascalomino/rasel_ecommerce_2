@@ -11,6 +11,7 @@ def site(request):
     if digits and not digits.startswith("54"):
         digits = f"549{digits}"
     return {
+        "mp_checkout_enabled": settings.MP_CHECKOUT_ENABLED,
         "whatsapp_number": number,
         "whatsapp_link": f"https://wa.me/{digits}" if digits else "",
     }

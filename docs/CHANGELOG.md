@@ -5,6 +5,17 @@ documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
 ## 2026-08-07 — Lanzamiento inicial de Mercado Pago con conciliación manual
 
+- Operación de despliegues: se desactivó Auto-Deploy en `rasel_ecommerce_2`.
+  Los cambios se publican primero automáticamente en staging y solo llegan a
+  `rasel.ar` mediante un deploy manual después de la aprobación explícita.
+- Se incorporó el logo horizontal oficial de Mercado Pago debajo del precio en
+  el detalle de producto y un aviso compacto en el inicio. Los dos elementos
+  aparecen únicamente cuando el checkout de Mercado Pago está habilitado.
+- Decisión comercial: la cuenta productiva de Checkout queda configurada para
+  liberar el dinero a los 18 días corridos. Se mantienen cuotas con interés
+  para el comprador y no se habilitan cuotas sin interés financiadas por
+  RaSel. Al decidirlo, el panel mostraba un costo de 3,39% + IVA para los medios
+  ofrecidos.
 - Decisión operativa: producción comenzará sin el Cron Job pago de Render. La
   conciliación segura permanece disponible desde el admin y por comando, con
   controles intensivos durante las primeras 48 horas y una rutina diaria

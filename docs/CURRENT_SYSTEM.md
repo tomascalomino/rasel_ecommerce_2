@@ -17,8 +17,10 @@ UptimeRobot → GET https://rasel.ar/healthz
 
 - **Cloudflare** administra el DNS, el proxy HTTPS y el bucket público R2.
 - **Render** ejecuta la aplicación Django en el servicio productivo
-  `rasel_ecommerce_2`. Producción se despliega automáticamente desde la rama
-  `bundle_work`.
+  `rasel_ecommerce_2`. Staging se despliega automáticamente desde la rama
+  `bundle_work`; producción sigue esa misma rama, pero tiene **Auto-Deploy
+  desactivado** y solo se publica manualmente después de aprobar la versión en
+  staging.
 - **Neon** almacena los datos persistentes: catálogo, stock, zonas, puntos de
   retiro, usuarios, pedidos y eventos de pago.
 - **R2** guarda las imágenes cargadas desde el admin; los archivos estáticos
@@ -66,7 +68,14 @@ del servidor y nunca confía en el total enviado por el navegador.
 - **Mercado Pago Checkout Pro:** el flujo está implementado, pero se muestra
   únicamente con `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
   Pago; RaSel no recibe tarjetas ni utiliza la Public Key. Ofrece tarjeta,
-  débito y dinero en cuenta, hasta seis cuotas, y excluye pagos `ticket`.
+  débito y dinero en cuenta, hasta seis cuotas, y excluye pagos `ticket`. La
+  cuenta vendedora está configurada para liberar el dinero a los **18 días
+  corridos**; las cuotas disponibles para el comprador tienen interés y RaSel
+  no ofrece cuotas sin interés financiadas por el comercio. Cuando el checkout
+  está activo, la página de cada producto muestra el logo oficial de Mercado
+  Pago debajo del precio y el inicio incluye un aviso compacto sobre los medios
+  disponibles. Ambos avisos se ocultan con el mismo kill switch para no
+  promocionar un medio temporalmente deshabilitado.
 
 Para transferencia o efectivo, el checkout valida todas las variantes y su
 stock dentro de una transacción, crea una orden `pending`, descuenta stock,

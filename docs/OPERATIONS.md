@@ -227,24 +227,30 @@ la conciliación ocurre sola.
 3. En **Webhooks**, modo productivo, registrar
    `https://rasel.ar/payments/webhook/`, seleccionar solo **Pagos (legacy)** y
    copiar el secret productivo directamente al servicio web.
-4. Crear un snapshot o punto de recuperación Neon. Para este lanzamiento se
+4. En **Costos y cuotas → Checkout → Por cobro**, mantener la liberación del
+   dinero a **18 días corridos** para todos los medios. En **Por ofrecer
+   cuotas**, comprobar que indique cuotas con interés para el cliente y no
+   activar **Ofrecer cuotas sin interés**. El costo observado al 7 de agosto de
+   2026 fue 3,39% + IVA; verificar siempre el valor vigente en la cuenta antes
+   de tomar decisiones de precios.
+5. Crear un snapshot o punto de recuperación Neon. Para este lanzamiento se
    creó `backup-pre-mp-production-2026-08-07` desde la rama `production`, con
    datos y esquema actuales y sin eliminación automática. Desplegar código y
    migraciones con MP apagado.
-5. Ejecutar `check` y la suite de `shop`, `cart`, `orders`, `payments` y
+6. Ejecutar `check` y la suite de `shop`, `cart`, `orders`, `payments` y
    `shipping`. Verificar health check, tienda, carrito, transferencia y efectivo.
-6. Verificar que GET al webhook responda `405` y ejecutar una conciliación
+7. Verificar que GET al webhook responda `405` y ejecutar una conciliación
    manual sin errores. Confirmar que el operador acepta y conoce la rutina
    manual mientras no exista el Cron Job.
-7. Cambiar `MP_CHECKOUT_ENABLED=1`, desplegar y realizar una compra real
+8. Cambiar `MP_CHECKOUT_ENABLED=1`, desplegar y realizar una compra real
    controlada de bajo importe.
-8. Confirmar el webhook firmado productivo, el pago en Mercado Pago,
+9. Confirmar el webhook firmado productivo, el pago en Mercado Pago,
    exactamente una orden pagada, un único
    descuento de stock, un solo email, retorno correcto, datos de envío y carrito
    limpio.
-9. Ejecutar la evaluación de calidad con el `mp_payment_id` productivo de esa
+10. Ejecutar la evaluación de calidad con el `mp_payment_id` productivo de esa
    compra y resolver las observaciones.
-10. Monitorear eventos, borradores, logs y alertas, y ejecutar la conciliación
+11. Monitorear eventos, borradores, logs y alertas, y ejecutar la conciliación
     manual cada 30 minutos durante las primeras 48 horas.
 
 ## Reintegros y respuesta a incidentes
@@ -273,15 +279,22 @@ y [Cron Jobs de Render](https://render.com/docs/cronjobs).
 
 ## Despliegue y rollback
 
-Producción se despliega automáticamente cuando se hace push a `bundle_work`.
+Los pushes a `bundle_work` despliegan automáticamente el servicio de staging.
+El servicio productivo `rasel_ecommerce_2` mantiene **Auto-Deploy desactivado**
+para que ningún cambio llegue a `rasel.ar` sin revisión previa.
 
-1. Render ejecuta `bash build.sh`: instala dependencias, corre
+1. Esperar que staging quede `Live` y revisar allí el cambio en escritorio y
+   móvil.
+2. Obtener la aprobación explícita del responsable del sitio.
+3. En `rasel_ecommerce_2`, usar **Manual Deploy → Deploy latest commit** y
+   comprobar que el commit coincida con el aprobado en staging.
+4. Render ejecuta `bash build.sh`: instala dependencias, corre
    `collectstatic` y aplica migraciones.
-2. Render ejecuta `bash start.sh`: entra en `backend/` y arranca Gunicorn con
+5. Render ejecuta `bash start.sh`: entra en `backend/` y arranca Gunicorn con
    dos workers.
-3. Confirmar `https://rasel.ar/healthz`, home, catálogo, una imagen de R2 y un
+6. Confirmar `https://rasel.ar/healthz`, home, catálogo, una imagen de R2 y un
    checkout sin completar una compra real.
-4. Revisar logs de Render por errores de inicio, base de datos, R2 o Brevo.
+7. Revisar logs de Render por errores de inicio, base de datos, R2 o Brevo.
 
 Si un deploy rompe producción, usar el rollback de Render al deploy estable
 anterior. No revertir migraciones ni borrar datos sin preparar primero una

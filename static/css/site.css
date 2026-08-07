@@ -1788,6 +1788,29 @@ textarea:focus {
   color: var(--gold);
 }
 
+.mp-payment-note {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid #cce9f3;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.mp-brand-logo {
+  display: block;
+  width: 108px;
+  height: auto;
+  flex: none;
+}
+
 .savings-note {
   display: flex;
   align-items: center;
@@ -2235,6 +2258,41 @@ textarea:focus {
   color: var(--gold);
 }
 
+/* Mercado Pago: aviso compacto en home, visible solo con el checkout activo */
+.mp-home-banner {
+  display: grid;
+  grid-template-columns: 138px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 22px;
+  border-color: #cce9f3;
+  background: #fff;
+}
+
+.mp-home-banner-logo {
+  width: 138px;
+}
+
+.mp-home-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mp-home-banner-copy strong {
+  color: var(--olive);
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.mp-home-banner-copy span {
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 /* ── Home: banda de origen (foto de olivar + historia) ── */
 .home-origin {
   display: grid;
@@ -2258,6 +2316,21 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
+  .mp-home-banner {
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .mp-home-banner-logo {
+    width: 120px;
+  }
+
+  .mp-home-banner .btn {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    text-align: center;
+  }
+
   .home-origin {
     grid-template-columns: 1fr;
   }
@@ -2270,6 +2343,26 @@ textarea:focus {
 
 /* ── Ajustes mobile menores (footer, paddings en pantallas chicas) ── */
 @media (max-width: 560px) {
+  .mp-payment-note {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mp-home-banner {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 18px;
+  }
+
+  .mp-home-banner-logo {
+    width: 124px;
+  }
+
+  .mp-home-banner .btn {
+    grid-column: auto;
+  }
+
   /* El footer apila el bloque de marca y el pill en vez de apretarlos */
   .footer .row {
     flex-wrap: wrap;
