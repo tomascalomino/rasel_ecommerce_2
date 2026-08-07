@@ -122,10 +122,10 @@
           {% if radio.data.value == "mp" %}
           <p class="field-hint">Tarjeta, débito o dinero en cuenta. Hasta {{ mp_max_installments }} cuotas. Sin descuento por medio de pago.</p>
           {% elif radio.data.value == "transfer" %}
-          <p class="field-hint payment-discount-hint">Aplicamos {{ offline_discount_percent }}% de descuento sobre los productos.</p>
+          <p class="field-hint payment-discount-hint">Aplicamos como mínimo {{ offline_discount_percent }}% de descuento sobre los productos.</p>
           {% elif radio.data.value == "cod" %}
           <p id="cod-hint" class="muted tiny">
-            {{ offline_discount_percent }}% de descuento. Disponible para retiro o entrega en persona en CABA y GBA.
+            Mínimo {{ offline_discount_percent }}% de descuento. Disponible para retiro o entrega en persona en CABA y GBA.
           </p>
           {% endif %}
           {% endfor %}
@@ -214,7 +214,7 @@
   var paymentRadios = document.querySelectorAll('input[name="payment_method"]');
   var codHint = document.getElementById("cod-hint");
   var COD_HINT_DEFAULT =
-    discountPercent + "% de descuento. Disponible para retiro o entrega en persona en CABA y GBA.";
+    "Mínimo " + discountPercent + "% de descuento. Disponible para retiro o entrega en persona en CABA y GBA.";
 
   var deliveryRadios = document.querySelectorAll('input[name="delivery_method"]');
   var shipFields = document.getElementById("ship-fields");
@@ -245,7 +245,7 @@
     discountRow.hidden = !hasDiscount;
     sumDiscount.textContent = "− " + money(discount);
     sumTotalLabel.textContent = hasDiscount
-      ? "Total con " + discountPercent + "% OFF"
+      ? "Total con precio especial"
       : "Total";
     sumTotal.textContent = money(subtotal - discount + currentShippingCost);
   }
@@ -276,7 +276,7 @@
       sumShipping.textContent = "Retiro sin cargo";
       sumShipping.className = "ship-free";
       currentShippingCost = 0;
-      setCod(true, "Pagás en efectivo al retirar con " + discountPercent + "% de descuento.");
+      setCod(true, "Pagás en efectivo al retirar con un mínimo de " + discountPercent + "% de descuento.");
       refreshTotals();
     } else {
       shipFields.hidden = false;
@@ -338,7 +338,7 @@
     setCod(
       !!data.cod_allowed,
       data.cod_allowed
-        ? "Pagás en efectivo al recibir con " + discountPercent + "% de descuento."
+        ? "Pagás en efectivo al recibir con un mínimo de " + discountPercent + "% de descuento."
         : "No disponible para tu zona."
     );
 

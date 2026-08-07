@@ -3,6 +3,21 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-07 — Precio offline redondeado por variante
+
+- Cambio comercial: transferencia y efectivo conservan un descuento mínimo del
+  5%; después de aplicarlo, el precio promocional de cada variante se redondea
+  hacia abajo al múltiplo de $50.
+- Consistencia: el checkout multiplica el precio promocional unitario por la
+  cantidad, por lo que coincide con el valor mostrado en producto aun al comprar
+  varias unidades o presentaciones. Mercado Pago y el envío no reciben descuento.
+- Comunicación: inicio, producto, checkout, totales, emails y términos indican
+  “mínimo 5%” y muestran el importe efectivo descontado.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas; tasa
+  y múltiplo permanecen centralizados en `config/pricing.py`.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-08-07 — Descuento de 5% por transferencia y efectivo
 
 - Cambio comercial: transferencia y efectivo aplican un 5% de descuento sobre

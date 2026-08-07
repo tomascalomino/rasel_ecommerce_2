@@ -65,12 +65,15 @@ del servidor y nunca confía en el total enviado por el navegador.
   dirección del cliente.
 - **Pagos activos por defecto:** transferencia bancaria y efectivo contra
   entrega o retiro.
-- **Descuento por medio de pago:** transferencia y efectivo reciben un 5% de
-  descuento sobre el subtotal de productos. El costo de envío no se descuenta
-  y el umbral de envío gratis continúa evaluándose sobre el subtotal de lista.
-  Mercado Pago conserva el precio completo. El detalle de producto muestra el
-  precio promocional de la presentación elegida, el inicio comunica el beneficio
-  y el resumen del checkout cambia en el acto al seleccionar cada medio.
+- **Descuento por medio de pago:** transferencia y efectivo reciben un descuento
+  mínimo del 5% sobre los productos. Para cada variante se calcula el 5% y su
+  precio promocional se redondea hacia abajo al múltiplo de $50; la diferencia
+  efectiva se multiplica por la cantidad comprada. El costo de envío no se
+  descuenta y el umbral de envío gratis continúa evaluándose sobre el subtotal
+  de lista. Mercado Pago conserva el precio completo. El detalle de producto
+  muestra el precio promocional de la presentación elegida, el inicio comunica
+  que el beneficio es de al menos 5% y el resumen del checkout cambia en el acto
+  al seleccionar cada medio.
 - **Mercado Pago Checkout Pro:** el flujo está implementado, pero se muestra
   únicamente con `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
   Pago; RaSel no recibe tarjetas ni utiliza la Public Key. Ofrece tarjeta,

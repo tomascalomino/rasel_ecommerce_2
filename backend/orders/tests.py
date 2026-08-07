@@ -11,7 +11,11 @@ from shipping.services import resolve_shipping
 from shop.models import Category, Product, Variant
 from django.contrib import admin as django_admin
 
-from config.pricing import discounted_amount, payment_discount
+from config.pricing import (
+    discounted_amount,
+    payment_discount,
+    payment_discount_for_lines,
+)
 
 from .admin import OrderAdmin, cancel_and_restore_stock, mark_paid, mark_shipped
 from .models import Order, OrderItem
@@ -26,15 +30,27 @@ def _request_with_messages():
 
 
 class PaymentPricingTests(TestCase):
-    def test_five_percent_discount_uses_commercial_cent_rounding(self):
+    def test_minimum_five_percent_discount_rounds_price_down_to_fifty(self):
         self.assertEqual(
-            payment_discount(Decimal("100.10"), "transfer"),
-            Decimal("5.01"),
+            payment_discount(Decimal("7400.00"), "transfer"),
+            Decimal("400.00"),
         )
         self.assertEqual(
-            discounted_amount(Decimal("100.10")),
-            Decimal("95.09"),
+            discounted_amount(Decimal("7400.00")),
+            Decimal("7000.00"),
         )
+        self.assertEqual(discounted_amount(Decimal("13700.00")), Decimal("13000.00"))
+
+    def test_line_discount_preserves_promotional_unit_prices(self):
+        lines = [
+            (Decimal("7400.00"), 2),
+            (Decimal("13700.00"), 1),
+        ]
+        self.assertEqual(
+            payment_discount_for_lines(lines, "transfer"),
+            Decimal("1500.00"),
+        )
+        self.assertEqual(payment_discount_for_lines(lines, "mp"), Decimal("0.00"))
 
     def test_discount_applies_only_to_transfer_and_cash(self):
         subtotal = Decimal("1000.00")
@@ -83,9 +99,9 @@ class TransferCheckoutTests(TestCase):
         self.assertEqual(order.payment_method, "transfer")
         self.assertEqual(order.items.count(), 1)
         self.assertEqual(order.items.first().line_total, Decimal("200.00"))
-        self.assertEqual(order.payment_discount_amount, Decimal("10.00"))
+        self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
         quote = resolve_shipping("1000", subtotal=Decimal("200.00"))
-        self.assertEqual(order.total_amount, Decimal("190.00") + quote.cost)
+        self.assertEqual(order.total_amount, Decimal("100.00") + quote.cost)
 
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_qty, 3)
@@ -96,7 +112,7 @@ class TransferCheckoutTests(TestCase):
         body = mail.outbox[0].body
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
-        self.assertIn("Descuento por transferencia/efectivo (5%): -$10.00", body)
+        self.assertIn("Descuento por transferencia/efectivo (mínimo 5%): -$100.00", body)
         # CABA/GBA: promesa de entrega en 48hs desde el pago.
         self.assertIn("48hs", body)
 
@@ -105,8 +121,8 @@ class TransferCheckoutTests(TestCase):
         response = self.client.get(reverse("orders:checkout"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-offline-discount="10.00"')
-        self.assertContains(response, "5% de descuento")
+        self.assertContains(response, 'data-offline-discount="100.00"')
+        self.assertContains(response, "mínimo 5% de descuento")
         self.assertContains(response, 'id="payment-discount-row"')
 
     def test_transfer_interior_email_coordinates_by_whatsapp(self):
@@ -173,10 +189,10 @@ class CodCheckoutTests(TestCase):
         self.assertRedirects(resp, reverse("orders:cod_info", args=[order.id]))
         self.assertEqual(order.status, "pending")
         self.assertEqual(order.payment_method, "cod")
-        # El 5% se aplica a productos; el envío mantiene su costo completo.
+        # El descuento mínimo se aplica a productos; el envío mantiene su costo completo.
         quote = resolve_shipping("1425", subtotal=Decimal("200.00"))
-        self.assertEqual(order.payment_discount_amount, Decimal("10.00"))
-        self.assertEqual(order.total_amount, Decimal("190.00") + quote.cost)
+        self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
+        self.assertEqual(order.total_amount, Decimal("100.00") + quote.cost)
 
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_qty, 3)
@@ -185,7 +201,7 @@ class CodCheckoutTests(TestCase):
         self.assertIn("buyer@example.com", mail.outbox[0].to)
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento de la entrega", body)
-        self.assertIn("Descuento por transferencia/efectivo (5%): -$10.00", body)
+        self.assertIn("Descuento por transferencia/efectivo (mínimo 5%): -$100.00", body)
         self.assertIn("48hs", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
 
@@ -244,8 +260,8 @@ class PickupCheckoutTests(TestCase):
         self.assertEqual(order.pickup_point_id, self.point.id)
         self.assertIn(self.point.name, order.pickup_point_label)
         self.assertEqual(order.shipping_cost, Decimal("0.00"))
-        self.assertEqual(order.payment_discount_amount, Decimal("10.00"))
-        self.assertEqual(order.total_amount, Decimal("190.00"))
+        self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
+        self.assertEqual(order.total_amount, Decimal("100.00"))
         self.assertEqual(order.address_line, "")
         self.assertEqual(order.postal_code, "")
 
@@ -265,8 +281,8 @@ class PickupCheckoutTests(TestCase):
         self.assertRedirects(resp, reverse("orders:cod_info", args=[order.id]))
         self.assertEqual(order.payment_method, "cod")
         self.assertEqual(order.delivery_method, "pickup")
-        self.assertEqual(order.payment_discount_amount, Decimal("5.00"))
-        self.assertEqual(order.total_amount, Decimal("95.00"))
+        self.assertEqual(order.payment_discount_amount, Decimal("50.00"))
+        self.assertEqual(order.total_amount, Decimal("50.00"))
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento del retiro", body)
         # Retiro: se coordina por WhatsApp, sin promesa de 48hs.

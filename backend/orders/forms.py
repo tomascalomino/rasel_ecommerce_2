@@ -41,11 +41,11 @@ class CheckoutForm(forms.Form):
         ("mp", "Mercado Pago"),
         (
             "transfer",
-            f"Transferencia Bancaria — {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
+            f"Transferencia Bancaria — mínimo {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
         ),
         (
             "cod",
-            f"Efectivo (al recibir o al retirar) — {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
+            f"Efectivo (al recibir o al retirar) — mínimo {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
         ),
     ]
     payment_method = forms.ChoiceField(
