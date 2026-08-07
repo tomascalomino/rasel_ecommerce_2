@@ -5,6 +5,8 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import escape
 
+from config.pricing import discounted_amount
+
 from .models import Product, Variant
 
 
@@ -55,6 +57,7 @@ def home(request):
     for p in featured:
         active_vars = [v for v in p.variants.all() if v.is_active]
         p.min_price_ars = min((v.price_ars for v in active_vars), default=None)
+        p.offline_price_ars = discounted_amount(p.min_price_ars)
         p.in_stock = any(v.stock_qty > 0 for v in active_vars)
     return render(request, "home.html", {"featured_products": featured})
 
@@ -137,7 +140,10 @@ def product_detail(request, slug: str):
     )
 
     active_vars = list(product.variants.all())
+    for variant in active_vars:
+        variant.offline_price_ars = discounted_amount(variant.price_ars)
     product.min_price_ars = min((v.price_ars for v in active_vars), default=None)
+    product.offline_price_ars = discounted_amount(product.min_price_ars)
     product.in_stock = any(v.stock_qty > 0 for v in active_vars)
 
     # "También te puede gustar": otros productos activos con su precio mínimo.

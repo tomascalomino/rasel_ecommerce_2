@@ -295,6 +295,7 @@ class MercadoPagoIntegrationTests(TestCase):
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(self.draft.order.status, "paid")
         self.assertEqual(self.draft.order.payment_status, "approved")
+        self.assertEqual(self.draft.order.payment_discount_amount, Decimal("0.00"))
         self.assertTrue(self.draft.order.stock_deducted)
         self.assertEqual(self.variant.stock_qty, 1)
         self.assertEqual(len(mail.outbox), 1)

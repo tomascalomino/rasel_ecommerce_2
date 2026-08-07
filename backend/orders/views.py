@@ -7,6 +7,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
+from config.pricing import (
+    OFFLINE_PAYMENT_DISCOUNT_PERCENT,
+    payment_discount,
+)
 from payments.mercadopago import MercadoPagoError
 from payments.services import (
     PaymentValidationError,
@@ -23,6 +27,7 @@ from .models import Order, OrderItem
 
 
 def _render_checkout(request, cart, form):
+    subtotal = cart.total()
     return render(
         request,
         "orders/checkout.html",
@@ -31,36 +36,44 @@ def _render_checkout(request, cart, form):
             "form": form,
             "mp_enabled": settings.MP_CHECKOUT_ENABLED,
             "mp_max_installments": settings.MP_MAX_INSTALLMENTS,
+            "offline_discount_amount": payment_discount(subtotal, "transfer"),
+            "offline_discount_percent": OFFLINE_PAYMENT_DISCOUNT_PERCENT,
             "pickup_points": PickupPoint.objects.filter(is_active=True),
         },
     )
 
 
-def _delivery_from_form(form, subtotal):
+def _delivery_from_form(form, subtotal, payment_method):
     delivery_method = form.cleaned_data["delivery_method"]
+    discount_amount = payment_discount(subtotal, payment_method)
+    discounted_subtotal = subtotal - discount_amount
     if delivery_method == "pickup":
         point = form.cleaned_data["pickup_point"]
         return {
             "delivery_method": delivery_method,
+            "items_subtotal": subtotal,
             "pickup_point": point,
             "pickup_point_label": f"{point.name} - {point.address}",
             "shipping_cost": Decimal("0.00"),
             "shipping_zone": "",
             "shipping_carrier_arranged": False,
             "cod_allowed": True,
-            "grand_total": subtotal,
+            "payment_discount_amount": discount_amount,
+            "grand_total": discounted_subtotal,
         }
 
     quote = resolve_shipping(form.cleaned_data["postal_code"], subtotal=subtotal)
     return {
         "delivery_method": delivery_method,
+        "items_subtotal": subtotal,
         "pickup_point": None,
         "pickup_point_label": "",
         "shipping_cost": quote.cost,
         "shipping_zone": quote.zone_name,
         "shipping_carrier_arranged": quote.carrier_arranged,
         "cod_allowed": quote.cod_allowed,
-        "grand_total": subtotal + quote.cost,
+        "payment_discount_amount": discount_amount,
+        "grand_total": discounted_subtotal + quote.cost,
     }
 
 
@@ -82,6 +95,7 @@ def _customer_from_form(form):
 def _create_offline_order(customer, delivery, cart_rows, payment_method):
     with transaction.atomic():
         validated = []
+        validated_subtotal = Decimal("0.00")
         for item in cart_rows:
             variant = (
                 Variant.objects.select_for_update()
@@ -93,7 +107,16 @@ def _create_offline_order(customer, delivery, cart_rows, payment_method):
                     f"Sin stock suficiente de {variant.product.name} ({variant.name}). "
                     f"Disponible: {variant.stock_qty}."
                 )
-            validated.append((variant, item))
+            unit_price = variant.price_ars
+            line_total = unit_price * item.qty
+            validated_subtotal += line_total
+            validated.append((variant, item.qty, unit_price, line_total))
+
+        if validated_subtotal != delivery["items_subtotal"]:
+            raise ValueError("El precio de uno de los productos cambió. Revisá el pedido.")
+
+        discount_amount = payment_discount(validated_subtotal, payment_method)
+        grand_total = validated_subtotal - discount_amount + delivery["shipping_cost"]
 
         order = Order.objects.create(
             **customer,
@@ -103,23 +126,24 @@ def _create_offline_order(customer, delivery, cart_rows, payment_method):
             shipping_cost=delivery["shipping_cost"],
             shipping_zone=delivery["shipping_zone"],
             shipping_carrier_arranged=delivery["shipping_carrier_arranged"],
-            total_amount=delivery["grand_total"],
+            payment_discount_amount=discount_amount,
+            total_amount=grand_total,
             status="pending",
             payment_status="pending",
             payment_method=payment_method,
             stock_deducted=True,
         )
-        for variant, item in validated:
+        for variant, quantity, unit_price, line_total in validated:
             OrderItem.objects.create(
                 order=order,
                 variant=variant,
                 product_name=variant.product.name,
                 variant_name=variant.name,
-                unit_price=item.unit_price,
-                quantity=item.qty,
-                line_total=item.line_total,
+                unit_price=unit_price,
+                quantity=quantity,
+                line_total=line_total,
             )
-            variant.stock_qty -= item.qty
+            variant.stock_qty -= quantity
             variant.save(update_fields=["stock_qty"])
         return order
 
@@ -143,7 +167,7 @@ def checkout(request):
         messages.error(request, "Los productos del carrito ya no estan disponibles.")
         return redirect("cart:detail")
     subtotal = sum((item.line_total for item in cart_rows), Decimal("0.00"))
-    delivery = _delivery_from_form(form, subtotal)
+    delivery = _delivery_from_form(form, subtotal, payment_method)
     customer = _customer_from_form(form)
 
     if payment_method == "cod" and not delivery["cod_allowed"]:

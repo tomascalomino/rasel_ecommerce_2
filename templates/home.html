@@ -107,6 +107,17 @@
 <div class="spacer"></div>
 {% endif %}
 
+<section class="card offline-home-banner" aria-label="Descuento por transferencia o efectivo">
+  <span class="discount-badge discount-badge-large">{{ offline_payment_discount_percent }}% OFF</span>
+  <div class="offline-home-banner-copy">
+    <strong>Ahorrá pagando por transferencia o efectivo</strong>
+    <span>El descuento se aplica automáticamente sobre todos los productos.</span>
+  </div>
+  <a class="btn btn-small" href="{% url 'shop:product_list' %}">Ver productos</a>
+</section>
+
+<div class="spacer"></div>
+
 {% if mp_checkout_enabled %}
 <section class="card mp-home-banner" aria-label="Mercado Pago disponible">
   <img

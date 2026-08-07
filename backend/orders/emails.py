@@ -16,6 +16,8 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
 
+from config.pricing import OFFLINE_PAYMENT_DISCOUNT_PERCENT
+
 logger = logging.getLogger("orders.email")
 
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
@@ -68,13 +70,22 @@ def _build_lines(order) -> str:
 
 def _totals_block(order) -> str:
     shipping = order.shipping_cost or 0
-    subtotal = order.total_amount - shipping
-    if getattr(order, "delivery_method", "ship") == "pickup":
-        return (
-            f"Subtotal: ${subtotal}\n"
-            f"Retiro en punto de retiro: Sin cargo\n"
-            f"Total: ${order.total_amount}"
+    discount = getattr(order, "payment_discount_amount", 0) or 0
+    subtotal = order.total_amount - shipping + discount
+    lines = [f"Subtotal: ${subtotal}"]
+    if discount > 0:
+        lines.append(
+            f"Descuento por transferencia/efectivo "
+            f"({OFFLINE_PAYMENT_DISCOUNT_PERCENT}%): -${discount}"
         )
+    if getattr(order, "delivery_method", "ship") == "pickup":
+        lines.extend(
+            [
+                "Retiro en punto de retiro: Sin cargo",
+                f"Total: ${order.total_amount}",
+            ]
+        )
+        return "\n".join(lines)
     zona = f" ({order.shipping_zone})" if order.shipping_zone else ""
     if getattr(order, "shipping_carrier_arranged", False):
         envio = "a cargo del comprador y a coordinar vía WhatsApp"
@@ -82,11 +93,8 @@ def _totals_block(order) -> str:
         envio = f"${shipping}"
     else:
         envio = "Gratis"
-    return (
-        f"Subtotal: ${subtotal}\n"
-        f"Envío{zona}: {envio}\n"
-        f"Total: ${order.total_amount}"
-    )
+    lines.extend([f"Envío{zona}: {envio}", f"Total: ${order.total_amount}"])
+    return "\n".join(lines)
 
 
 def _delivery_block(order) -> str:

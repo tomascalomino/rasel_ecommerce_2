@@ -24,12 +24,7 @@
       </div>
     </div>
 
-    <div class="result-list">
-      <div class="row">
-        <span class="muted">Total a transferir</span>
-        <strong class="cart-total">{{ order.total_amount|ars }}</strong>
-      </div>
-    </div>
+    {% include "orders/partials/order_totals.html" %}
 
     {% if order.delivery_method == "pickup" %}
     <div class="spacer"></div>

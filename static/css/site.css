@@ -1811,6 +1811,45 @@ textarea:focus {
   flex: none;
 }
 
+.offline-payment-note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(169, 133, 69, .34);
+  border-radius: 14px;
+  background: var(--gold-soft);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.offline-payment-note > strong {
+  color: var(--olive);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--olive);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
 .savings-note {
   display: flex;
   align-items: center;
@@ -1969,6 +2008,39 @@ textarea:focus {
 
 .ship-summary .row {
   padding: 8px 0;
+}
+
+.payment-discount-row[hidden] {
+  display: none !important;
+}
+
+.payment-discount-row {
+  color: var(--olive);
+  border-radius: 10px;
+  background: var(--gold-soft);
+  padding-inline: 10px !important;
+}
+
+.payment-discount-row .label-sm {
+  color: inherit;
+}
+
+.payment-discount-hint {
+  color: var(--olive);
+  font-weight: 600;
+}
+
+.payment-discount-total {
+  color: var(--olive);
+  background: var(--gold-soft);
+}
+
+.order-totals-breakdown .row {
+  padding: 11px 12px;
+}
+
+.order-total-final {
+  border-top: 1px solid var(--border);
 }
 
 .ship-free {
@@ -2293,6 +2365,43 @@ textarea:focus {
   line-height: 1.45;
 }
 
+/* Transferencia y efectivo: beneficio comercial siempre disponible */
+.offline-home-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 22px;
+  padding: 18px 22px;
+  border-color: rgba(169, 133, 69, .34);
+  background: var(--gold-soft);
+}
+
+.discount-badge-large {
+  min-width: 92px;
+  min-height: 48px;
+  font-size: 16px;
+}
+
+.offline-home-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.offline-home-banner-copy strong {
+  color: var(--olive);
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.offline-home-banner-copy span {
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
 /* ── Home: banda de origen (foto de olivar + historia) ── */
 .home-origin {
   display: grid;
@@ -2316,6 +2425,17 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
+  .offline-home-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .offline-home-banner .btn {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    text-align: center;
+  }
+
   .mp-home-banner {
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 16px;
@@ -2343,6 +2463,29 @@ textarea:focus {
 
 /* ── Ajustes mobile menores (footer, paddings en pantallas chicas) ── */
 @media (max-width: 560px) {
+  .offline-payment-note {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .offline-payment-note > strong {
+    grid-column: 1 / -1;
+    justify-self: end;
+  }
+
+  .offline-home-banner {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 18px;
+  }
+
+  .discount-badge-large {
+    justify-self: start;
+  }
+
+  .offline-home-banner .btn {
+    grid-column: auto;
+  }
+
   .mp-payment-note {
     align-items: flex-start;
     flex-direction: column;

@@ -74,7 +74,7 @@ class Order(models.Model):
     )
 
     # Envío: costo y nombre de la zona resuelta a partir del CP.
-    # total_amount = subtotal (items) + shipping_cost.
+    # total_amount = subtotal (items) - payment_discount_amount + shipping_cost.
     shipping_cost = models.DecimalField(
         "costo de envío", max_digits=12, decimal_places=2, default=0
     )
@@ -85,7 +85,19 @@ class Order(models.Model):
         "correo a cargo del comprador", default=False
     )
 
+    payment_discount_amount = models.DecimalField(
+        "descuento por medio de pago",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+    )
+
     total_amount = models.DecimalField("total", max_digits=12, decimal_places=2)
+
+    @property
+    def items_subtotal(self):
+        """Subtotal histórico antes del descuento y del envío."""
+        return self.total_amount - self.shipping_cost + self.payment_discount_amount
 
     # MercadoPago tracking (MVP)
     mp_preference_id = models.CharField(max_length=120, blank=True, default="")

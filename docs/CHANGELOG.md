@@ -3,6 +3,25 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-07 — Descuento de 5% por transferencia y efectivo
+
+- Cambio comercial: transferencia y efectivo aplican un 5% de descuento sobre
+  los productos; el envío mantiene su valor y Mercado Pago conserva el precio
+  completo.
+- Experiencia: el inicio incorpora un aviso compacto, el detalle de producto
+  muestra en negrita el precio promocional y lo actualiza al cambiar de
+  presentación, y el checkout recalcula visualmente descuento y total al alternar
+  el medio de pago.
+- Seguridad e historial: el servidor recalcula precios y descuento dentro de la
+  transacción de stock. La orden guarda `payment_discount_amount`, los emails y
+  pantallas posteriores desglosan subtotal, descuento, envío y total, y los
+  ítems conservan el precio de lista.
+- Datos: se agrega la migración `orders.0014`; las órdenes existentes y de
+  Mercado Pago quedan con descuento cero.
+- Verificación: `manage.py check`, `makemigrations --check` y las 88 pruebas de
+  `shop`, `cart`, `orders`, `payments` y `shipping` finalizaron correctamente
+  (una prueba dependiente de PostgreSQL se omite en SQLite).
+
 ## 2026-08-07 — Lanzamiento inicial de Mercado Pago con conciliación manual
 
 - Operación de despliegues: se desactivó Auto-Deploy en `rasel_ecommerce_2`.

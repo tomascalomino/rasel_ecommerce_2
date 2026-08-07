@@ -67,6 +67,19 @@ class ProductListViewTests(TestCase):
 		products = list(response.context["page_obj"])
 		self.assertGreaterEqual(products[0].min_price_ars, products[1].min_price_ars)
 
+	def test_offline_discount_is_visible_on_home_and_product(self):
+		for url in (reverse("home"), reverse("shop:product_detail", args=[self.p1.slug])):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				self.assertContains(response, "5% OFF")
+				self.assertContains(response, "transferencia o efectivo")
+
+		product_response = self.client.get(
+			reverse("shop:product_detail", args=[self.p1.slug])
+		)
+		self.assertContains(product_response, "$ 114")
+		self.assertContains(product_response, 'data-offline-price="114.00"')
+
 	@override_settings(MP_CHECKOUT_ENABLED=True)
 	def test_mp_brand_is_visible_on_home_and_product_when_checkout_is_enabled(self):
 		for url in (reverse("home"), reverse("shop:product_detail", args=[self.p1.slug])):

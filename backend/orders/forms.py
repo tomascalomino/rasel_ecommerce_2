@@ -1,6 +1,7 @@
 from django import forms
 from django.conf import settings
 
+from config.pricing import OFFLINE_PAYMENT_DISCOUNT_PERCENT
 from shipping.models import PickupPoint
 from shipping.services import normalize_cp
 
@@ -38,8 +39,14 @@ class CheckoutForm(forms.Form):
 
     PAYMENT_CHOICES = [
         ("mp", "Mercado Pago"),
-        ("transfer", "Transferencia Bancaria"),
-        ("cod", "Efectivo (al recibir o al retirar)"),
+        (
+            "transfer",
+            f"Transferencia Bancaria — {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
+        ),
+        (
+            "cod",
+            f"Efectivo (al recibir o al retirar) — {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
+        ),
     ]
     payment_method = forms.ChoiceField(
         choices=PAYMENT_CHOICES, widget=forms.RadioSelect, initial="mp"
@@ -54,8 +61,8 @@ class CheckoutForm(forms.Form):
         # Con MercadoPago apagado quedan transferencia y efectivo.
         if not settings.MP_CHECKOUT_ENABLED:
             self.fields["payment_method"].choices = [
-                ("transfer", "Transferencia Bancaria"),
-                ("cod", "Efectivo (al recibir o al retirar)"),
+                self.PAYMENT_CHOICES[1],
+                self.PAYMENT_CHOICES[2],
             ]
             self.fields["payment_method"].initial = "transfer"
 

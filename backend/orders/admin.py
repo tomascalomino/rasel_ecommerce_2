@@ -109,6 +109,7 @@ class OrderAdmin(admin.ModelAdmin):
         "payment_badge",
         "payment_method",
         "delivery_method",
+        "payment_discount_amount",
         "total_amount",
         "mp_refunded_amount",
     )
@@ -129,6 +130,7 @@ class OrderAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "payment_status",
+        "payment_discount_amount",
         "mp_refunded_amount",
         "mp_preference_id",
         "mp_payment_id",

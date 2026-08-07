@@ -38,21 +38,16 @@
       </div>
     </div>
 
-    <div class="result-list">
-      <div class="row">
-        <span class="muted">Total a abonar en efectivo</span>
-        <strong class="cart-total">{{ order.total_amount|ars }}</strong>
-      </div>
-    </div>
+    {% include "orders/partials/order_totals.html" %}
 
     <div class="spacer"></div>
 
     <div class="alerts">
       <div class="alert" style="text-align: center; border-color: var(--gold);">
         {% if order.delivery_method == "pickup" %}
-        <p>Pagás en efectivo al momento del retiro. <strong>Sin recargos.</strong></p>
+        <p>Pagás en efectivo al momento del retiro. <strong>El {{ offline_payment_discount_percent }}% de descuento ya está aplicado.</strong></p>
         {% else %}
-        <p>Pagás en efectivo al momento de la entrega. <strong>Sin recargos.</strong></p>
+        <p>Pagás en efectivo al momento de la entrega. <strong>El {{ offline_payment_discount_percent }}% de descuento ya está aplicado.</strong></p>
         {% endif %}
         <p class="muted tiny mt-6">
           ¿Consultas sobre tu orden <strong>#{{ order.id }}</strong>? Escribinos a

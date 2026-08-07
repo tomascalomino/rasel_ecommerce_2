@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load money %}
+{% load l10n %}
 
 {% block title %}RaSel — {{ product.name }}{% endblock %}
 
@@ -33,7 +34,15 @@
     </div>
 
     {% if product.min_price_ars %}
-      <div class="detail-price">{{ product.min_price_ars|ars }}</div>
+      <div class="detail-price" id="product-current-price">{{ product.min_price_ars|ars }}</div>
+    {% endif %}
+
+    {% if product.offline_price_ars %}
+      <div class="offline-payment-note">
+        <span class="discount-badge">{{ offline_payment_discount_percent }}% OFF</span>
+        <span>Pagando por transferencia o efectivo</span>
+        <strong id="product-offline-price">{{ product.offline_price_ars|ars }}</strong>
+      </div>
     {% endif %}
 
     {% if mp_checkout_enabled %}
@@ -65,9 +74,14 @@
 
         <div class="buy-col">
           <span class="label-sm">Elegí presentación</span>
-          <select name="variant_id" required>
+          <select name="variant_id" id="product-variant" required>
             {% for v in product.variants.all %}
-              <option value="{{ v.id }}" {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}>
+              <option
+                value="{{ v.id }}"
+                data-price="{{ v.price_ars|unlocalize }}"
+                data-offline-price="{{ v.offline_price_ars|unlocalize }}"
+                {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}
+              >
                 {{ v.name }}
                 — {{ v.price_ars|ars }}
                 {% if v.stock_qty|default:0 <= 0 %}(Sin stock){% endif %}
@@ -119,6 +133,32 @@
 
   </div>
 </div>
+
+<script>
+(function () {
+  var select = document.getElementById("product-variant");
+  var regularPrice = document.getElementById("product-current-price");
+  var offlinePrice = document.getElementById("product-offline-price");
+  if (!select || !regularPrice || !offlinePrice) return;
+
+  function money(value) {
+    return "$ " + new Intl.NumberFormat("es-AR", {
+      minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  }
+
+  function refreshPrice() {
+    var option = select.options[select.selectedIndex];
+    if (!option) return;
+    regularPrice.textContent = money(parseFloat(option.dataset.price) || 0);
+    offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
+  }
+
+  select.addEventListener("change", refreshPrice);
+  refreshPrice();
+})();
+</script>
 
 {% if related_products %}
   <div class="related-head">

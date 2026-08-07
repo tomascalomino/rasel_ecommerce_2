@@ -1,0 +1,31 @@
+{% load money %}
+<div class="result-list order-totals-breakdown">
+  <div class="row">
+    <span class="muted">Subtotal de productos</span>
+    <span>{{ order.items_subtotal|ars }}</span>
+  </div>
+  {% if order.payment_discount_amount %}
+  <div class="row payment-discount-total">
+    <span>Descuento por transferencia/efectivo ({{ offline_payment_discount_percent }}%)</span>
+    <strong>− {{ order.payment_discount_amount|ars }}</strong>
+  </div>
+  {% endif %}
+  <div class="row">
+    <span class="muted">{% if order.delivery_method == "pickup" %}Retiro{% else %}Envío{% endif %}</span>
+    <span>
+      {% if order.delivery_method == "pickup" %}
+        Sin cargo
+      {% elif order.shipping_carrier_arranged %}
+        A coordinar
+      {% elif order.shipping_cost %}
+        {{ order.shipping_cost|ars }}
+      {% else %}
+        Gratis
+      {% endif %}
+    </span>
+  </div>
+  <div class="row order-total-final">
+    <strong>{% if order.payment_method == "transfer" %}Total a transferir{% else %}Total a abonar en efectivo{% endif %}</strong>
+    <strong class="cart-total">{{ order.total_amount|ars }}</strong>
+  </div>
+</div>

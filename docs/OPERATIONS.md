@@ -321,13 +321,24 @@ recuperación de Neon.
 
 1. Una orden por transferencia o efectivo llega `pending`; una aprobación MP
    llega `paid`, y una anomalía MP llega `payment_review`.
-2. Para transferencia, verificar el comprobante recibido por WhatsApp antes de
+2. Las órdenes por transferencia o efectivo muestran un descuento del 5% sobre
+   los productos. Revisar `descuento por medio de pago`, subtotal, envío y total
+   antes de cobrar o confirmar; Mercado Pago debe mostrar descuento cero. El
+   envío nunca forma parte de la base promocional.
+3. Para transferencia, verificar el comprobante recibido por WhatsApp antes de
    marcar la orden como pagada.
-3. Marcar `paid` manualmente solo para métodos offline. Las órdenes MP se
+4. Marcar `paid` manualmente solo para métodos offline. Las órdenes MP se
    actualizan mediante API y conciliación.
-4. Marcar `shipped` cuando se despacha o queda listo para retirar.
-5. En una orden MP aprobada, reintegrar primero en Mercado Pago; cancelar en
+5. Marcar `shipped` cuando se despacha o queda listo para retirar.
+6. En una orden MP aprobada, reintegrar primero en Mercado Pago; cancelar en
    RaSel no mueve dinero. No restaurar stock enviado sin devolución física.
+
+Antes de aprobar un despliegue, probar en staging una compra con envío y otra
+con retiro: al alternar Mercado Pago, transferencia y efectivo, el resumen debe
+mostrar u ocultar el descuento sin recargar la página. Al confirmar, el total de
+la orden y del email debe coincidir con el resumen. La tasa promocional es una
+regla versionada en `config/pricing.py`; cambiarla requiere código, pruebas,
+actualización de la comunicación visible y el flujo staging → aprobación → producción.
 
 ## Incidentes frecuentes
 
