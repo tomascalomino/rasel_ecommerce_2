@@ -3,6 +3,26 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-07 — Lanzamiento inicial de Mercado Pago con conciliación manual
+
+- Decisión operativa: producción comenzará sin el Cron Job pago de Render. La
+  conciliación segura permanece disponible desde el admin y por comando, con
+  controles intensivos durante las primeras 48 horas y una rutina diaria
+  obligatoria posterior.
+- Próximo desarrollo: provisionar `rasel-mp-reconcile` cada diez minutos para
+  automatizar webhooks perdidos, pagos pendientes y liberación de reservas. El
+  costo mínimo vigente de Render queda aceptado como una mejora futura, no como
+  parte del lanzamiento inicial.
+- Configuración: el servicio productivo real es `rasel_ecommerce_2`; el
+  Blueprint se alinea con ese nombre y deja de declarar el Cron Job para evitar
+  su creación y facturación accidental. Mercado Pago continúa apagado con
+  `MP_CHECKOUT_ENABLED=0` hasta la compra real controlada.
+- Recuperación: se creó en Neon la rama
+  `backup-pre-mp-production-2026-08-07` desde el estado actual de `production`,
+  con datos y esquema y sin eliminación automática.
+- Documentación actualizada: `render.yaml`, `docs/CURRENT_SYSTEM.md`,
+  `docs/OPERATIONS.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-07 — Firma sandbox vinculada al vendedor de prueba
 
 - Cambio operativo: se comprobó que las notificaciones reales de Checkout Pro

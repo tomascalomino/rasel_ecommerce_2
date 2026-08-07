@@ -16,8 +16,9 @@ UptimeRobot → GET https://rasel.ar/healthz
 ```
 
 - **Cloudflare** administra el DNS, el proxy HTTPS y el bucket público R2.
-- **Render** ejecuta la aplicación Django. Producción se despliega
-  automáticamente desde la rama `bundle_work`.
+- **Render** ejecuta la aplicación Django en el servicio productivo
+  `rasel_ecommerce_2`. Producción se despliega automáticamente desde la rama
+  `bundle_work`.
 - **Neon** almacena los datos persistentes: catálogo, stock, zonas, puntos de
   retiro, usuarios, pedidos y eventos de pago.
 - **R2** guarda las imágenes cargadas desde el admin; los archivos estáticos
@@ -89,9 +90,11 @@ collector y `live_mode` contra el endpoint de checkout emitido por Mercado
 Pago. Checkout Pro puede devolver `live_mode=true` para cuentas y tarjetas de
 prueba que operan mediante el `init_point` regular; el aislamiento se sostiene
 además con token de prueba, collector esperado y base staging separada. Pagos
-pendientes conservan la reserva y el comando
-`reconcile_mp_payments` recupera webhooks perdidos, cancela pendientes al
-cumplir 48 horas y libera stock solamente tras consultar al proveedor.
+pendientes conservan la reserva. La conciliación manual mediante el admin o el
+comando `reconcile_mp_payments` recupera webhooks perdidos, cancela pendientes
+al cumplir 48 horas y libera stock solamente tras consultar al proveedor.
+Actualmente no existe un Cron Job productivo: hasta incorporarlo, esta
+conciliación requiere la rutina manual definida en `OPERATIONS.md`.
 
 ## Órdenes, stock y notificaciones
 
@@ -142,13 +145,19 @@ usuarios.
 
 - Neon permite restaurar historial de la rama `production` solo dentro de las
   últimas **seis horas**. No hay snapshots ni backups programados configurados.
+- La rama Neon `backup-pre-mp-production-2026-08-07` conserva el estado previo
+  al lanzamiento productivo de Mercado Pago. No está conectada a Render y no
+  debe editarse, restablecerse ni eliminarse durante el período de lanzamiento.
 - Sentry está desactivado; los incidentes se observan en los logs de Render y
   en las entregas de Brevo.
 - No existe el Cron Job `rasel-kpi-weekly`; el comando `ops_kpis` puede usarse
   manualmente, pero no corre semanalmente en producción.
-- `render.yaml` define `rasel-mp-reconcile` cada diez minutos. Su existencia,
-  credenciales y último resultado deben comprobarse en el panel de Render antes
-  de habilitar nuevos pagos.
+- Mercado Pago productivo tiene token, webhook y variables operativas
+  configurados en el servicio `rasel_ecommerce_2`, pero el checkout permanece
+  apagado con `MP_CHECKOUT_ENABLED=0` hasta la compra real controlada.
+- No existe todavía el Cron Job productivo `rasel-mp-reconcile`. La
+  conciliación se opera manualmente y la automatización cada diez minutos queda
+  registrada como el próximo desarrollo prioritario.
 - Render opera en plan gratuito y puede tardar en responder tras inactividad;
   UptimeRobot reduce ese riesgo, pero no reemplaza monitoreo integral.
 

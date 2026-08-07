@@ -45,7 +45,7 @@ python backend/manage.py ops_kpis --days 7
 | Comercio | `WHATSAPP_NUMBER` | Coordinación de comprobantes, entregas y retiros. | Sí |
 | Mercado Pago | `MP_CHECKOUT_ENABLED` | Kill switch de pagos nuevos (`0` o `1`). No detiene webhook ni conciliación. | Sí; iniciar en `0` |
 | Mercado Pago | `MP_ENVIRONMENT` | Separa estrictamente `test` de `production`. | Sí si se usa MP |
-| Mercado Pago | `MP_ACCESS_TOKEN` | Credencial privada usada solo por backend y cron. | Sí si se usa MP |
+| Mercado Pago | `MP_ACCESS_TOKEN` | Credencial privada usada solo por backend y conciliación. | Sí si se usa MP |
 | Mercado Pago | `MP_WEBHOOK_SECRET` | Valida la firma de cada webhook antes de escribir en la base. | Sí si se usa MP |
 | Mercado Pago | `MP_MAX_INSTALLMENTS` | Máximo de cuotas; valor operativo inicial `6`. | Sí si se usa MP |
 | Mercado Pago | `MP_RESERVATION_MINUTES` | Duración de reserva inicial; valor operativo `30`. | Sí si se usa MP |
@@ -174,7 +174,7 @@ reservas vencidas**. La acción consulta Mercado Pago antes de reponer stock; si
 encuentra un pago lo procesa, y si la API falla conserva la reserva. Nunca
 editar o borrar el borrador ni corregir el stock manualmente.
 
-## Conciliación automática
+## Conciliación manual de Mercado Pago
 
 Ejecución manual:
 
@@ -188,16 +188,32 @@ solicita su cancelación y verifica el resultado antes de reponer stock. Si la
 API falla, conserva el stock, registra el error, envía una alerta y termina con
 código distinto de cero.
 
-El Blueprint declara el Cron Job `rasel-mp-reconcile`, rama `bundle_work`,
-schedule UTC `*/10 * * * *` y comando
-`python backend/manage.py reconcile_mp_payments --batch-size 100`. En Render se
-deben cargar separadamente `DATABASE_URL`, token, secret, ambiente, alertas y
-Brevo. Antes de habilitar checkout, ejecutar el job manualmente, comprobar un
-resultado exitoso y revisar su próxima ejecución.
+Producción comienza sin un Cron Job pago. Mientras no exista automatización,
+la operación manual es obligatoria:
 
-El Cron Job anterior es obligatorio para producción. La acción manual del
-admin es una herramienta de staging e incidentes y no reemplaza la
-conciliación automática productiva.
+1. Durante las primeras 48 horas del lanzamiento, revisar cada 30 minutos
+   mientras haya actividad comercial.
+2. Después, revisar como mínimo al abrir, a mitad de la jornada y antes de
+   cerrar, además de hacerlo inmediatamente ante una alerta de pago, un error
+   de webhook o una incidencia de Mercado Pago.
+3. Entrar en **Payments → Payment drafts**, filtrar estados creados, con stock
+   reservado, preferencia creada, pago pendiente o revisión manual, seleccionar
+   los borradores y ejecutar **Conciliar y liberar reservas vencidas**.
+4. Revisar también órdenes en `payment_review`, eventos con firma o
+   procesamiento fallido, stock liberado y `processing_error`.
+5. Si la API o la base fallan, mantener o colocar
+   `MP_CHECKOUT_ENABLED=0`, conservar el stock y repetir la conciliación cuando
+   el proveedor se recupere. Nunca asumir que no hubo pago.
+
+La próxima mejora operativa prioritaria es crear en Render el Cron Job
+`rasel-mp-reconcile`, rama `bundle_work`, schedule UTC `*/10 * * * *` y comando
+`python backend/manage.py reconcile_mp_payments --batch-size 100`. Render cobra
+por tiempo de ejecución con un mínimo de USD 1 mensual por Cron Job al momento
+de esta decisión; verificar el precio vigente antes de provisionarlo.
+Cuando se incorpore, deberá recibir por separado `DATABASE_URL`, credenciales
+MP, ambiente, alertas y Brevo, y probarse manualmente antes de sustituir la
+rutina anterior. Hasta entonces no debe agregarse al Blueprint ni asumirse que
+la conciliación ocurre sola.
 
 ## Salida a producción de Mercado Pago
 
@@ -205,24 +221,31 @@ conciliación automática productiva.
    credenciales**. Usar industria **Alimentos y bebidas** o **Retail** si la
    primera no aparece, sitio `https://rasel.ar`, aceptar términos y completar
    reCAPTCHA.
-2. Copiar el Access Token productivo directamente a los servicios web y cron de
-   Render. Configurar `MP_ENVIRONMENT=production` y mantener
+2. Copiar el Access Token productivo directamente al servicio web de Render.
+   Configurar `MP_ENVIRONMENT=production` y mantener
    `MP_CHECKOUT_ENABLED=0`.
 3. En **Webhooks**, modo productivo, registrar
-   `https://rasel.ar/payments/webhook/`, seleccionar solo **Pagos** y copiar el
-   secret productivo directamente a web y cron.
-4. Ejecutar la evaluación de calidad de la aplicación de Mercado Pago y
-   resolver todas las observaciones.
-5. Crear un snapshot o punto de recuperación Neon. Desplegar código y
+   `https://rasel.ar/payments/webhook/`, seleccionar solo **Pagos (legacy)** y
+   copiar el secret productivo directamente al servicio web.
+4. Crear un snapshot o punto de recuperación Neon. Para este lanzamiento se
+   creó `backup-pre-mp-production-2026-08-07` desde la rama `production`, con
+   datos y esquema actuales y sin eliminación automática. Desplegar código y
    migraciones con MP apagado.
-6. Ejecutar `check` y la suite de `shop`, `cart`, `orders`, `payments` y
+5. Ejecutar `check` y la suite de `shop`, `cart`, `orders`, `payments` y
    `shipping`. Verificar health check, tienda, carrito, transferencia y efectivo.
-7. Verificar webhook firmado y Cron Job productivos sin iniciar compras nuevas.
-8. Cambiar `MP_CHECKOUT_ENABLED=1`, desplegar y realizar una compra real
+6. Verificar que GET al webhook responda `405` y ejecutar una conciliación
+   manual sin errores. Confirmar que el operador acepta y conoce la rutina
+   manual mientras no exista el Cron Job.
+7. Cambiar `MP_CHECKOUT_ENABLED=1`, desplegar y realizar una compra real
    controlada de bajo importe.
-9. Confirmar un pago en Mercado Pago, exactamente una orden pagada, un único
+8. Confirmar el webhook firmado productivo, el pago en Mercado Pago,
+   exactamente una orden pagada, un único
    descuento de stock, un solo email, retorno correcto, datos de envío y carrito
-   limpio. Monitorear eventos, borradores, logs, alertas y cron durante 48 horas.
+   limpio.
+9. Ejecutar la evaluación de calidad con el `mp_payment_id` productivo de esa
+   compra y resolver las observaciones.
+10. Monitorear eventos, borradores, logs y alertas, y ejecutar la conciliación
+    manual cada 30 minutos durante las primeras 48 horas.
 
 ## Reintegros y respuesta a incidentes
 
@@ -234,9 +257,10 @@ la devolución física; si no fue enviada, cancelar y reponer desde el admin sol
 cuando el estado financiero ya permita hacerlo.
 
 Kill switch: poner `MP_CHECKOUT_ENABLED=0` para ocultar y bloquear pagos nuevos,
-pero mantener token, secret, webhook y cron para terminar operaciones en curso.
+pero mantener token, secret, webhook y conciliación manual para terminar
+operaciones en curso.
 No revertir migraciones ni borrar borradores. Si se expone un secreto,
-regenerarlo en Mercado Pago, reemplazarlo en web y cron y desplegar; nunca
+regenerarlo en Mercado Pago, reemplazarlo en el servicio web y desplegar; nunca
 publicar su valor. Un rollback de código solo es seguro con el antiguo
 `MP_ENABLED` ausente o en `0` y después de revisar compatibilidad de migraciones.
 
@@ -305,7 +329,7 @@ recuperación de Neon.
 | Pago cambia solo al volver desde Mercado Pago | Comprobar que la preferencia contiene la `notification_url` HTTPS de `SITE_URL` con `source_news=webhooks`, revisar entregas en Webhooks y reconciliar el borrador. No depender del retorno del navegador. |
 | Webhook sandbox MP devuelve `401` | Abrir el evento en la `TestApp-*` del vendedor de prueba y comparar su clave de **Modo productivo** con `MP_WEBHOOK_SECRET` de staging. No usar las claves de la aplicación principal. |
 | Webhook productivo MP devuelve `401` | Comparar la clave de modo productivo de la aplicación real con Render; rotar y reemplazarla si existe duda de exposición. |
-| Conciliación MP falla | Mantener el checkout apagado si el problema persiste, conservar token/webhook/cron y revisar API, base, alertas y último `processing_error`. Nunca liberar stock suponiendo que no hubo pago. |
+| Conciliación MP falla | Mantener el checkout apagado si el problema persiste, conservar token y webhook, y revisar API, base, alertas y último `processing_error`. Nunca liberar stock suponiendo que no hubo pago. |
 | Cambio de deploy fallido | Revisar logs del deploy, volver al último deploy estable y evitar cambios destructivos en la base. |
 
 ## Recuperación y monitoreo
@@ -316,8 +340,9 @@ recuperación de Neon.
   **Preview data**. No usar **Restore** directamente sobre producción sin un
   plan de recuperación validado.
 - Los logs de Render son la observabilidad activa. Sentry no está configurado.
-- `ops_kpis --days 7` sigue siendo manual. Mercado Pago usa el Cron Job
-  `rasel-mp-reconcile`; confirmar en Render su existencia y última ejecución.
+- `ops_kpis --days 7` sigue siendo manual. La conciliación de Mercado Pago
+  también es manual hasta incorporar `rasel-mp-reconcile`; registrar cada
+  revisión operativa y no asumir que existe una ejecución programada.
 - UptimeRobot es keep-alive, no monitoreo de base de datos, R2, checkout o email.
 
 ## Checklist de cambio operativo
