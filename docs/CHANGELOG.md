@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-09 — Precio offline en todas las tarjetas de producto
+
+- Cambio aplicado: las previews del inicio, la tienda y las recomendaciones
+  muestran el precio de lista y debajo el importe exacto pagando por
+  transferencia o efectivo.
+- Consistencia: todas las tarjetas comparten la preparación de precio mínimo,
+  precio offline y stock a partir de variantes activas; el importe promocional
+  reutiliza la regla central de descuento y redondeo.
+- Experiencia: se retiró del inicio el banner general de descuento para evitar
+  duplicar el beneficio que ahora comunica cada producto. El detalle dinámico y
+  el aviso de Mercado Pago no cambian.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-07 — Botellas primero en la selección del inicio
 
 - La sección **Nuestra selección** deja de heredar el orden alfabético

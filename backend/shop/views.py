@@ -10,6 +10,19 @@ from config.pricing import discounted_amount
 from .models import Product, Variant
 
 
+def _attach_product_card_data(products):
+    """Adjunta precio mínimo, precio offline y stock a previews de producto."""
+    for product in products:
+        active_variants = [variant for variant in product.variants.all() if variant.is_active]
+        product.min_price_ars = min(
+            (variant.price_ars for variant in active_variants),
+            default=None,
+        )
+        product.offline_price_ars = discounted_amount(product.min_price_ars)
+        product.in_stock = any(variant.stock_qty > 0 for variant in active_variants)
+    return products
+
+
 def healthz(request):
     """Health-check liviano para el ping de keep-alive (no toca la base)."""
     return HttpResponse("ok", content_type="text/plain")
@@ -56,11 +69,7 @@ def home(request):
         .order_by("name")
         .prefetch_related("variants")[:3]
     )
-    for p in featured:
-        active_vars = [v for v in p.variants.all() if v.is_active]
-        p.min_price_ars = min((v.price_ars for v in active_vars), default=None)
-        p.offline_price_ars = discounted_amount(p.min_price_ars)
-        p.in_stock = any(v.stock_qty > 0 for v in active_vars)
+    _attach_product_card_data(featured)
     return render(request, "home.html", {"featured_products": featured})
 
 
@@ -72,15 +81,8 @@ def product_list(request):
     # 1. Fetch all products and their variants to memory (safe for small/medium boutique catalogs)
     all_products = list(Product.objects.filter(is_active=True).prefetch_related("variants"))
 
-    # 2. Attach properties statically to avoid DB annotation errors in Postgres
-    for p in all_products:
-        active_vars = [v for v in p.variants.all() if v.is_active]
-        if active_vars:
-            p.min_price_ars = min(v.price_ars for v in active_vars)
-            p.in_stock = any(v.stock_qty > 0 for v in active_vars)
-        else:
-            p.min_price_ars = None
-            p.in_stock = False
+    # 2. Attach card properties in memory to avoid DB annotation errors in Postgres
+    _attach_product_card_data(all_products)
 
     # 3. Apply filters
     filtered_products = []
@@ -154,10 +156,7 @@ def product_detail(request, slug: str):
         .exclude(pk=product.pk)
         .prefetch_related("variants")[:3]
     )
-    for p in related:
-        rel_vars = [v for v in p.variants.all() if v.is_active]
-        p.min_price_ars = min((v.price_ars for v in rel_vars), default=None)
-        p.in_stock = any(v.stock_qty > 0 for v in rel_vars)
+    _attach_product_card_data(related)
 
     return render(
         request,

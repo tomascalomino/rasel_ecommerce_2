@@ -67,16 +67,12 @@ class ProductListViewTests(TestCase):
 		products = list(response.context["page_obj"])
 		self.assertGreaterEqual(products[0].min_price_ars, products[1].min_price_ars)
 
-	def test_offline_discount_is_visible_on_home_and_product(self):
-		for url in (reverse("home"), reverse("shop:product_detail", args=[self.p1.slug])):
-			with self.subTest(url=url):
-				response = self.client.get(url)
-				self.assertContains(response, "MÍN. 5% OFF")
-				self.assertContains(response, "transferencia o efectivo")
-
+	def test_offline_discount_is_visible_on_product_detail(self):
 		product_response = self.client.get(
 			reverse("shop:product_detail", args=[self.p1.slug])
 		)
+		self.assertContains(product_response, "MÍN. 5% OFF")
+		self.assertContains(product_response, "transferencia o efectivo")
 		self.assertContains(product_response, "$ 100")
 		self.assertContains(product_response, 'data-offline-price="100.00"')
 
@@ -94,6 +90,109 @@ class ProductListViewTests(TestCase):
 			with self.subTest(url=url):
 				response = self.client.get(url)
 				self.assertNotContains(response, "mercado-pago-horizontal.svg")
+
+
+class ProductCardPricingTests(TestCase):
+	def setUp(self):
+		category = Category.objects.create(name="Aceites premium")
+		self.primary = Product.objects.create(
+			name="AOVE Clásico",
+			category=category,
+			is_active=True,
+		)
+		Variant.objects.create(
+			product=self.primary,
+			name="500 ml",
+			sku="AOVE-500",
+			price_ars=Decimal("7400.00"),
+			stock_qty=0,
+			is_active=True,
+		)
+		Variant.objects.create(
+			product=self.primary,
+			name="750 ml",
+			sku="AOVE-750",
+			price_ars=Decimal("9000.00"),
+			stock_qty=3,
+			is_active=True,
+		)
+		Variant.objects.create(
+			product=self.primary,
+			name="Variante retirada",
+			sku="AOVE-INACTIVA",
+			price_ars=Decimal("100.00"),
+			stock_qty=10,
+			is_active=False,
+		)
+
+		self.out_of_stock = Product.objects.create(
+			name="Pack sin stock",
+			category=category,
+			is_active=True,
+		)
+		Variant.objects.create(
+			product=self.out_of_stock,
+			name="Pack x2",
+			sku="PACK-X2",
+			price_ars=Decimal("2000.00"),
+			stock_qty=0,
+			is_active=True,
+		)
+
+		self.without_variants = Product.objects.create(
+			name="Sin variantes",
+			category=category,
+			is_active=True,
+		)
+		Variant.objects.create(
+			product=self.without_variants,
+			name="Presentación retirada",
+			sku="SIN-ACTIVAS",
+			price_ars=Decimal("500.00"),
+			stock_qty=10,
+			is_active=False,
+		)
+
+	def test_home_and_catalog_show_exact_offline_price_for_active_minimum(self):
+		for url, context_name in (
+			(reverse("home"), "featured_products"),
+			(reverse("shop:product_list"), "page_obj"),
+		):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				products = {product.pk: product for product in response.context[context_name]}
+
+				self.assertEqual(products[self.primary.pk].min_price_ars, Decimal("7400.00"))
+				self.assertEqual(products[self.primary.pk].offline_price_ars, Decimal("7000.00"))
+				self.assertTrue(products[self.primary.pk].in_stock)
+				self.assertEqual(
+					products[self.out_of_stock.pk].offline_price_ars,
+					Decimal("1900.00"),
+				)
+				self.assertFalse(products[self.out_of_stock.pk].in_stock)
+				self.assertIsNone(products[self.without_variants.pk].offline_price_ars)
+				self.assertContains(response, 'class="product-card-offline-price"', count=2)
+				self.assertContains(response, "$ 7.000")
+				self.assertContains(response, "$ 1.900")
+				self.assertContains(response, "con transferencia o efectivo", count=2)
+
+	def test_related_product_cards_show_offline_price(self):
+		response = self.client.get(
+			reverse("shop:product_detail", args=[self.primary.slug])
+		)
+		related = {product.pk: product for product in response.context["related_products"]}
+
+		self.assertEqual(related[self.out_of_stock.pk].offline_price_ars, Decimal("1900.00"))
+		self.assertFalse(related[self.out_of_stock.pk].in_stock)
+		self.assertIsNone(related[self.without_variants.pk].offline_price_ars)
+		self.assertContains(response, 'class="product-card-offline-price"', count=1)
+		self.assertContains(response, "$ 1.900")
+
+	def test_home_no_longer_shows_general_offline_discount_banner(self):
+		response = self.client.get(reverse("home"))
+
+		self.assertNotContains(response, "offline-home-banner")
+		self.assertNotContains(response, "Ahorrá pagando por transferencia o efectivo")
 
 
 class HomeProductOrderTests(TestCase):

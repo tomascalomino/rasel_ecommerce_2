@@ -1657,6 +1657,32 @@ textarea:focus {
   color: var(--text-2);
 }
 
+.product-price-row {
+  align-items: flex-end;
+}
+
+.product-price-block {
+  min-width: 0;
+}
+
+.product-card-offline-price {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 7px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.product-card-offline-price strong {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .active-filters {
   display: flex;
   align-items: center;
@@ -2372,46 +2398,6 @@ textarea:focus {
   line-height: 1.35;
 }
 
-/* Transferencia y efectivo: beneficio comercial siempre disponible */
-.offline-home-banner {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
-  width: min(100%, 760px);
-  margin-inline: auto;
-  padding: 11px 15px;
-  border-color: rgba(169, 133, 69, .34);
-  background: var(--gold-soft);
-  box-shadow: 0 5px 14px rgba(46, 51, 36, .06);
-}
-
-.discount-badge-large {
-  min-width: 76px;
-  min-height: 34px;
-  font-size: 14px;
-}
-
-.offline-home-banner-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.offline-home-banner-copy strong {
-  color: var(--text);
-  font-family: var(--font-serif);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.offline-home-banner-copy span {
-  color: var(--text-2);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
 /* ── Home: banda de origen (foto de olivar + historia) ── */
 .home-origin {
   display: grid;
@@ -2435,11 +2421,6 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
-  .offline-home-banner {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 12px;
-  }
-
   .mp-home-banner {
     grid-template-columns: 92px minmax(0, 1fr);
     gap: 12px;
@@ -2469,16 +2450,6 @@ textarea:focus {
   .offline-payment-note > strong {
     grid-column: auto;
     justify-self: auto;
-  }
-
-  .offline-home-banner {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 10px;
-    padding: 11px 13px;
-  }
-
-  .discount-badge-large {
-    justify-self: start;
   }
 
   .mp-payment-note {

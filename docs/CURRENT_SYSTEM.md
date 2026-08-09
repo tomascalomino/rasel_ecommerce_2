@@ -74,9 +74,11 @@ del servidor y nunca confía en el total enviado por el navegador.
   efectiva se multiplica por la cantidad comprada. El costo de envío no se
   descuenta y el umbral de envío gratis continúa evaluándose sobre el subtotal
   de lista. Mercado Pago conserva el precio completo. El detalle de producto
-  muestra el precio promocional de la presentación elegida, el inicio comunica
-  que el beneficio es de al menos 5% y el resumen del checkout cambia en el acto
-  al seleccionar cada medio.
+  muestra el precio promocional de la presentación elegida. Las tarjetas del
+  inicio, la tienda y las recomendaciones muestran debajo del precio de lista el
+  importe exacto por transferencia o efectivo de la variante activa más
+  económica. El resumen del checkout cambia en el acto al seleccionar cada
+  medio.
 - **Mercado Pago Checkout Pro:** el flujo está implementado, pero se muestra
   únicamente con `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
   Pago; RaSel no recibe tarjetas ni utiliza la Public Key. Ofrece tarjeta,
