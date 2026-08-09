@@ -50,6 +50,10 @@ UptimeRobot → GET https://rasel.ar/healthz
 - La sección **Nuestra selección** del inicio muestra hasta tres productos
   activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
   coloca primero las botellas y después los packs.
+- La navegación pública se presenta como **Tienda**, **Virgen Extra**,
+  **Quiénes Somos**, **Conservación** y **Contacto**. El hero del inicio
+  identifica el origen como “Andalgalá, Catamarca” y el footer conserva la
+  información institucional y legal sin un badge adicional de producto.
 - El administrador activa o desactiva productos y variantes. Las imágenes de
   producto se cargan desde el admin y quedan en R2 en producción.
 - El carrito se guarda en la sesión del navegador con `variant_id` como clave.

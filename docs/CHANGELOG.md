@@ -3,6 +3,15 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-09 — Simplificación de navegación y textos institucionales
+
+- Cambio aplicado: el hero identifica el origen como “Andalgalá, Catamarca”,
+  sin el prefijo “Blend”, y se eliminó el badge “Blend Catamarca” del footer.
+- Navegación: **Quiénes Somos** aparece antes de **Conservación**, manteniendo
+  enlaces, estados activos y el resto del menú sin cambios.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-09 — Compra rápida desde las tarjetas de producto
 
 - Cambio aplicado: las tarjetas del inicio, la tienda y las recomendaciones

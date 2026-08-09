@@ -20,14 +20,14 @@
           Virgen Extra
         </a>
 
-        <a class="navlink {% if request.resolver_match and request.resolver_match.url_name == 'conservacion' %}is-active{% endif %}"
-          href="{% url 'conservacion' %}">
-          Conservación
-        </a>
-
         <a class="navlink {% if request.resolver_match and request.resolver_match.url_name == 'about' %}is-active{% endif %}"
           href="{% url 'about' %}">
           Quiénes Somos
+        </a>
+
+        <a class="navlink {% if request.resolver_match and request.resolver_match.url_name == 'conservacion' %}is-active{% endif %}"
+          href="{% url 'conservacion' %}">
+          Conservación
         </a>
 
         <a class="navlink {% if request.resolver_match and request.resolver_match.url_name == 'contact' %}is-active{% endif %}"
