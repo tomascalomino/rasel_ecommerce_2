@@ -1,0 +1,87 @@
+{% load static %}
+{% load money %}
+{% load l10n %}
+{% with first_variant=product.card_variants.0 %}
+<dialog
+  class="quick-add-dialog"
+  id="quick-add-{{ product.pk }}"
+  aria-labelledby="quick-add-title-{{ product.pk }}"
+  data-quick-add-dialog
+>
+  <div class="quick-add-shell">
+    <button class="quick-add-close" type="button" aria-label="Cerrar compra rápida" data-quick-add-close>
+      {% include "partials/icons/close.svg" %}
+    </button>
+
+    <div class="quick-add-media">
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+      {% else %}
+        <span class="quick-add-placeholder icon" aria-hidden="true">
+          {% include "partials/icons/bottle.svg" %}
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="quick-add-content">
+      <div>
+        <div class="eyebrow"><span class="dot"></span><span>Compra rápida</span></div>
+        <h2 class="h2 quick-add-title" id="quick-add-title-{{ product.pk }}">{{ product.name }}</h2>
+      </div>
+
+      <div class="quick-add-prices" aria-live="polite">
+        <strong data-quick-add-regular-price>{{ first_variant.price_ars|ars }}</strong>
+        <span>
+          <b data-quick-add-offline-price>{{ first_variant.offline_price_ars|ars }}</b>
+          con transferencia o efectivo
+        </span>
+      </div>
+
+      <form action="{% url 'cart:add' %}" method="post" class="quick-add-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+        {% if product.card_variants|length > 1 %}
+          <label class="quick-add-field" for="quick-add-variant-{{ product.pk }}">
+            <span class="label-sm">Elegí la presentación</span>
+            <select id="quick-add-variant-{{ product.pk }}" name="variant_id" data-quick-add-variant required>
+              {% for variant in product.card_variants %}
+                <option
+                  value="{{ variant.pk }}"
+                  data-price="{{ variant.price_ars|unlocalize }}"
+                  data-offline-price="{{ variant.offline_price_ars|unlocalize }}"
+                  data-stock="{{ variant.stock_qty }}"
+                >{{ variant.name }} — {{ variant.price_ars|ars }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        {% else %}
+          <input type="hidden" name="variant_id" value="{{ first_variant.pk }}">
+          <div class="quick-add-field">
+            <span class="label-sm">Presentación</span>
+            <span class="quick-add-selected-variant">{{ first_variant.name }}</span>
+          </div>
+        {% endif %}
+
+        <div class="quick-add-submit-row">
+          <div class="quick-add-quantity" data-quick-add-quantity>
+            <button type="button" aria-label="Restar una unidad" data-quick-add-qty="decrease">−</button>
+            <input
+              type="number"
+              name="qty"
+              value="1"
+              min="1"
+              max="{{ first_variant.stock_qty }}"
+              inputmode="numeric"
+              aria-label="Cantidad"
+              data-quick-add-qty-input
+            >
+            <button type="button" aria-label="Sumar una unidad" data-quick-add-qty="increase">+</button>
+          </div>
+          <button type="submit" class="btn btn-primary quick-add-submit">Agregar al carrito</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</dialog>
+{% endwith %}

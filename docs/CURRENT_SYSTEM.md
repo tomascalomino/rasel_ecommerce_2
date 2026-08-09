@@ -79,6 +79,11 @@ del servidor y nunca confía en el total enviado por el navegador.
   importe exacto por transferencia o efectivo de la variante activa más
   económica. El resumen del checkout cambia en el acto al seleccionar cada
   medio.
+- Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
+  imagen, precio, precio offline, cantidad y las presentaciones activas que
+  tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un
+  selector. Al agregar, el cliente permanece en la página de origen, ve el
+  mensaje de confirmación y el contador del carrito se actualiza.
 - **Mercado Pago Checkout Pro:** el flujo está implementado, pero se muestra
   únicamente con `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
   Pago; RaSel no recibe tarjetas ni utiliza la Public Key. Ofrece tarjeta,

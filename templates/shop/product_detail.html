@@ -192,10 +192,21 @@
         <div class="spacer"></div>
         <div class="row product-price-row">
           {% include "partials/product_card_price.html" with product=p only %}
-          <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+          {% if p.in_stock %}
+            <a
+              class="btn btn-primary btn-small product-buy-button"
+              href="{% url 'shop:product_detail' p.slug %}"
+              data-quick-add-open="quick-add-{{ p.pk }}"
+            >Comprar</a>
+          {% else %}
+            <a class="btn btn-lite btn-small" href="{% url 'shop:product_detail' p.slug %}">Ver</a>
+          {% endif %}
         </div>
       </div>
     </div>
+    {% if p.in_stock %}
+      {% include "partials/product_quick_add_dialog.html" with product=p %}
+    {% endif %}
     {% endfor %}
   </div>
 {% endif %}

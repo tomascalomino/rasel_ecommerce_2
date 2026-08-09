@@ -3,6 +3,19 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-09 — Compra rápida desde las tarjetas de producto
+
+- Cambio aplicado: las tarjetas del inicio, la tienda y las recomendaciones
+  incorporan un botón **Comprar** que abre un modal sin exigir entrar al detalle.
+- Experiencia: el modal muestra imagen, precio de lista, precio offline,
+  cantidad y únicamente las presentaciones activas con stock; cuando hay una
+  sola disponible queda preseleccionada.
+- Carrito: el formulario reutiliza el POST protegido por CSRF y vuelve de forma
+  segura a la página de origen, donde se actualizan el mensaje y el contador del
+  carrito. Las URLs externas de retorno se rechazan.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-09 — Precio offline en todas las tarjetas de producto
 
 - Cambio aplicado: las previews del inicio, la tienda y las recomendaciones

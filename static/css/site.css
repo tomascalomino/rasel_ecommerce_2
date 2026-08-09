@@ -1683,6 +1683,239 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.product-buy-button {
+  flex: none;
+}
+
+.quick-add-dialog {
+  width: min(920px, calc(100% - 32px));
+  max-width: none;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 24px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 28px 80px rgba(14, 22, 18, .32);
+}
+
+.quick-add-dialog::backdrop {
+  background: rgba(14, 22, 18, .66);
+  backdrop-filter: blur(2px);
+}
+
+.quick-add-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.05fr) minmax(320px, .95fr);
+  min-height: 470px;
+}
+
+.quick-add-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .9);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.quick-add-close:hover {
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.quick-add-close svg {
+  width: 100%;
+  height: 100%;
+}
+
+.quick-add-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 470px;
+  overflow: hidden;
+  background:
+    radial-gradient(180px 130px at 50% 40%, rgba(122, 168, 106, .18), transparent 72%),
+    linear-gradient(135deg, #f5f0e6 0%, #eef1ec 100%);
+}
+
+.quick-add-media img {
+  width: 100%;
+  height: 100%;
+  min-height: 470px;
+  object-fit: cover;
+}
+
+.quick-add-placeholder {
+  width: 116px;
+  height: 116px;
+  color: var(--gold);
+}
+
+.quick-add-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 22px;
+  padding: 42px 38px;
+}
+
+.quick-add-title {
+  margin: 8px 44px 0 0;
+  font-size: clamp(24px, 3vw, 32px);
+}
+
+.quick-add-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.quick-add-prices > strong {
+  font-family: var(--font-serif);
+  font-size: clamp(27px, 3.2vw, 34px);
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.quick-add-prices > span {
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.quick-add-prices b {
+  color: var(--brand);
+  font-family: var(--font-serif);
+  font-size: 19px;
+}
+
+.quick-add-form,
+.quick-add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.quick-add-form {
+  gap: 22px;
+}
+
+.quick-add-field select {
+  width: 100%;
+}
+
+.quick-add-selected-variant {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(14, 22, 18, .035);
+  font-weight: 700;
+}
+
+.quick-add-submit-row {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.quick-add-quantity {
+  display: grid;
+  grid-template-columns: 36px minmax(36px, 1fr) 36px;
+  min-height: 48px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.quick-add-quantity button,
+.quick-add-quantity input {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: center;
+  font: inherit;
+}
+
+.quick-add-quantity button {
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.quick-add-quantity button:hover {
+  background: rgba(14, 22, 18, .06);
+}
+
+.quick-add-quantity input {
+  appearance: textfield;
+  font-weight: 700;
+}
+
+.quick-add-quantity input::-webkit-inner-spin-button,
+.quick-add-quantity input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.quick-add-submit {
+  min-height: 48px;
+}
+
+@media (max-width: 720px) {
+  .quick-add-dialog {
+    width: calc(100% - 20px);
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - 20px);
+    border-radius: 20px;
+  }
+
+  .quick-add-shell {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .quick-add-media,
+  .quick-add-media img {
+    min-height: 220px;
+    max-height: 260px;
+  }
+
+  .quick-add-content {
+    gap: 18px;
+    padding: 24px 20px 22px;
+  }
+
+  .quick-add-title {
+    margin-right: 40px;
+  }
+}
+
+@media (max-width: 440px) {
+  .quick-add-submit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-add-quantity {
+    width: 126px;
+  }
+}
+
 .active-filters {
   display: flex;
   align-items: center;

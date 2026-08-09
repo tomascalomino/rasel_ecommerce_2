@@ -105,7 +105,7 @@ class ProductCardPricingTests(TestCase):
 			name="500 ml",
 			sku="AOVE-500",
 			price_ars=Decimal("7400.00"),
-			stock_qty=0,
+			stock_qty=2,
 			is_active=True,
 		)
 		Variant.objects.create(
@@ -174,7 +174,7 @@ class ProductCardPricingTests(TestCase):
 				self.assertContains(response, 'class="product-card-offline-price"', count=2)
 				self.assertContains(response, "$ 7.000")
 				self.assertContains(response, "$ 1.900")
-				self.assertContains(response, "con transferencia o efectivo", count=2)
+				self.assertContains(response, "con transferencia o efectivo")
 
 	def test_related_product_cards_show_offline_price(self):
 		response = self.client.get(
@@ -187,6 +187,54 @@ class ProductCardPricingTests(TestCase):
 		self.assertIsNone(related[self.without_variants.pk].offline_price_ars)
 		self.assertContains(response, 'class="product-card-offline-price"', count=1)
 		self.assertContains(response, "$ 1.900")
+
+	def test_quick_add_is_available_on_home_catalog_and_related_cards(self):
+		for url in (reverse("home"), reverse("shop:product_list")):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				self.assertContains(
+					response,
+					f'data-quick-add-open="quick-add-{self.primary.pk}"',
+				)
+				self.assertContains(response, f'id="quick-add-{self.primary.pk}"')
+				self.assertContains(response, 'data-price="7400.00"')
+				self.assertContains(response, 'data-offline-price="7000.00"')
+				self.assertContains(response, "Agregar al carrito")
+				self.assertNotContains(response, "Variante retirada")
+				self.assertNotContains(
+					response,
+					f'data-quick-add-open="quick-add-{self.out_of_stock.pk}"',
+				)
+
+		response = self.client.get(
+			reverse("shop:product_detail", args=[self.out_of_stock.slug])
+		)
+		self.assertContains(
+			response,
+			f'data-quick-add-open="quick-add-{self.primary.pk}"',
+		)
+		self.assertContains(response, f'id="quick-add-{self.primary.pk}"')
+
+	def test_quick_add_hides_variant_selector_when_only_one_is_available(self):
+		product = Product.objects.create(name="Única presentación", is_active=True)
+		variant = Variant.objects.create(
+			product=product,
+			name="250 ml",
+			sku="UNICA-250",
+			price_ars=Decimal("3500.00"),
+			stock_qty=4,
+			is_active=True,
+		)
+
+		response = self.client.get(reverse("shop:product_list"))
+
+		self.assertContains(response, f'id="quick-add-{product.pk}"')
+		self.assertContains(
+			response,
+			f'<input type="hidden" name="variant_id" value="{variant.pk}">',
+			html=True,
+		)
+		self.assertNotContains(response, f'id="quick-add-variant-{product.pk}"')
 
 	def test_home_no_longer_shows_general_offline_discount_banner(self):
 		response = self.client.get(reverse("home"))

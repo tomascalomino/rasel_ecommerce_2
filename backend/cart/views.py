@@ -1,5 +1,6 @@
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .cart import Cart
@@ -17,6 +18,13 @@ def cart_add(request):
     qty = int(request.POST.get("qty", 1))
     cart.add(variant_id=variant_id, qty=qty, override=False)
     messages.success(request, "Producto agregado al carrito.")
+    next_url = (request.POST.get("next") or "").strip()
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
     return redirect("cart:detail")
 
 
