@@ -3,6 +3,17 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-09 — Logo del header con área visible ampliada
+
+- Cambio aplicado: el header usa una versión WebP transparente, sin pérdida y
+  recortada alrededor del contenido real del logo.
+- Experiencia: la marca ocupa mejor las cajas existentes de escritorio y móvil
+  sin aumentar la altura del header ni desplazar la navegación.
+- Respaldo: se conserva el asset original y no se redibujaron la tipografía,
+  los ornamentos ni los colores de la marca.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-09 — Baja acidez destacada en el hero
 
 - Cambio aplicado: la descripción principal deja de presentar el aceite como

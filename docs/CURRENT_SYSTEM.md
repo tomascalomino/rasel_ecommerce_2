@@ -55,7 +55,9 @@ UptimeRobot → GET https://rasel.ar/healthz
   identifica el origen como “Andalgalá, Catamarca”, describe el producto como
   aceite de oliva premium y destaca “Acidez menor a 0,3%” junto a sus otros
   beneficios. El footer conserva la información institucional y legal sin un
-  badge adicional de producto.
+  badge adicional de producto. El header usa una versión recortada y
+  transparente del logo para aprovechar el espacio existente sin aumentar la
+  altura de la barra; el archivo original se conserva como respaldo.
 - El administrador activa o desactiva productos y variantes. Las imágenes de
   producto se cargan desde el admin y quedan en R2 en producción.
 - El carrito se guarda en la sesión del navegador con `variant_id` como clave.

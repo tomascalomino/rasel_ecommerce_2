@@ -278,3 +278,5 @@ class PublicNavigationCopyTests(TestCase):
 		self.assertIn("Aceite de oliva premium.", hero)
 		self.assertNotIn("pensado para uso diario", hero)
 		self.assertIn("Acidez menor a 0,3%", hero)
+		self.assertContains(response, "img/rasel-logo-header.webp")
+		self.assertNotContains(response, "img/rasel-escudo.webp")
