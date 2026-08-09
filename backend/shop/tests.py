@@ -269,8 +269,12 @@ class PublicNavigationCopyTests(TestCase):
 	def test_home_uses_simplified_origin_and_requested_navigation_order(self):
 		response = self.client.get(reverse("home"))
 		content = response.content.decode()
+		hero = content.split('<section class="hero-full"', 1)[1].split("</section>", 1)[0]
 
 		self.assertContains(response, "<span>Andalgalá, Catamarca</span>", html=True)
 		self.assertNotContains(response, "Blend · Andalgalá, Catamarca")
 		self.assertNotContains(response, 'class="pill pill-meta"')
 		self.assertLess(content.index("Quiénes Somos"), content.index("Conservación"))
+		self.assertIn("Aceite de oliva premium.", hero)
+		self.assertNotIn("pensado para uso diario", hero)
+		self.assertIn("Acidez menor a 0,3%", hero)

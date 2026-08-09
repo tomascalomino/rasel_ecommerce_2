@@ -3,6 +3,16 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-09 — Baja acidez destacada en el hero
+
+- Cambio aplicado: la descripción principal deja de presentar el aceite como
+  “pensado para uso diario” y conserva la definición breve “Aceite de oliva
+  premium”.
+- Experiencia: la barra de beneficios del hero incorpora “Acidez menor a 0,3%”
+  con un ícono de verificación y el mismo estilo responsive existente.
+- Migraciones o variables: no se agregan migraciones ni variables nuevas.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-09 — Simplificación de navegación y textos institucionales
 
 - Cambio aplicado: el hero identifica el origen como “Andalgalá, Catamarca”,
