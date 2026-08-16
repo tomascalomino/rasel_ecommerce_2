@@ -3,6 +3,25 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-16 — Rotación productiva de Mercado Pago validada
+
+- Cambio operativo: se reemplazaron directamente en Render el Access Token y
+  la clave del webhook productivos por los de la cuenta vendedora activa, sin
+  exponer ni versionar sus valores. `MP_ENVIRONMENT` permanece en `production`
+  y el checkout quedó habilitado con `MP_CHECKOUT_ENABLED=1`.
+- Verificación: `healthz` respondió `200`, el GET del webhook respondió `405` y
+  una compra real controlada produjo una sola orden pagada, descuento cero,
+  un único descuento de stock y un evento firmado procesado sin error.
+- Reintegro: el reintegro total se sincronizó en la misma orden y el producto y
+  la variante temporales quedaron inactivos, sin una venta neta pendiente.
+- Operación: continúa la conciliación manual intensiva durante las primeras 48
+  horas y la rutina diaria posterior porque todavía no existe el Cron Job
+  productivo `rasel-mp-reconcile`.
+- Migraciones o código: no se modificaron código, esquema ni nombres de
+  variables; el cambio se limitó a configuración productiva y documentación.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-08-09 — Logo del header con área visible ampliada
 
 - Cambio aplicado: el header usa una versión WebP transparente, sin pérdida y

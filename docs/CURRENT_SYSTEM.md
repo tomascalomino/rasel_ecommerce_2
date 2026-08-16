@@ -74,8 +74,8 @@ del servidor y nunca confía en el total enviado por el navegador.
   mínimo de compra o quedar a coordinar con el comprador.
 - **Retiro:** usa un punto de retiro activo, no cobra envío y no requiere
   dirección del cliente.
-- **Pagos activos por defecto:** transferencia bancaria y efectivo contra
-  entrega o retiro.
+- **Pagos activos en producción:** transferencia bancaria, efectivo contra
+  entrega o retiro y Mercado Pago Checkout Pro.
 - **Descuento por medio de pago:** transferencia y efectivo reciben un descuento
   mínimo del 5% sobre los productos. Para cada variante se calcula el 5% y su
   precio promocional se redondea hacia abajo al múltiplo de $50; la diferencia
@@ -92,8 +92,8 @@ del servidor y nunca confía en el total enviado por el navegador.
   tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un
   selector. Al agregar, el cliente permanece en la página de origen, ve el
   mensaje de confirmación y el contador del carrito se actualiza.
-- **Mercado Pago Checkout Pro:** el flujo está implementado, pero se muestra
-  únicamente con `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
+- **Mercado Pago Checkout Pro:** el flujo está habilitado en producción con
+  `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
   Pago; RaSel no recibe tarjetas ni utiliza la Public Key. Ofrece tarjeta,
   débito y dinero en cuenta, hasta seis cuotas, y excluye pagos `ticket`. La
   cuenta vendedora está configurada para liberar el dinero a los **18 días
@@ -191,9 +191,12 @@ usuarios.
   en las entregas de Brevo.
 - No existe el Cron Job `rasel-kpi-weekly`; el comando `ops_kpis` puede usarse
   manualmente, pero no corre semanalmente en producción.
-- Mercado Pago productivo tiene token, webhook y variables operativas
-  configurados en el servicio `rasel_ecommerce_2`, pero el checkout permanece
-  apagado con `MP_CHECKOUT_ENABLED=0` hasta la compra real controlada.
+- Mercado Pago productivo tiene token, webhook y variables operativas de la
+  cuenta vendedora activa configurados en `rasel_ecommerce_2`. El checkout está
+  habilitado con `MP_CHECKOUT_ENABLED=1` desde el 16 de agosto de 2026, después
+  de validar una compra real controlada, una única orden, el descuento de stock,
+  la firma del webhook y el reintegro total. La prueba no dejó un producto
+  activo ni una venta neta pendiente.
 - No existe todavía el Cron Job productivo `rasel-mp-reconcile`. La
   conciliación se opera manualmente y la automatización cada diez minutos queda
   registrada como el próximo desarrollo prioritario.

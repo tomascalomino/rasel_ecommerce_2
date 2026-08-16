@@ -74,7 +74,7 @@ proveedor.
    fiscales, segundo factor y recuperación de cuenta.
 2. Entrar en Mercado Pago Developers → **Tus integraciones** → **Crear
    aplicación**.
-3. Usar el nombre `RaSel Ecommerce` y seleccionar **Pagos online**, **Tienda
+3. Usar el nombre `RaSelEcommerce` y seleccionar **Pagos online**, **Tienda
    con desarrollo propio**, sitio `https://rasel.ar`, **Checkouts** y
    **Checkout Pro**.
 4. En **Pruebas → Credenciales de prueba**, activar las credenciales si fuera
@@ -216,6 +216,20 @@ rutina anterior. Hasta entonces no debe agregarse al Blueprint ni asumirse que
 la conciliación ocurre sola.
 
 ## Salida a producción de Mercado Pago
+
+Estado vigente desde el 16 de agosto de 2026: `rasel_ecommerce_2` usa las
+credenciales productivas de la cuenta vendedora activa, con
+`MP_ENVIRONMENT=production` y `MP_CHECKOUT_ENABLED=1`. La rotación se validó
+con health check `200`, webhook GET `405`, una compra real controlada, una sola
+orden pagada, un único descuento de stock, firma válida, procesamiento sin
+error y reintegro total sincronizado. El producto y la variante temporales
+quedaron inactivos. No registrar aquí el titular, los identificadores de pago
+ni los valores de las credenciales.
+
+La conciliación manual intensiva debe mantenerse durante las 48 horas
+posteriores a esta activación y luego continuar con la frecuencia diaria
+definida en la sección **Conciliación manual de Mercado Pago**, mientras no
+exista el Cron Job productivo.
 
 1. En Mercado Pago abrir **Producción → Credenciales de producción → Activar
    credenciales**. Usar industria **Alimentos y bebidas** o **Retail** si la
