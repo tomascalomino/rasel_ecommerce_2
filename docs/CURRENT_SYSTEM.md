@@ -211,7 +211,9 @@ usuarios.
 - La versión vigente es siempre el valor de `app_version`; el esquema comenzó
   en `1.0.0`. Todo commit posterior debe incrementarlo. Un hook local y el
   workflow `Version check` rechazan versiones ausentes, inválidas, repetidas o
-  decrecientes.
+  decrecientes. La única excepción es la realineación post-squash de
+  `bundle_work`: debe conservar exactamente la versión y el árbol Git completo;
+  una diferencia en cualquier archivo hace fallar el check.
 - `Promotion gate` ejecuta el check y la suite completa para cada PR a `main` y
   acepta solamente `bundle_work` como origen. El ruleset activo `Protect main`
   no tiene bypass, exige PR, historial lineal, conversaciones resueltas y

@@ -71,6 +71,8 @@ exclusivamente versiones aprobadas para producción. El flujo obligatorio es:
    promoción usando **Squash and merge**. No se admite push directo a `main`.
 7. Verificar que `main`, el PR aprobado y `app_version` identifican el mismo
    candidato antes de iniciar un deploy productivo.
+8. Antes de otro desarrollo, realinear `bundle_work` al commit squash de `main`
+   mediante el procedimiento seguro de esta sección.
 
 El ruleset activo `Protect main` apunta a la rama por defecto, no tiene bypass,
 exige pull request, historial lineal y conversaciones resueltas, permite solo
@@ -84,6 +86,32 @@ En la configuración del repositorio se debe conservar **Squash merge** y
 deshabilitar merge commits normales, porque cada commit definitivo de `main`
 debe representar una única versión. La protección de GitHub controla la
 promoción de código; el deploy manual de Render agrega una segunda aprobación.
+
+### Realineación post-squash de `bundle_work`
+
+GitHub crea un commit nuevo al usar squash, por lo que `main` y `bundle_work`
+quedan con historias distintas aunque contengan exactamente los mismos archivos.
+Antes de empezar otro cambio, realinear la rama de staging. Ejecutar solamente
+con el árbol rastreado limpio y después de verificar que ambos árboles remotos
+son idénticos:
+
+```powershell
+git switch bundle_work
+git fetch origin
+git diff --exit-code origin/main origin/bundle_work
+git rev-parse "origin/main^{tree}"
+git rev-parse "origin/bundle_work^{tree}"
+
+$rasel_previous_bundle = git rev-parse origin/bundle_work
+git reset --hard origin/main
+git push --force-with-lease="refs/heads/bundle_work:$rasel_previous_bundle" origin HEAD:refs/heads/bundle_work
+```
+
+Los dos valores `^{tree}` deben ser iguales y `git diff` no debe mostrar nada.
+Si difieren, detenerse: no hacer reset ni force-push. Esta operación no crea un
+commit ni incrementa `app_version`; `Version check` solo la acepta para
+`bundle_work`, con evento forzado, árbol completo idéntico y la misma versión.
+Todos los pushes normales continúan exigiendo un incremento por commit.
 
 ## Variables de entorno
 

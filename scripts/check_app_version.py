@@ -29,6 +29,11 @@ def version_at(revision: str) -> str | None:
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def tree_at(revision: str) -> str | None:
+    result = git("rev-parse", f"{revision}^{{tree}}", check=False)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
 def validate_increment(previous: str | None, current: str, label: str) -> list[str]:
     errors = []
     try:
@@ -88,7 +93,11 @@ def check_commit(commit: str) -> list[str]:
 
 
 def check_range(revision_range: str) -> list[str]:
-    commits = git_text("rev-list", "--reverse", revision_range).splitlines()
+    revision_result = git("rev-list", "--reverse", revision_range, check=False)
+    if revision_result.returncode != 0:
+        return [f"No se pudo resolver el rango Git {revision_range}."]
+
+    commits = revision_result.stdout.strip().splitlines()
     errors = []
     for commit in commits:
         errors.extend(check_commit(commit))
@@ -99,14 +108,55 @@ def check_range(revision_range: str) -> list[str]:
     return errors
 
 
+def check_sync(before: str, after: str) -> list[str]:
+    """Admite una realineación post-squash solo si no cambia contenido ni versión."""
+    before_tree = tree_at(before)
+    after_tree = tree_at(after)
+    before_version = version_at(before)
+    after_version = version_at(after)
+    errors = []
+
+    if before_tree is None:
+        errors.append(f"No se pudo resolver el commit anterior {before}.")
+    if after_tree is None:
+        errors.append(f"No se pudo resolver el commit nuevo {after}.")
+    if before_version is None:
+        errors.append(f"El commit anterior {before} no contiene {VERSION_PATH}.")
+    if after_version is None:
+        errors.append(f"El commit nuevo {after} no contiene {VERSION_PATH}.")
+    if errors:
+        return errors
+
+    errors.extend(validate_increment(None, before_version, "versión anterior"))
+    errors.extend(validate_increment(None, after_version, "versión nueva"))
+    if errors:
+        return errors
+
+    if before_tree != after_tree:
+        errors.append(
+            "La sincronización post-squash solo admite árboles Git idénticos."
+        )
+    if before_version != after_version:
+        errors.append(
+            "La sincronización post-squash debe conservar exactamente app_version."
+        )
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--staged", action="store_true")
     mode.add_argument("--range", dest="revision_range")
+    mode.add_argument("--sync", nargs=2, metavar=("BEFORE", "AFTER"))
     args = parser.parse_args()
 
-    errors = check_staged() if args.staged else check_range(args.revision_range)
+    if args.staged:
+        errors = check_staged()
+    elif args.sync:
+        errors = check_sync(*args.sync)
+    else:
+        errors = check_range(args.revision_range)
     if errors:
         print("Error de versionado:", file=sys.stderr)
         for error in errors:
