@@ -215,9 +215,9 @@ usuarios.
 - `Promotion gate` ejecuta el check y la suite completa para cada PR a `main` y
   acepta solamente `bundle_work` como origen. El ruleset activo `Protect main`
   no tiene bypass, exige PR, historial lineal, conversaciones resueltas y
-  squash, y bloquea borrado y force-push. Durante la incorporación inicial no
-  se puede integrar el PR hasta ejecutar los workflows y agregar `app-version`
-  y `promotion-gate` como status checks obligatorios del mismo ruleset.
+  squash, y bloquea borrado y force-push. También exige que `app-version` y
+  `promotion-gate` finalicen correctamente sobre una rama actualizada antes de
+  habilitar el merge.
 
 ## Fuentes de verdad
 

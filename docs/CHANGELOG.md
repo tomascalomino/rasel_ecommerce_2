@@ -26,10 +26,10 @@ documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 - Migraciones o variables: no se agregan migraciones ni variables de entorno.
 - Configuración externa: el ruleset activo `Protect main` ya exige PR, historial
   lineal, resolución de conversaciones y squash, sin bypass, y bloquea borrado
-  y force-push. Después de la primera ejecución todavía se deben agregar como
-  obligatorios `app-version` y `promotion-gate`. También falta confirmar que
-  `rasel_ecommerce_2` esté vinculado a `main`, no a `bundle_work`, antes del
-  próximo deploy productivo.
+  y force-push. También exige los status checks `app-version` y
+  `promotion-gate` y que la rama esté actualizada antes del merge. Falta
+  confirmar que `rasel_ecommerce_2` esté vinculado a `main`, no a
+  `bundle_work`, antes del próximo deploy productivo.
 - Documentación actualizada: `AGENTS.md`, `README.md`,
   `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y `docs/CHANGELOG.md`.
 

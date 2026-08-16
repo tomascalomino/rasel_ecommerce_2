@@ -74,15 +74,11 @@ exclusivamente versiones aprobadas para producción. El flujo obligatorio es:
 
 El ruleset activo `Protect main` apunta a la rama por defecto, no tiene bypass,
 exige pull request, historial lineal y conversaciones resueltas, permite solo
-squash y bloquea force-push y eliminación. Mantiene cero aprobaciones formales
-porque existe un único responsable: su acción manual de revisar y hacer merge
-es la aprobación. Al sumar otro colaborador, exigir una aprobación y la
-aprobación del último push.
-
-Durante la incorporación inicial, después de que los workflows aparezcan por
-primera vez, editar `Protect main`, activar **Require status checks to pass**,
-agregar `app-version` y `promotion-gate` y exigir que la rama esté actualizada.
-No integrar el primer PR antes de completar esta configuración.
+squash y bloquea force-push y eliminación. También exige que la rama esté
+actualizada y que los status checks `app-version` y `promotion-gate` finalicen
+correctamente. Mantiene cero aprobaciones formales porque existe un único
+responsable: su acción manual de revisar y hacer merge es la aprobación. Al
+sumar otro colaborador, exigir una aprobación y la aprobación del último push.
 
 En la configuración del repositorio se debe conservar **Squash merge** y
 deshabilitar merge commits normales, porque cada commit definitivo de `main`
