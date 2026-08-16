@@ -45,6 +45,10 @@ operativos o de configuración.
   checks `Version check` y `Promotion gate` deben finalizar correctamente.
 - El responsable del sitio debe aprobar la promoción. Usar **Squash and merge**
   para mantener un único commit de versión en `main`.
+- Después del squash y antes de otro desarrollo, realinear `bundle_work` al
+  nuevo commit de `main` únicamente si ambos árboles Git son idénticos. Usar un
+  force-push con lease exacto; la CI solo exceptúa el incremento de versión para
+  esta sincronización sin cambios de contenido ni de `app_version`.
 - Producción se despliega manualmente desde el commit aprobado de `main`; nunca
   desplegar desde `bundle_work` ni activar Auto-Deploy en el servicio productivo.
 

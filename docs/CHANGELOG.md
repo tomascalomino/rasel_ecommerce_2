@@ -3,6 +3,24 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-16 — Sincronización post-squash segura (1.0.2)
+
+- Corrección: `Version check` distingue los pushes normales de la realineación
+  forzada de `bundle_work` posterior a **Squash and merge**. La excepción solo
+  acepta el mismo árbol Git completo y exactamente el mismo `app_version`; no
+  permite cambios de contenido, otras ramas ni actualizaciones no forzadas.
+- Robustez: el workflow recupera explícitamente el commit anterior cuando el
+  force-push lo deja fuera de las referencias remotas y devuelve un error claro
+  si un rango no puede resolverse.
+- Pruebas: se cubren sincronización válida, árbol o versión diferentes, commit
+  ausente y SemVer inválido. Los tests del validador se ejecutan dentro del job
+  obligatorio `app-version`.
+- CI: `actions/checkout` y `actions/setup-python` pasan a sus versiones mayores
+  oficiales `v7`, eliminando la advertencia por el runtime Node.js anterior.
+- Operación: se documenta la comparación de árboles y el force-push con lease
+  exacto que realinea la rama persistente de staging antes del siguiente cambio.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-16 — Versionado SemVer visible y obligatorio
 
 - Cambio aplicado: `app_version` se incorpora como fuente única de la versión

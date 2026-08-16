@@ -54,7 +54,10 @@ GitHub Actions vuelve a comprobar cada commit publicado.
 4. Superar `Version check` y `Promotion gate` y obtener la aprobación del
    responsable del sitio.
 5. Integrar con **Squash and merge**.
-6. Desplegar manualmente en Render el SHA aprobado de `main`.
+6. Realinear `bundle_work` al nuevo commit de `main` después de confirmar que
+   ambos árboles Git son idénticos.
+7. Desplegar manualmente en Render el SHA aprobado de `main`.
 
 La rama `main` debe estar protegida mediante un ruleset de GitHub y producción
-debe mantener Auto-Deploy desactivado.
+debe mantener Auto-Deploy desactivado. La realineación post-squash conserva la
+misma versión y solo es válida cuando no cambia ningún archivo.
