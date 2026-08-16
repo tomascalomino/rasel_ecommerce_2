@@ -1,0 +1,32 @@
+name: Version check
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  app-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate pull request commits
+        if: github.event_name == 'pull_request'
+        run: >-
+          python scripts/check_app_version.py
+          --range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
+      - name: Validate pushed commits
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            python scripts/check_app_version.py --range "$AFTER"
+          else
+            python scripts/check_app_version.py --range "$BEFORE..$AFTER"
+          fi

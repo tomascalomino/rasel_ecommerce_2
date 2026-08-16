@@ -13,6 +13,7 @@
 {% block branding %}
 <div id="site-name">
   <a href="{% url 'admin:index' %}">RaSel <span class="rasel-brand-sub">Administración</span></a>
+  <span class="rasel-app-version" aria-label="Versión de la aplicación">v{{ app_version }}</span>
 </div>
 {% endblock %}
 
