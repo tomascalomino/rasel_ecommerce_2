@@ -3,6 +3,36 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-16 — Versionado SemVer visible y obligatorio
+
+- Cambio aplicado: `app_version` se incorpora como fuente única de la versión
+  de RaSel y comienza en `1.0.0`; Django valida que exista y use el formato
+  estable `MAJOR.MINOR.PATCH`.
+- Administración: el encabezado del admin muestra la versión desplegada en
+  todas sus páginas y permite identificar el código activo sin consultar
+  Render ni Git.
+- Flujo de commits: `bump_version.py` incrementa `patch`, `feature`/`minor`,
+  `major` o fija una versión exacta mayor. El hook versionado y GitHub Actions
+  rechazan commits sin incremento, con formato inválido o con una versión
+  repetida o decreciente.
+- Promoción: todo cambio pasa primero por `bundle_work` y staging. El workflow
+  `Promotion gate` solo admite PRs `bundle_work` → `main` y ejecuta el check y
+  la suite completa antes de que el responsable pueda promover la versión con
+  **Squash and merge**. Render productivo conserva el deploy manual desde
+  `main` como segunda aprobación.
+- Verificación: se agregan pruebas para la lectura del archivo y la presencia
+  de la versión en el admin; el arranque y `collectstatic` fallan temprano si
+  la fuente de versión desaparece o queda inválida.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+- Configuración externa: el ruleset activo `Protect main` ya exige PR, historial
+  lineal, resolución de conversaciones y squash, sin bypass, y bloquea borrado
+  y force-push. Después de la primera ejecución todavía se deben agregar como
+  obligatorios `app-version` y `promotion-gate`. También falta confirmar que
+  `rasel_ecommerce_2` esté vinculado a `main`, no a `bundle_work`, antes del
+  próximo deploy productivo.
+- Documentación actualizada: `AGENTS.md`, `README.md`,
+  `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-16 — Rotación productiva de Mercado Pago validada
 
 - Cambio operativo: se reemplazaron directamente en Render el Access Token y

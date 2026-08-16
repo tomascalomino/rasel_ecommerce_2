@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+if ! git diff --cached --name-only --diff-filter=ACMR | grep -Fxq "app_version"; then
+  echo "Error de versionado: cada commit debe incrementar app_version." >&2
+  echo "Ejecute: python scripts/bump_version.py patch|feature|major" >&2
+  exit 1
+fi
+
+current_version=$(git show :app_version)
+if ! printf '%s\n' "$current_version" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'; then
+  echo "Error de versionado: app_version debe usar major.minor.patch." >&2
+  exit 1
+fi
+
+previous_version=$(git show HEAD:app_version 2>/dev/null || true)
+if [ -n "$previous_version" ]; then
+  if ! awk -v old="$previous_version" -v new="$current_version" 'BEGIN {
+    split(old, previous, ".");
+    split(new, current, ".");
+    valid = current[1] > previous[1] ||
+      (current[1] == previous[1] && current[2] > previous[2]) ||
+      (current[1] == previous[1] && current[2] == previous[2] && current[3] > previous[3]);
+    exit valid ? 0 : 1;
+  }'; then
+    echo "Error de versionado: $current_version no es mayor que $previous_version." >&2
+    exit 1
+  fi
+fi

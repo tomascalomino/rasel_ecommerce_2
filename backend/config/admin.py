@@ -14,6 +14,8 @@ from django.contrib import admin
 from django.db.models import Count, Sum
 from django.utils import timezone
 
+from .version import APP_VERSION
+
 ROLE_OPERATOR = "Operador"
 ROLE_READONLY = "Solo lectura"
 
@@ -75,6 +77,11 @@ class RaselAdminSite(admin.AdminSite):
         "shop": ("product", "variant", "category"),
         "shipping": ("shippingzone", "pickuppoint"),
     }
+
+    def each_context(self, request):
+        context = super().each_context(request)
+        context["app_version"] = APP_VERSION
+        return context
 
     def get_app_list(self, request, app_label=None):
         app_list = super().get_app_list(request, app_label)

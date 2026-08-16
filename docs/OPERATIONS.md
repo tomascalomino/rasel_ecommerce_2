@@ -21,6 +21,74 @@ python backend/manage.py test shop cart orders payments shipping
 python backend/manage.py ops_kpis --days 7
 ```
 
+## Versionado de la aplicación
+
+`app_version` en la raíz es la única fuente de verdad y contiene una versión
+SemVer estable `MAJOR.MINOR.PATCH`. Django valida el archivo al arrancar y el
+admin muestra el mismo valor con prefijo `v`.
+
+Todo commit debe incluir un incremento. Antes de prepararlo, ejecutar una de
+estas opciones:
+
+```powershell
+# Corrección, documentación o refactor compatible: 1.0.0 -> 1.0.1
+python scripts/bump_version.py patch
+
+# Funcionalidad compatible: 1.0.1 -> 1.1.0
+python scripts/bump_version.py feature
+
+# Cambio incompatible: 1.1.0 -> 2.0.0
+python scripts/bump_version.py major
+
+# Versión exacta, siempre mayor que la actual
+python scripts/bump_version.py 2.1.0
+```
+
+Activar una sola vez por clon el hook incluido en el repositorio:
+
+```powershell
+python scripts/install_git_hooks.py
+```
+
+El hook rechaza el commit si `app_version` no está preparado, no tiene formato
+válido o no aumenta. El workflow `Version check` repite la validación para cada
+commit de un push o pull request; no sustituye la protección de rama de GitHub.
+No editar el valor desde Render ni crear una variable de entorno equivalente.
+
+## Flujo obligatorio de ramas y aprobación
+
+`bundle_work` es la rama de desarrollo integrado y staging. `main` contiene
+exclusivamente versiones aprobadas para producción. El flujo obligatorio es:
+
+1. Incrementar `app_version` en cada commit y trabajar sobre `bundle_work`.
+2. Pushear únicamente a `bundle_work` y esperar que staging quede `Live`.
+3. Probar el flujo afectado en staging, incluidos escritorio y móvil cuando
+   corresponda.
+4. Abrir un pull request con origen `bundle_work` y destino `main`.
+5. Esperar los checks `Version check` y `Promotion gate`; el segundo rechaza
+   otros orígenes y ejecuta `check` más la suite completa de Django.
+6. El responsable del sitio revisa el SHA, la versión y staging, y aprueba la
+   promoción usando **Squash and merge**. No se admite push directo a `main`.
+7. Verificar que `main`, el PR aprobado y `app_version` identifican el mismo
+   candidato antes de iniciar un deploy productivo.
+
+El ruleset activo `Protect main` apunta a la rama por defecto, no tiene bypass,
+exige pull request, historial lineal y conversaciones resueltas, permite solo
+squash y bloquea force-push y eliminación. Mantiene cero aprobaciones formales
+porque existe un único responsable: su acción manual de revisar y hacer merge
+es la aprobación. Al sumar otro colaborador, exigir una aprobación y la
+aprobación del último push.
+
+Durante la incorporación inicial, después de que los workflows aparezcan por
+primera vez, editar `Protect main`, activar **Require status checks to pass**,
+agregar `app-version` y `promotion-gate` y exigir que la rama esté actualizada.
+No integrar el primer PR antes de completar esta configuración.
+
+En la configuración del repositorio se debe conservar **Squash merge** y
+deshabilitar merge commits normales, porque cada commit definitivo de `main`
+debe representar una única versión. La protección de GitHub controla la
+promoción de código; el deploy manual de Render agrega una segunda aprobación.
+
 ## Variables de entorno
 
 | Grupo | Variable | Uso | Requerida en producción |
@@ -294,21 +362,27 @@ y [Cron Jobs de Render](https://render.com/docs/cronjobs).
 ## Despliegue y rollback
 
 Los pushes a `bundle_work` despliegan automáticamente el servicio de staging.
-El servicio productivo `rasel_ecommerce_2` mantiene **Auto-Deploy desactivado**
-para que ningún cambio llegue a `rasel.ar` sin revisión previa.
+El servicio productivo `rasel_ecommerce_2` debe estar vinculado a `main` y
+mantener **Auto-Deploy desactivado** para que ningún cambio llegue a `rasel.ar`
+sin revisión previa. Antes del próximo deploy, entrar en **Settings → Build &
+Deploy → Branch** y confirmar `main`; si todavía aparece `bundle_work`, cambiar
+la rama y guardar antes de continuar.
 
 1. Esperar que staging quede `Live` y revisar allí el cambio en escritorio y
    móvil.
-2. Obtener la aprobación explícita del responsable del sitio.
-3. En `rasel_ecommerce_2`, usar **Manual Deploy → Deploy latest commit** y
-   comprobar que el commit coincida con el aprobado en staging.
-4. Render ejecuta `bash build.sh`: instala dependencias, corre
+2. Abrir y aprobar el PR `bundle_work` → `main` después de que pasen los checks.
+3. Confirmar que el SHA y `app_version` de `main` coinciden con staging.
+4. Obtener la aprobación explícita del responsable del sitio para desplegar.
+5. En `rasel_ecommerce_2`, usar **Manual Deploy → Deploy latest commit** y
+   comprobar que el commit coincida con el aprobado en `main`.
+6. Render ejecuta `bash build.sh`: instala dependencias, corre
    `collectstatic` y aplica migraciones.
-5. Render ejecuta `bash start.sh`: entra en `backend/` y arranca Gunicorn con
+7. Render ejecuta `bash start.sh`: entra en `backend/` y arranca Gunicorn con
    dos workers.
-6. Confirmar `https://rasel.ar/healthz`, home, catálogo, una imagen de R2 y un
-   checkout sin completar una compra real.
-7. Revisar logs de Render por errores de inicio, base de datos, R2 o Brevo.
+8. Confirmar `https://rasel.ar/healthz`, home, catálogo, una imagen de R2 y un
+   checkout sin completar una compra real. Entrar al admin y comprobar que la
+   versión mostrada coincide con `app_version` del commit desplegado.
+9. Revisar logs de Render por errores de inicio, base de datos, R2 o Brevo.
 
 Si un deploy rompe producción, usar el rollback de Render al deploy estable
 anterior. No revertir migraciones ni borrar datos sin preparar primero una

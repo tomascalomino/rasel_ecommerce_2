@@ -18,9 +18,12 @@ UptimeRobot → GET https://rasel.ar/healthz
 - **Cloudflare** administra el DNS, el proxy HTTPS y el bucket público R2.
 - **Render** ejecuta la aplicación Django en el servicio productivo
   `rasel_ecommerce_2`. Staging se despliega automáticamente desde la rama
-  `bundle_work`; producción sigue esa misma rama, pero tiene **Auto-Deploy
-  desactivado** y solo se publica manualmente después de aprobar la versión en
-  staging.
+  `bundle_work`; `main` representa el código aprobado para producción. El
+  servicio productivo tiene **Auto-Deploy desactivado** y solo debe desplegar
+  manualmente un commit de `main` después de aprobar la misma versión en
+  staging. Antes del próximo deploy productivo se debe confirmar en Render que
+  la rama vinculada ya sea `main`; si todavía figura `bundle_work`, el deploy
+  queda bloqueado hasta corregirla.
 - **Neon** almacena los datos persistentes: catálogo, stock, zonas, puntos de
   retiro, usuarios, pedidos y eventos de pago.
 - **R2** guarda las imágenes cargadas desde el admin; los archivos estáticos
@@ -170,6 +173,9 @@ usuarios.
 - **Solo lectura:** puede consultar los mismos datos sin modificarlos.
 - Los usuarios y roles los gestiona un administrador. El dashboard muestra
   pendientes, ventas cobradas y órdenes recientes.
+- El encabezado del admin muestra la versión desplegada con el formato
+  `vMAJOR.MINOR.PATCH`. El valor se lee de `app_version` en la raíz del
+  repositorio y no depende de una variable de entorno.
 - Borradores y eventos de Mercado Pago siguen visibles aunque el checkout esté
   apagado. La acción **Reconciliar con Mercado Pago** consulta la API.
 - La acción **Conciliar y liberar reservas vencidas** permite operar staging o
@@ -202,11 +208,22 @@ usuarios.
   registrada como el próximo desarrollo prioritario.
 - Render opera en plan gratuito y puede tardar en responder tras inactividad;
   UptimeRobot reduce ese riesgo, pero no reemplaza monitoreo integral.
+- La versión vigente es siempre el valor de `app_version`; el esquema comenzó
+  en `1.0.0`. Todo commit posterior debe incrementarlo. Un hook local y el
+  workflow `Version check` rechazan versiones ausentes, inválidas, repetidas o
+  decrecientes.
+- `Promotion gate` ejecuta el check y la suite completa para cada PR a `main` y
+  acepta solamente `bundle_work` como origen. El ruleset activo `Protect main`
+  no tiene bypass, exige PR, historial lineal, conversaciones resueltas y
+  squash, y bloquea borrado y force-push. Durante la incorporación inicial no
+  se puede integrar el PR hasta ejecutar los workflows y agregar `app-version`
+  y `promotion-gate` como status checks obligatorios del mismo ruleset.
 
 ## Fuentes de verdad
 
 Ante una diferencia, usar esta prioridad:
 
 1. Paneles de producción y comportamiento observable.
-2. Código y configuración versionados en `bundle_work`.
+2. Código aprobado para producción en `main` y candidato de staging en
+   `bundle_work`.
 3. Esta documentación, que debe corregirse inmediatamente si quedó desfasada.
