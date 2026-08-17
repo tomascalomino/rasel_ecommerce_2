@@ -3,6 +3,16 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-17 — Integración de rama para promoción (1.0.5)
+
+- Integración: `bundle_work` incorpora el commit squash vigente de `main` para
+  que la promoción de la portada social parta de una rama actualizada y el PR
+  muestre únicamente el cambio nuevo.
+- Versionado: el merge de mantenimiento incrementa `app_version`, tal como
+  exige la validación por commit, sin agregar comportamiento funcional al de
+  la versión 1.0.4.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Portada social con fotografía real (1.0.4)
 
 - Corrección: las vistas previas de WhatsApp, Instagram, Facebook y Twitter
