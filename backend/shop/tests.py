@@ -1,7 +1,9 @@
 from decimal import Decimal
 
+from django.contrib.staticfiles import finders
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
 from .models import Category, Product, Variant
 
@@ -83,6 +85,9 @@ class ProductListViewTests(TestCase):
 				response = self.client.get(url)
 				self.assertContains(response, "mercado-pago-horizontal.svg")
 				self.assertContains(response, "Hasta 6 cuotas")
+				if url == reverse("home"):
+					self.assertContains(response, "Pagá como prefieras")
+					self.assertNotContains(response, "Pagá como preferís")
 
 	@override_settings(MP_CHECKOUT_ENABLED=False)
 	def test_mp_brand_is_hidden_when_checkout_is_disabled(self):
@@ -280,3 +285,28 @@ class PublicNavigationCopyTests(TestCase):
 		self.assertIn("Acidez menor a 0,3%", hero)
 		self.assertContains(response, "img/rasel-logo-header.webp")
 		self.assertNotContains(response, "img/rasel-escudo.webp")
+
+
+class SocialMetadataTests(TestCase):
+	def test_home_uses_real_product_social_cover(self):
+		response = self.client.get(reverse("home"))
+
+		self.assertContains(response, "img/og-product-2026.jpg", count=2)
+		self.assertNotContains(response, "img/og-cover.jpg")
+		self.assertContains(response, '<meta property="og:image:type" content="image/jpeg">', html=True)
+		self.assertContains(response, '<meta property="og:image:width" content="1200">', html=True)
+		self.assertContains(response, '<meta property="og:image:height" content="800">', html=True)
+		self.assertContains(
+			response,
+			'<meta property="og:image:alt" content="Botella de aceite de oliva virgen extra RaSel junto a un cuenco de aceite">',
+			html=True,
+		)
+
+	def test_social_cover_is_the_documented_jpeg_size(self):
+		asset_path = finders.find("img/og-product-2026.jpg")
+
+		self.assertIsNotNone(asset_path)
+		self.assertIsNone(finders.find("img/og-cover.jpg"))
+		with Image.open(asset_path) as image:
+			self.assertEqual(image.format, "JPEG")
+			self.assertEqual(image.size, (1200, 800))

@@ -61,6 +61,10 @@ UptimeRobot → GET https://rasel.ar/healthz
   badge adicional de producto. El header usa una versión recortada y
   transparente del logo para aprovechar el espacio existente sin aumentar la
   altura de la barra; el archivo original se conserva como respaldo.
+- Las vistas previas al compartir cualquier página en WhatsApp y otras redes
+  usan una portada JPEG de 1200 × 800 basada en la fotografía real de la
+  botella y el aceite. Los metadatos Open Graph y Twitter declaran esa imagen,
+  sus dimensiones y un texto alternativo descriptivo.
 - El administrador activa o desactiva productos y variantes. Las imágenes de
   producto se cargan desde el admin y quedan en R2 en producción.
 - El carrito se guarda en la sesión del navegador con `variant_id` como clave.
@@ -103,9 +107,10 @@ del servidor y nunca confía en el total enviado por el navegador.
   corridos**; las cuotas disponibles para el comprador tienen interés y RaSel
   no ofrece cuotas sin interés financiadas por el comercio. Cuando el checkout
   está activo, la página de cada producto muestra el logo oficial de Mercado
-  Pago debajo del precio y el inicio incluye un aviso compacto sobre los medios
-  disponibles. Ambos avisos se ocultan con el mismo kill switch para no
-  promocionar un medio temporalmente deshabilitado.
+  Pago debajo del precio y el inicio incluye un aviso compacto encabezado
+  “Pagá como prefieras” sobre los medios disponibles. Ambos avisos se ocultan
+  con el mismo kill switch para no promocionar un medio temporalmente
+  deshabilitado.
 
 Para transferencia o efectivo, el checkout valida todas las variantes y su
 stock dentro de una transacción, vuelve a calcular precios y el descuento del
