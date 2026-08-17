@@ -3,6 +3,31 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-17 — Integración de rama para promoción (1.0.5)
+
+- Integración: `bundle_work` incorpora el commit squash vigente de `main` para
+  que la promoción de la portada social parta de una rama actualizada y el PR
+  muestre únicamente el cambio nuevo.
+- Versionado: el merge de mantenimiento incrementa `app_version`, tal como
+  exige la validación por commit, sin agregar comportamiento funcional al de
+  la versión 1.0.4.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
+## 2026-08-17 — Portada social con fotografía real (1.0.4)
+
+- Corrección: las vistas previas de WhatsApp, Instagram, Facebook y Twitter
+  dejan de usar el antiguo paisaje generado con IA y muestran una fotografía
+  real de la botella RaSel junto al aceite.
+- Caché: la nueva portada usa un nombre de archivo distinto para que el deploy
+  publique una URL estática versionada nueva y no reutilice el recurso anterior;
+  el archivo viejo generado con IA se elimina del proyecto.
+- Metadatos: Open Graph declara formato, dimensiones de 1200 × 800 y texto
+  alternativo; Twitter recibe explícitamente la misma imagen y descripción.
+- Pruebas: se verifica la referencia social, la ausencia de la portada vieja y
+  que el recurso final sea un JPEG con las dimensiones declaradas.
+- Copy: el aviso de medios de pago del inicio cambia a “Pagá como prefieras”.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Política de publicación auditada (1.0.3)
 
 - Documentación: se auditó toda la documentación rastreada contra los
