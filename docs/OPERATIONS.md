@@ -27,10 +27,10 @@ python backend/manage.py ops_kpis --days 7
 SemVer estable `MAJOR.MINOR.PATCH`. Django valida el archivo al arrancar y el
 admin muestra el mismo valor con prefijo `v`.
 
-Todo commit normal debe incluir un incremento, incluso si solo modifica
-documentación, configuración o un refactor interno. Si un pull request contiene
-varios commits, cada uno debe introducir su propio incremento. Antes de preparar
-el commit, ejecutar una de estas opciones:
+Todo commit creado durante el desarrollo debe incluir un incremento, incluso si
+solo modifica documentación, configuración o un refactor interno. Si un pull
+request contiene varios commits, cada uno debe introducir su propio incremento.
+Antes de preparar el commit, ejecutar una de estas opciones:
 
 ```powershell
 # Corrección, documentación o refactor compatible: 1.0.0 -> 1.0.1
@@ -52,10 +52,13 @@ Activar una sola vez por clon el hook incluido en el repositorio:
 python scripts/install_git_hooks.py
 ```
 
-El hook rechaza el commit si `app_version` no está preparado, no tiene formato
-válido o no aumenta. El workflow **Version check** repite la validación para
-cada commit de un push o pull request; el job y status check que debe exigir el
-ruleset se llama `app-version`. La CI no sustituye la protección de rama de
+El hook rechaza cada commit creado durante el desarrollo si `app_version` no
+está preparado, no tiene formato válido o no aumenta. El workflow **Version
+check** repite la validación para cada commit de un push o pull request; el job
+y status check que debe exigir el ruleset se llama `app-version`. La única
+excepción es el merge commit que GitHub crea al promover el PR: debe conservar
+exactamente el árbol y la versión del candidato, y esa versión debe ser mayor
+que la del primer padre de `main`. La CI no sustituye la protección de rama de
 GitHub. No editar el valor desde Render ni crear una variable de entorno
 equivalente.
 
@@ -81,55 +84,58 @@ El flujo obligatorio es:
    checks obligatorios son `app-version` y `promotion-gate`; el segundo rechaza
    otros orígenes y ejecuta `manage.py check` más la suite completa de Django.
 6. El responsable del sitio revisa el SHA, la versión y staging, y aprueba la
-   promoción usando **Squash and merge**. No se admite push directo a `main`.
+   promoción usando exclusivamente **Create a merge commit**. No se admite push
+   directo a `main`.
 7. Verificar que `main`, el PR aprobado y `app_version` identifican el mismo
    candidato antes de iniciar un deploy productivo.
-8. Antes de otro desarrollo, realinear `bundle_work` al commit squash de `main`
-   mediante el procedimiento seguro de esta sección.
+8. Antes de otro desarrollo, avanzar `bundle_work` por fast-forward al merge
+   commit de `main` mediante el procedimiento seguro de esta sección.
 
 El ruleset activo `Protect main` apunta a la rama por defecto (`main`), no tiene
-bypass, exige pull request, historial lineal y conversaciones resueltas, permite
-solo squash y bloquea force-push y eliminación. También exige que la rama esté
-actualizada y que los status checks `app-version` y `promotion-gate` finalicen
-correctamente. Mantiene cero aprobaciones formales porque existe un único
-responsable: su revisión de staging y su acción manual de ejecutar **Squash and
-merge** son la aprobación. Al sumar otro colaborador, configurar al menos una
-aprobación requerida, descartar aprobaciones obsoletas ante nuevos commits y
-exigir aprobación del último push revisable.
+bypass, exige pull request y conversaciones resueltas, requiere el método
+**merge commit** y bloquea force-push y eliminación. No exige historial lineal.
+También exige que la rama esté actualizada y que los status checks
+`app-version` y `promotion-gate` finalicen correctamente. Mantiene cero
+aprobaciones formales porque existe un único responsable: su revisión de
+staging y su acción manual de ejecutar **Create a merge commit** son la
+aprobación. Al sumar otro colaborador, configurar al menos una aprobación
+requerida, descartar aprobaciones obsoletas ante nuevos commits y exigir
+aprobación del último push revisable.
 
-En la configuración del repositorio se debe conservar **Squash merge** y
-deshabilitar merge commits normales, porque cada commit definitivo de `main`
-debe representar una única versión. La protección de GitHub controla la
-promoción de código; el deploy manual de Render agrega una segunda aprobación.
+En la configuración del repositorio se debe habilitar exclusivamente **Allow
+merge commits** y deshabilitar **Allow squash merging** y **Allow rebase
+merging**. La protección de GitHub controla la promoción de código; el deploy
+manual de Render agrega una segunda aprobación.
 
-### Realineación post-squash de `bundle_work`
+### Sincronización post-merge de `bundle_work`
 
-GitHub crea un commit nuevo al usar squash, por lo que `main` y `bundle_work`
-quedan con historias distintas aunque contengan exactamente los mismos archivos.
-Antes de empezar otro cambio, realinear la rama de staging. Ejecutar solamente
-con el árbol rastreado limpio y después de verificar que ambos árboles remotos
-son idénticos:
+GitHub crea un merge commit cuyo primer padre es el `main` anterior y cuyo
+segundo padre es el candidato de `bundle_work`. Como la rama debe estar
+actualizada antes de promoverse, el merge commit conserva exactamente el árbol
+y `app_version` del candidato. Antes de empezar otro cambio, avanzar la rama de
+staging por fast-forward para que las dos ramas apunten al mismo commit. Ejecutar
+solamente con el árbol rastreado limpio:
 
 ```powershell
 git switch bundle_work
 git fetch origin
-git diff --exit-code origin/main origin/bundle_work
+git merge --ff-only origin/main
+git diff --exit-code origin/main bundle_work
+git rev-parse origin/main
+git rev-parse bundle_work
 git rev-parse "origin/main^{tree}"
-git rev-parse "origin/bundle_work^{tree}"
-
-$rasel_previous_bundle = git rev-parse origin/bundle_work
-git reset --hard origin/main
-git push --force-with-lease="refs/heads/bundle_work:$rasel_previous_bundle" origin HEAD:refs/heads/bundle_work
+git rev-parse "bundle_work^{tree}"
+git push origin bundle_work
 ```
 
-Los dos valores `^{tree}` deben ser iguales y `git diff` no debe mostrar nada.
-Si difieren, detenerse: no hacer reset ni force-push. Esta operación no crea un
-commit ni incrementa `app_version`; `Version check` solo la acepta para
-`bundle_work`, con evento forzado, árbol completo idéntico y la misma versión.
-Todos los pushes normales continúan exigiendo un incremento por commit.
+Los dos SHA y los dos valores `^{tree}` deben ser iguales; `git diff` no debe
+mostrar nada. Si el fast-forward no es posible o cualquier valor difiere,
+detenerse: no hacer reset, rebase ni force-push. Esta operación no crea un
+commit ni incrementa `app_version`; solo publica en `bundle_work` el mismo merge
+commit ya aprobado en `main`.
 
-Después del force-push, confirmar en GitHub que el job `app-version` terminó en
-verde y que `origin/main` y `origin/bundle_work` apuntan al mismo commit. Esa
+Después del push, confirmar en GitHub que el job `app-version` terminó en verde
+y que `origin/main` y `origin/bundle_work` apuntan al mismo commit. Esa
 coincidencia cierra la promoción y deja staging listo para el siguiente cambio.
 
 ## Variables de entorno
@@ -430,10 +436,10 @@ política.
 2. Esperar que staging quede `Live` y revisar allí el cambio en escritorio y
    móvil.
 3. Abrir y aprobar el PR `bundle_work` → `main` después de que pasen los checks
-   `app-version` y `promotion-gate`, y usar solo **Squash and merge**.
+   `app-version` y `promotion-gate`, y usar solo **Create a merge commit**.
 4. Confirmar que el SHA y `app_version` de `main` coinciden con el PR aprobado.
-5. Realinear `bundle_work` mediante el procedimiento post-squash y comprobar
-   que su job `app-version` quede verde.
+5. Avanzar `bundle_work` por fast-forward mediante el procedimiento post-merge
+   y comprobar que su job `app-version` quede verde.
 6. Obtener la aprobación explícita del responsable del sitio para desplegar.
 7. En `rasel_ecommerce_2`, usar **Manual Deploy → Deploy latest commit** y
    comprobar que el commit coincida con el aprobado en `main`.
@@ -530,8 +536,10 @@ aprobación → producción.
 - Confirmar qué servicios externos y variables toca el cambio.
 - Ejecutar tests y verificaciones relevantes en el entorno Conda.
 - Publicar primero en staging y validar allí el flujo público afectado.
-- Promover mediante PR, checks verdes, aprobación manual y **Squash and merge**.
-- Realinear `bundle_work` solo con árboles idénticos y verificar `app-version`.
+- Promover mediante PR, checks verdes, aprobación manual y **Create a merge
+  commit**.
+- Avanzar `bundle_work` por fast-forward hasta el mismo SHA de `main` y verificar
+  `app-version`.
 - Desplegar producción manualmente desde el SHA aprobado de `main`.
 - Actualizar `CURRENT_SYSTEM.md` y/o este documento según `AGENTS.md`.
 - Registrar el cambio en `CHANGELOG.md` si modifica comportamiento u operación.

@@ -73,7 +73,37 @@ def check_staged() -> list[str]:
     return validate_increment(previous, current, "commit preparado")
 
 
-def check_commit(commit: str) -> list[str]:
+def is_promotion_merge(
+    commit: str,
+    current: str,
+    parents: list[str],
+    parent_versions: list[str | None],
+) -> bool:
+    """Reconoce el merge commit inmutable que GitHub crea al promover el PR."""
+    if len(parents) != 2 or len(parent_versions) != 2:
+        return False
+
+    base_version, candidate_version = parent_versions
+    if base_version is None or candidate_version is None:
+        return False
+    try:
+        base_parts = parse_version(base_version)
+        candidate_parts = parse_version(candidate_version)
+        current_parts = parse_version(current)
+    except ValueError:
+        return False
+
+    commit_tree = tree_at(commit)
+    candidate_tree = tree_at(parents[1])
+    return (
+        current_parts == candidate_parts
+        and candidate_parts > base_parts
+        and commit_tree is not None
+        and commit_tree == candidate_tree
+    )
+
+
+def check_commit(commit: str, *, allow_promotion_merge: bool = False) -> list[str]:
     short = git_text("rev-parse", "--short", commit)
     subject = git_text("show", "-s", "--format=%s", commit)
     label = f"{short} ({subject})"
@@ -86,13 +116,25 @@ def check_commit(commit: str) -> list[str]:
             return [f"{label}: app_version fue eliminado."]
         return []  # Historial anterior a la incorporación del versionado.
 
+    if allow_promotion_merge and is_promotion_merge(
+        commit,
+        current,
+        parents,
+        parent_versions,
+    ):
+        return []
+
     errors = validate_increment(None, current, label)
     for previous in parent_versions:
         errors.extend(validate_increment(previous, current, label))
     return errors
 
 
-def check_range(revision_range: str) -> list[str]:
+def check_range(
+    revision_range: str,
+    *,
+    allow_promotion_merge: bool = False,
+) -> list[str]:
     revision_result = git("rev-list", "--reverse", revision_range, check=False)
     if revision_result.returncode != 0:
         return [f"No se pudo resolver el rango Git {revision_range}."]
@@ -100,46 +142,13 @@ def check_range(revision_range: str) -> list[str]:
     commits = revision_result.stdout.strip().splitlines()
     errors = []
     for commit in commits:
-        errors.extend(check_commit(commit))
+        errors.extend(
+            check_commit(commit, allow_promotion_merge=allow_promotion_merge)
+        )
 
     head = revision_range.rsplit("..", 1)[-1]
     if version_at(head) is None:
         errors.append(f"El extremo {head} no contiene {VERSION_PATH}.")
-    return errors
-
-
-def check_sync(before: str, after: str) -> list[str]:
-    """Admite una realineación post-squash solo si no cambia contenido ni versión."""
-    before_tree = tree_at(before)
-    after_tree = tree_at(after)
-    before_version = version_at(before)
-    after_version = version_at(after)
-    errors = []
-
-    if before_tree is None:
-        errors.append(f"No se pudo resolver el commit anterior {before}.")
-    if after_tree is None:
-        errors.append(f"No se pudo resolver el commit nuevo {after}.")
-    if before_version is None:
-        errors.append(f"El commit anterior {before} no contiene {VERSION_PATH}.")
-    if after_version is None:
-        errors.append(f"El commit nuevo {after} no contiene {VERSION_PATH}.")
-    if errors:
-        return errors
-
-    errors.extend(validate_increment(None, before_version, "versión anterior"))
-    errors.extend(validate_increment(None, after_version, "versión nueva"))
-    if errors:
-        return errors
-
-    if before_tree != after_tree:
-        errors.append(
-            "La sincronización post-squash solo admite árboles Git idénticos."
-        )
-    if before_version != after_version:
-        errors.append(
-            "La sincronización post-squash debe conservar exactamente app_version."
-        )
     return errors
 
 
@@ -148,15 +157,19 @@ def main() -> int:
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--staged", action="store_true")
     mode.add_argument("--range", dest="revision_range")
-    mode.add_argument("--sync", nargs=2, metavar=("BEFORE", "AFTER"))
+    parser.add_argument("--allow-promotion-merge", action="store_true")
     args = parser.parse_args()
+
+    if args.allow_promotion_merge and not args.revision_range:
+        parser.error("--allow-promotion-merge requiere --range")
 
     if args.staged:
         errors = check_staged()
-    elif args.sync:
-        errors = check_sync(*args.sync)
     else:
-        errors = check_range(args.revision_range)
+        errors = check_range(
+            args.revision_range,
+            allow_promotion_merge=args.allow_promotion_merge,
+        )
     if errors:
         print("Error de versionado:", file=sys.stderr)
         for error in errors:

@@ -8,9 +8,10 @@
 - [ ] La rama está actualizada con `main` y las conversaciones están resueltas.
 - [ ] Los checks `app-version` y `promotion-gate` finalizaron correctamente.
 - [ ] El responsable del sitio aprobó promover esta versión.
-- [ ] El método seleccionado es exclusivamente **Squash and merge**.
+- [ ] El método seleccionado es exclusivamente **Create a merge commit**.
 
-Después del merge, realinear `bundle_work` solo si su árbol Git es idéntico al
-de `main` y confirmar que `app-version` quede verde. Luego producción se
-despliega manualmente desde Render, verificando que la rama sea `main`, que
-Auto-Deploy continúe apagado y que el SHA coincida con el aprobado en este PR.
+Después del merge, avanzar `bundle_work` por fast-forward a `main` y confirmar
+que ambas ramas apunten al mismo SHA y árbol, sin reset ni force-push. Luego
+producción se despliega manualmente desde Render, verificando que la rama sea
+`main`, que Auto-Deploy continúe apagado y que el SHA coincida con el aprobado
+en este PR.

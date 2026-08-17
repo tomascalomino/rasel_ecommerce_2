@@ -3,6 +3,25 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-17 — Promoción con merge commit y ramas idénticas (1.0.6)
+
+- Promoción: los PR `bundle_work` → `main` pasan a integrarse exclusivamente
+  con **Create a merge commit**, preservando todos los commits del candidato y
+  un punto explícito de promoción.
+- Sincronización: después del merge, `bundle_work` avanza por fast-forward hasta
+  el mismo SHA de `main`; se eliminan el reset y el force-push post-squash.
+- Versionado: `Version check` admite el merge commit generado por GitHub sin un
+  incremento adicional únicamente cuando tiene dos padres, conserva exactamente
+  el árbol y la versión del candidato, y esa versión supera la de `main`.
+- Protección: `Protect main` deja de exigir historial lineal, requiere el método
+  merge y conserva PR obligatorio, rama actualizada, conversaciones resueltas,
+  checks `app-version` y `promotion-gate`, y bloqueo de borrado y force-push.
+- Repositorio: se habilitan únicamente merge commits; squash y rebase quedan
+  deshabilitados para evitar métodos de promoción alternativos.
+- Pruebas: se cubren el merge válido y los rechazos por reutilización ordinaria
+  de versión, árbol alterado, versión no incremental o ausencia de dos padres.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Integración de rama para promoción (1.0.5)
 
 - Integración: `bundle_work` incorpora el commit squash vigente de `main` para

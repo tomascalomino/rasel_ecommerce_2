@@ -214,26 +214,27 @@ usuarios.
 - Render opera en plan gratuito y puede tardar en responder tras inactividad;
   UptimeRobot reduce ese riesgo, pero no reemplaza monitoreo integral.
 - La versión vigente es siempre el valor de `app_version`; el esquema comenzó
-  en `1.0.0`. Cada commit normal, incluidos documentación, configuración y
-  refactors, debe incrementarlo. Un hook local y el workflow **Version check**
-  rechazan versiones ausentes, inválidas, repetidas o decrecientes. Su job y
-  status check se llaman `app-version`.
-- La única excepción al incremento es la realineación post-squash de
-  `bundle_work`: debe ser un force-push sobre esa rama que conserve exactamente
-  `app_version` y el árbol Git completo. Una diferencia en cualquier archivo,
-  otra rama o una actualización no forzada hace fallar `Version check`.
+  en `1.0.0`. Cada commit creado durante el desarrollo, incluidos documentación,
+  configuración y refactors, debe incrementarlo. Un hook local y el workflow
+  **Version check** rechazan versiones ausentes, inválidas, repetidas o
+  decrecientes. Su job y status check se llaman `app-version`.
+- La única excepción es el merge commit generado por GitHub al promover el PR:
+  debe tener exactamente dos padres, conservar el árbol y la versión del
+  candidato `bundle_work`, y esa versión debe ser mayor que la del `main`
+  anterior. El fast-forward posterior de `bundle_work` reutiliza ese mismo
+  commit sin crear otro ni cambiar `app_version`.
 - El workflow **Promotion gate**, cuyo job y status check se llaman
   `promotion-gate`, ejecuta `manage.py check` y la suite completa para cada PR a
   `main`; acepta solamente `bundle_work` como origen dentro del mismo
   repositorio. El ruleset activo `Protect main` no tiene bypass, exige PR,
-  historial lineal, conversaciones resueltas y squash, y bloquea borrado y
+  conversaciones resueltas y el método **merge commit**, y bloquea borrado y
   force-push. También exige `app-version`, `promotion-gate` y una rama
-  actualizada antes de habilitar el merge.
+  actualizada antes de habilitar el merge; no exige historial lineal.
 - Con un único responsable, el ruleset mantiene cero aprobaciones formales: la
-  revisión de staging y la decisión manual de ejecutar **Squash and merge** son
-  la aprobación del propietario. Si se incorpora otro colaborador, la política
-  operativa exige configurar al menos una aprobación y aprobación del último
-  push revisable.
+  revisión de staging y la decisión manual de ejecutar **Create a merge
+  commit** son la aprobación del propietario. Si se incorpora otro colaborador,
+  la política operativa exige configurar al menos una aprobación y aprobación
+  del último push revisable.
 
 ## Fuentes de verdad
 

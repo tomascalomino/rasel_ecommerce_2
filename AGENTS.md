@@ -28,8 +28,10 @@ operativos o de configuración.
 ## Versionado obligatorio
 
 - `app_version` en la raíz es la única fuente de verdad de la versión SemVer.
-- Todo commit normal debe incrementar la versión y debe incluir el cambio del
-  archivo, incluso si solo modifica documentación o configuración.
+- Todo commit creado durante el desarrollo debe incrementar la versión e incluir
+  el cambio del archivo, incluso si solo modifica documentación o configuración.
+- El merge commit generado por GitHub al promover `bundle_work` es la única
+  excepción: conserva la versión y el árbol exactos del candidato aprobado.
 - Usar `python scripts/bump_version.py patch` para correcciones, documentación
   o refactors compatibles; `feature` para funcionalidad compatible; `major`
   para cambios incompatibles; también se acepta una versión exacta mayor.
@@ -44,12 +46,11 @@ operativos o de configuración.
   proponerlo para producción.
 - Promover únicamente mediante un pull request `bundle_work` → `main`. Los
   status checks `app-version` y `promotion-gate` deben finalizar correctamente.
-- El responsable del sitio debe aprobar la promoción. Usar **Squash and merge**
-  para mantener un único commit de versión en `main`.
-- Después del squash y antes de otro desarrollo, realinear `bundle_work` al
-  nuevo commit de `main` únicamente si ambos árboles Git son idénticos. Usar un
-  force-push con lease exacto; la CI solo exceptúa el incremento de versión para
-  esta sincronización sin cambios de contenido ni de `app_version`.
+- El responsable del sitio debe aprobar la promoción. Usar exclusivamente
+  **Create a merge commit** para preservar los commits y el historial.
+- Después del merge y antes de otro desarrollo, avanzar `bundle_work` por
+  fast-forward al nuevo commit de `main`. Confirmar que ambas ramas apunten al
+  mismo SHA y árbol; no usar reset ni force-push.
 - Producción se despliega manualmente desde el commit aprobado de `main`; nunca
   desplegar desde `bundle_work` ni activar Auto-Deploy en el servicio productivo.
 
