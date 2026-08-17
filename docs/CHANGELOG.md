@@ -3,6 +3,36 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-17 — Política de publicación auditada (1.0.3)
+
+- Documentación: se auditó toda la documentación rastreada contra los
+  workflows, hooks, scripts de versionado, configuración Django, comandos de
+  Render y estado operativo verificado de GitHub y producción.
+- Versionado: se explicita que cada commit normal, incluidos documentación y
+  configuración, incrementa SemVer; los nombres obligatorios de los status
+  checks son `app-version` y `promotion-gate`.
+- Promoción: se consolida el único recorrido permitido: `bundle_work`, staging
+  automático, PR a `main`, checks verdes, aprobación manual, **Squash and
+  merge**, realineación segura y deploy productivo manual.
+- Producción: `rasel_ecommerce_2` quedó confirmado en la rama `main`, con
+  Auto-Deploy apagado. Cada despliegue debe volver a validar rama, SHA, versión
+  y estado del control automático.
+- Operación futura: se corrige el Cron Job productivo de conciliación para que,
+  cuando se implemente, ejecute `main` y no la rama de staging. También se
+  distingue el valor seguro del Blueprint del estado activo en el panel de
+  Render.
+- Referencias: se verificó que las guías oficiales enlazadas de Checkout Pro,
+  webhooks, credenciales, pruebas, salida a producción y Cron Jobs continúan
+  disponibles.
+- Transferencia: el operador rotó conjuntamente en Render los valores
+  productivos de titular, banco, alias y CBU/CVU. No se registran sus valores ni
+  se modifican los nombres de las variables existentes.
+- Código, migraciones o variables: no cambia el comportamiento de la
+  aplicación ni el esquema; el único cambio de configuración es la rotación de
+  valores de transferencia informada arriba.
+- Documentación actualizada: `AGENTS.md`, `README.md`, la plantilla de PR,
+  `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y `docs/CHANGELOG.md`.
+
 ## 2026-08-16 — Sincronización post-squash segura (1.0.2)
 
 - Corrección: `Version check` distingue los pushes normales de la realineación
@@ -45,9 +75,9 @@ documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 - Configuración externa: el ruleset activo `Protect main` ya exige PR, historial
   lineal, resolución de conversaciones y squash, sin bypass, y bloquea borrado
   y force-push. También exige los status checks `app-version` y
-  `promotion-gate` y que la rama esté actualizada antes del merge. Falta
-  confirmar que `rasel_ecommerce_2` esté vinculado a `main`, no a
-  `bundle_work`, antes del próximo deploy productivo.
+  `promotion-gate` y que la rama esté actualizada antes del merge. La
+  vinculación de `rasel_ecommerce_2` a `main` y Auto-Deploy apagado quedó
+  confirmada posteriormente el 16 de agosto de 2026.
 - Documentación actualizada: `AGENTS.md`, `README.md`,
   `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y `docs/CHANGELOG.md`.
 

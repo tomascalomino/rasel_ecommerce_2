@@ -19,11 +19,11 @@ UptimeRobot → GET https://rasel.ar/healthz
 - **Render** ejecuta la aplicación Django en el servicio productivo
   `rasel_ecommerce_2`. Staging se despliega automáticamente desde la rama
   `bundle_work`; `main` representa el código aprobado para producción. El
-  servicio productivo tiene **Auto-Deploy desactivado** y solo debe desplegar
-  manualmente un commit de `main` después de aprobar la misma versión en
-  staging. Antes del próximo deploy productivo se debe confirmar en Render que
-  la rama vinculada ya sea `main`; si todavía figura `bundle_work`, el deploy
-  queda bloqueado hasta corregirla.
+  servicio productivo está vinculado a `main`, tiene **Auto-Deploy
+  desactivado** y solo despliega manualmente un commit aprobado después de
+  validar la misma versión en staging. Esta configuración quedó verificada el
+  16 de agosto de 2026; cada despliegue debe volver a comprobar rama, SHA y
+  versión antes de promoverlo.
 - **Neon** almacena los datos persistentes: catálogo, stock, zonas, puntos de
   retiro, usuarios, pedidos y eventos de pago.
 - **R2** guarda las imágenes cargadas desde el admin; los archivos estáticos
@@ -209,17 +209,26 @@ usuarios.
 - Render opera en plan gratuito y puede tardar en responder tras inactividad;
   UptimeRobot reduce ese riesgo, pero no reemplaza monitoreo integral.
 - La versión vigente es siempre el valor de `app_version`; el esquema comenzó
-  en `1.0.0`. Todo commit posterior debe incrementarlo. Un hook local y el
-  workflow `Version check` rechazan versiones ausentes, inválidas, repetidas o
-  decrecientes. La única excepción es la realineación post-squash de
-  `bundle_work`: debe conservar exactamente la versión y el árbol Git completo;
-  una diferencia en cualquier archivo hace fallar el check.
-- `Promotion gate` ejecuta el check y la suite completa para cada PR a `main` y
-  acepta solamente `bundle_work` como origen. El ruleset activo `Protect main`
-  no tiene bypass, exige PR, historial lineal, conversaciones resueltas y
-  squash, y bloquea borrado y force-push. También exige que `app-version` y
-  `promotion-gate` finalicen correctamente sobre una rama actualizada antes de
-  habilitar el merge.
+  en `1.0.0`. Cada commit normal, incluidos documentación, configuración y
+  refactors, debe incrementarlo. Un hook local y el workflow **Version check**
+  rechazan versiones ausentes, inválidas, repetidas o decrecientes. Su job y
+  status check se llaman `app-version`.
+- La única excepción al incremento es la realineación post-squash de
+  `bundle_work`: debe ser un force-push sobre esa rama que conserve exactamente
+  `app_version` y el árbol Git completo. Una diferencia en cualquier archivo,
+  otra rama o una actualización no forzada hace fallar `Version check`.
+- El workflow **Promotion gate**, cuyo job y status check se llaman
+  `promotion-gate`, ejecuta `manage.py check` y la suite completa para cada PR a
+  `main`; acepta solamente `bundle_work` como origen dentro del mismo
+  repositorio. El ruleset activo `Protect main` no tiene bypass, exige PR,
+  historial lineal, conversaciones resueltas y squash, y bloquea borrado y
+  force-push. También exige `app-version`, `promotion-gate` y una rama
+  actualizada antes de habilitar el merge.
+- Con un único responsable, el ruleset mantiene cero aprobaciones formales: la
+  revisión de staging y la decisión manual de ejecutar **Squash and merge** son
+  la aprobación del propietario. Si se incorpora otro colaborador, la política
+  operativa exige configurar al menos una aprobación y aprobación del último
+  push revisable.
 
 ## Fuentes de verdad
 

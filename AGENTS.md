@@ -28,7 +28,8 @@ operativos o de configuración.
 ## Versionado obligatorio
 
 - `app_version` en la raíz es la única fuente de verdad de la versión SemVer.
-- Todo commit debe incrementar la versión y debe incluir el cambio del archivo.
+- Todo commit normal debe incrementar la versión y debe incluir el cambio del
+  archivo, incluso si solo modifica documentación o configuración.
 - Usar `python scripts/bump_version.py patch` para correcciones, documentación
   o refactors compatibles; `feature` para funcionalidad compatible; `major`
   para cambios incompatibles; también se acepta una versión exacta mayor.
@@ -42,7 +43,7 @@ operativos o de configuración.
 - Esperar el deploy automático de staging y validar allí el cambio antes de
   proponerlo para producción.
 - Promover únicamente mediante un pull request `bundle_work` → `main`. Los
-  checks `Version check` y `Promotion gate` deben finalizar correctamente.
+  status checks `app-version` y `promotion-gate` deben finalizar correctamente.
 - El responsable del sitio debe aprobar la promoción. Usar **Squash and merge**
   para mantener un único commit de versión en `main`.
 - Después del squash y antes de otro desarrollo, realinear `bundle_work` al
