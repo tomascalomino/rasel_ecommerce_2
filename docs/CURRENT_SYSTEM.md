@@ -53,6 +53,11 @@ UptimeRobot → GET https://rasel.ar/healthz
 - La sección **Nuestra selección** del inicio muestra hasta tres productos
   activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
   coloca primero las botellas y después los packs.
+- Debajo de **Nuestra selección**, el inicio muestra un aviso compacto para
+  comercios con precios preferenciales en compras mayoristas. La consulta abre
+  WhatsApp con un mensaje precargado; si el número no está disponible, dirige a
+  **Contacto**. Esa página también menciona explícitamente las consultas por
+  compras mayoristas, sin publicar porcentajes, mínimos ni listas de precios.
 - La navegación pública se presenta como **Tienda**, **Virgen Extra**,
   **Quiénes Somos**, **Conservación** y **Contacto**. El hero del inicio
   identifica el origen como “Andalgalá, Catamarca”, describe el producto como

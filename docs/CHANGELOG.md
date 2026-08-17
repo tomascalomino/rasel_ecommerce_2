@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-17 — Consultas para compras mayoristas (1.1.0)
+
+- Experiencia: el inicio incorpora, debajo de la selección de productos, un
+  aviso compacto para comercios con precios preferenciales en compras
+  mayoristas y acceso directo a WhatsApp con un mensaje precargado.
+- Contacto: la introducción de la página menciona expresamente las consultas
+  mayoristas; si WhatsApp no está configurado, el aviso del inicio dirige a
+  **Contacto** en lugar de generar un enlace incompleto.
+- Alcance comercial: no se publican porcentajes, cantidades mínimas ni listas
+  de precios; las condiciones se coordinan directamente con la empresa.
+- Pruebas: se cubren el contenido, el enlace a WhatsApp, el fallback y el orden
+  del aviso respecto de la selección y Mercado Pago.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Promoción con merge commit y ramas idénticas (1.0.6)
 
 - Promoción: los PR `bundle_work` → `main` pasan a integrarse exclusivamente

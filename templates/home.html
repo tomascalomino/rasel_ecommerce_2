@@ -118,6 +118,28 @@
 <div class="spacer"></div>
 {% endif %}
 
+<section class="card wholesale-home-banner" aria-label="Compras mayoristas">
+  <div class="wholesale-home-banner-copy">
+    <strong>¿Comprás para tu comercio?</strong>
+    <span>
+      Tenemos precios preferenciales para compras mayoristas. Comunicate con nosotros y te asesoramos
+      según la cantidad que necesites.
+    </span>
+  </div>
+  {% if whatsapp_link %}
+    <a
+      class="btn btn-primary btn-small wholesale-home-banner-cta"
+      href="{{ whatsapp_link }}?text=Hola%20RaSel%2C%20quisiera%20consultar%20por%20compras%20mayoristas%20y%20precios%20preferenciales."
+      target="_blank"
+      rel="noopener"
+    >Consultar por WhatsApp</a>
+  {% else %}
+    <a class="btn btn-primary btn-small wholesale-home-banner-cta" href="{% url 'contact' %}">Contactanos</a>
+  {% endif %}
+</section>
+
+<div class="spacer"></div>
+
 {% if mp_checkout_enabled %}
 <section class="card mp-home-banner" aria-label="Mercado Pago disponible">
   <img

@@ -96,6 +96,42 @@ class ProductListViewTests(TestCase):
 				response = self.client.get(url)
 				self.assertNotContains(response, "mercado-pago-horizontal.svg")
 
+	@override_settings(WHATSAPP_NUMBER="1162002357", MP_CHECKOUT_ENABLED=True)
+	def test_home_promotes_wholesale_contact_by_whatsapp(self):
+		response = self.client.get(reverse("home"))
+		content = response.content.decode()
+
+		self.assertContains(response, "¿Comprás para tu comercio?")
+		self.assertContains(response, "Tenemos precios preferenciales para compras mayoristas.")
+		self.assertContains(
+			response,
+			'<a class="btn btn-primary btn-small wholesale-home-banner-cta" '
+			'href="https://wa.me/5491162002357?text=Hola%20RaSel%2C%20quisiera%20consultar%20por%20compras%20mayoristas%20y%20precios%20preferenciales." '
+			'target="_blank" rel="noopener">Consultar por WhatsApp</a>',
+			html=True,
+		)
+		self.assertLess(content.index("Nuestra selección"), content.index("¿Comprás para tu comercio?"))
+		self.assertLess(content.index("¿Comprás para tu comercio?"), content.index("Pagá como prefieras"))
+
+	@override_settings(WHATSAPP_NUMBER="")
+	def test_home_wholesale_banner_falls_back_to_contact(self):
+		response = self.client.get(reverse("home"))
+
+		self.assertContains(
+			response,
+			'<a class="btn btn-primary btn-small wholesale-home-banner-cta" href="/contact/">Contactanos</a>',
+			html=True,
+		)
+		self.assertNotContains(response, "Consultar por WhatsApp")
+
+	def test_contact_mentions_wholesale_purchases(self):
+		response = self.client.get(reverse("contact"))
+
+		self.assertContains(
+			response,
+			"¿Tenés dudas, querés hacer un pedido especial o consultar por compras mayoristas?",
+		)
+
 
 class ProductCardPricingTests(TestCase):
 	def setUp(self):

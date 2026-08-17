@@ -2593,6 +2593,44 @@ textarea:focus {
   color: var(--gold);
 }
 
+/* Compras mayoristas: aviso compacto en home */
+.wholesale-home-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  width: min(100%, 860px);
+  margin-inline: auto;
+  padding: 17px 20px;
+  border-color: rgba(169, 133, 69, .34);
+  background: linear-gradient(135deg, rgba(169, 133, 69, .14), rgba(57, 66, 42, .08));
+  box-shadow: 0 5px 14px rgba(46, 51, 36, .07);
+}
+
+.wholesale-home-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wholesale-home-banner-copy strong {
+  color: var(--deep-olive);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.wholesale-home-banner-copy span {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.wholesale-home-banner-cta {
+  white-space: nowrap;
+}
+
 /* Mercado Pago: aviso compacto en home, visible solo con el checkout activo */
 .mp-home-banner {
   display: grid;
@@ -2654,6 +2692,15 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
+  .wholesale-home-banner {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .wholesale-home-banner-cta {
+    justify-self: start;
+  }
+
   .mp-home-banner {
     grid-template-columns: 92px minmax(0, 1fr);
     gap: 12px;
@@ -2699,6 +2746,15 @@ textarea:focus {
 
   .mp-home-banner-logo {
     width: 82px;
+  }
+
+  .wholesale-home-banner {
+    padding: 16px;
+  }
+
+  .wholesale-home-banner-cta {
+    justify-self: stretch;
+    width: 100%;
   }
 
   /* El footer apila el bloque de marca y el pill en vez de apretarlos */
