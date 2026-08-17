@@ -102,16 +102,26 @@ class ProductListViewTests(TestCase):
 		content = response.content.decode()
 
 		self.assertContains(response, "¿Comprás para tu comercio?")
-		self.assertContains(response, "Tenemos precios preferenciales para compras mayoristas.")
 		self.assertContains(
 			response,
-			'<a class="btn btn-primary btn-small wholesale-home-banner-cta" '
-			'href="https://wa.me/5491162002357?text=Hola%20RaSel%2C%20quisiera%20consultar%20por%20compras%20mayoristas%20y%20precios%20preferenciales." '
-			'target="_blank" rel="noopener">Consultar por WhatsApp</a>',
+			"Precios preferenciales para compras mayoristas según la cantidad que necesites.",
+		)
+		self.assertContains(
+			response,
+			'href="https://wa.me/5491162002357?text=Hola%20RaSel%2C%20quisiera%20consultar%20por%20compras%20mayoristas%20y%20precios%20preferenciales."',
+		)
+		self.assertContains(
+			response,
+			'<span class="wholesale-home-banner-cta-full">Consultar por WhatsApp</span>',
 			html=True,
 		)
-		self.assertLess(content.index("Nuestra selección"), content.index("¿Comprás para tu comercio?"))
-		self.assertLess(content.index("¿Comprás para tu comercio?"), content.index("Pagá como prefieras"))
+		self.assertContains(
+			response,
+			'<span class="wholesale-home-banner-cta-mobile">WhatsApp</span>',
+			html=True,
+		)
+		self.assertLess(content.index("Nuestra selección"), content.index("Pagá como prefieras"))
+		self.assertLess(content.index("Pagá como prefieras"), content.index("¿Comprás para tu comercio?"))
 
 	@override_settings(WHATSAPP_NUMBER="")
 	def test_home_wholesale_banner_falls_back_to_contact(self):

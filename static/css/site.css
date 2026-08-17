@@ -2598,36 +2598,42 @@ textarea:focus {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 20px;
-  width: min(100%, 860px);
+  gap: 14px;
+  width: min(100%, 760px);
   margin-inline: auto;
-  padding: 17px 20px;
+  padding: 11px 15px;
   border-color: rgba(169, 133, 69, .34);
   background: linear-gradient(135deg, rgba(169, 133, 69, .14), rgba(57, 66, 42, .08));
-  box-shadow: 0 5px 14px rgba(46, 51, 36, .07);
+  box-shadow: 0 5px 14px rgba(46, 51, 36, .06);
 }
 
 .wholesale-home-banner-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .wholesale-home-banner-copy strong {
   color: var(--deep-olive);
   font-family: var(--font-serif);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .wholesale-home-banner-copy span {
   color: var(--text-2);
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.wholesale-home-banner-copy-mobile,
+.wholesale-home-banner-cta-mobile {
+  display: none;
 }
 
 .wholesale-home-banner-cta {
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -2692,15 +2698,6 @@ textarea:focus {
 }
 
 @media (max-width: 768px) {
-  .wholesale-home-banner {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .wholesale-home-banner-cta {
-    justify-self: start;
-  }
-
   .mp-home-banner {
     grid-template-columns: 92px minmax(0, 1fr);
     gap: 12px;
@@ -2749,12 +2746,24 @@ textarea:focus {
   }
 
   .wholesale-home-banner {
-    padding: 16px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 7px 13px;
+  }
+
+  .wholesale-home-banner-copy-full,
+  .wholesale-home-banner-cta-full {
+    display: none;
+  }
+
+  .wholesale-home-banner-copy-mobile,
+  .wholesale-home-banner-cta-mobile {
+    display: inline;
   }
 
   .wholesale-home-banner-cta {
-    justify-self: stretch;
-    width: 100%;
+    justify-self: end;
+    width: auto;
   }
 
   /* El footer apila el bloque de marca y el pill en vez de apretarlos */

@@ -3,6 +3,17 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-17 — Avisos compactos y ordenados en el inicio (1.1.1)
+
+- Corrección visual: el aviso mayorista adopta el mismo ancho, tipografía y
+  espaciado compacto que el aviso de Mercado Pago, sin superarlo visualmente.
+- Jerarquía: cuando Mercado Pago está habilitado, su aviso aparece primero y el
+  de compras mayoristas queda inmediatamente debajo.
+- Responsive: en pantallas pequeñas el aviso mayorista usa copias breves y un
+  botón reducido en una sola fila, sin superar el tamaño del aviso de pago ni
+  desbordar el contenedor.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Consultas para compras mayoristas (1.1.0)
 
 - Experiencia: el inicio incorpora, debajo de la selección de productos, un
