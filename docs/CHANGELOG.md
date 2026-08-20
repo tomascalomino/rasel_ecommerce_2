@@ -3,6 +3,18 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-18 — Buscador unificado del encabezado (1.1.2)
+
+- Corrección visual: el campo y la lupa forman una única píldora, con borde
+  fino y uniforme, sin la sombra ni el contorno nativo pixelado del navegador.
+- Interacción: el botón de texto separado se reemplaza por una lupa integrada;
+  el foco de teclado sigue siendo visible y la búsqueda conserva el parámetro
+  `q` y su valor al mostrar resultados.
+- Responsive y accesibilidad: el control ocupa todo el ancho del menú móvil,
+  ofrece un nombre accesible y evita duplicar el identificador del filtro de la
+  tienda.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Avisos compactos y ordenados en el inicio (1.1.1)
 
 - Corrección visual: el aviso mayorista adopta el mismo ancho, tipografía y

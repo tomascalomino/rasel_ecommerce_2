@@ -68,7 +68,9 @@ UptimeRobot → GET https://rasel.ar/healthz
   beneficios. El footer conserva la información institucional y legal sin un
   badge adicional de producto. El header usa una versión recortada y
   transparente del logo para aprovechar el espacio existente sin aumentar la
-  altura de la barra; el archivo original se conserva como respaldo.
+  altura de la barra; el archivo original se conserva como respaldo. El
+  buscador del encabezado integra campo y lupa en una única píldora, sin sombra
+  exterior, y ocupa todo el ancho del panel de navegación en móvil.
 - Las vistas previas al compartir cualquier página en WhatsApp y otras redes
   usan una portada JPEG de 1200 × 800 basada en la fotografía real de la
   botella y el aceite. Los metadatos Open Graph y Twitter declaran esa imagen,

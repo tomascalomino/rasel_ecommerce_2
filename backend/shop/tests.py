@@ -332,6 +332,23 @@ class PublicNavigationCopyTests(TestCase):
 		self.assertContains(response, "img/rasel-logo-header.webp")
 		self.assertNotContains(response, "img/rasel-escudo.webp")
 
+	def test_header_search_uses_one_accessible_control_and_unique_id(self):
+		for index in range(5):
+			Product.objects.create(name=f"Blend {index}", is_active=True)
+
+		response = self.client.get(reverse("shop:product_list"), {"q": "Blend"})
+		content = response.content.decode()
+
+		self.assertEqual(content.count('id="header-search"'), 1)
+		self.assertEqual(content.count('id="q"'), 1)
+		self.assertContains(response, 'for="header-search"')
+		self.assertContains(response, 'value="Blend" placeholder="Buscar productos"')
+		self.assertContains(
+			response,
+			'class="search-submit" type="submit" aria-label="Buscar productos"',
+		)
+		self.assertNotContains(response, 'class="btn btn-small" type="submit"')
+
 
 class SocialMetadataTests(TestCase):
 	def test_home_uses_real_product_social_cover(self):

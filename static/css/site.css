@@ -216,15 +216,6 @@ a {
     border-radius: 12px;
   }
 
-  /* Buscador a ancho completo dentro del panel */
-  .search-form {
-    width: 100%;
-  }
-
-  .search-input {
-    width: 100%;
-    flex: 1;
-  }
 }
 
 .pill {
@@ -878,14 +869,99 @@ select:focus {
 
 .search-form {
   display: flex;
-  gap: 8px;
-  align-items: center
+  align-items: center;
+  width: 220px;
+  height: 40px;
+  overflow: hidden;
+  border: 1px solid rgba(14, 22, 18, .16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .62);
+  box-shadow: none;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+
+.search-form:hover {
+  border-color: rgba(14, 22, 18, .26);
+  background: rgba(255, 255, 255, .78);
+}
+
+.search-form:focus-within {
+  border-color: var(--gold);
+  outline: 2px solid rgba(169, 133, 69, .22);
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: none;
 }
 
 .search-input {
-  width: 200px;
-  padding: 8px 12px;
-  border-radius: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  height: 100%;
+  padding: 0 6px 0 14px;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.search-input::placeholder {
+  color: rgba(14, 22, 18, .56);
+}
+
+.search-input::-webkit-search-cancel-button {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.search-form .search-input:focus {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.search-submit {
+  display: inline-flex;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background-color .2s ease, color .2s ease;
+}
+
+.search-submit:hover,
+.search-submit:focus-visible {
+  background: var(--gold-soft);
+  color: var(--deep-olive);
+}
+
+.search-submit:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -4px;
+}
+
+.search-submit .icon {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 768px) {
+  .search-form {
+    width: 100%;
+  }
 }
 
 /* ── Pages: About & Contact ── */
