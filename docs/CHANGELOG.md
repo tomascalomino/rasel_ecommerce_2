@@ -3,6 +3,21 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-20 — Aprobación obligatoria del propietario en GitHub (1.1.3)
+
+- Aprobación: cada push candidato a `bundle_work` genera el check
+  `owner-approval`, que espera la decisión personal de `@tomascalomino` en el
+  Environment protegido `production-promotion-approval` de GitHub.
+- Protección: `Protect main` exige ese check además de `app-version`,
+  `promotion-gate`, PR actualizado, conversaciones resueltas y merge commit. Un
+  nuevo SHA exige una nueva aprobación y el fast-forward post-merge no la pide.
+- Control: los agentes no pueden aprobar o rechazar el deployment, iniciar jobs
+  pendientes, saltar la protección ni simular la decisión mediante ninguna
+  interfaz. El Environment no permite bypass administrativo.
+- Merge: aprobar no activa auto-merge; **Create a merge commit** continúa
+  siendo una acción posterior y el deploy productivo sigue siendo manual.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-18 — Buscador unificado del encabezado (1.1.2)
 
 - Corrección visual: el campo y la lupa forman una única píldora, con borde

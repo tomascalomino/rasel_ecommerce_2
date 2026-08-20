@@ -236,15 +236,23 @@ usuarios.
 - El workflow **Promotion gate**, cuyo job y status check se llaman
   `promotion-gate`, ejecuta `manage.py check` y la suite completa para cada PR a
   `main`; acepta solamente `bundle_work` como origen dentro del mismo
-  repositorio. El ruleset activo `Protect main` no tiene bypass, exige PR,
-  conversaciones resueltas y el método **merge commit**, y bloquea borrado y
-  force-push. También exige `app-version`, `promotion-gate` y una rama
-  actualizada antes de habilitar el merge; no exige historial lineal.
-- Con un único responsable, el ruleset mantiene cero aprobaciones formales: la
-  revisión de staging y la decisión manual de ejecutar **Create a merge
-  commit** son la aprobación del propietario. Si se incorpora otro colaborador,
-  la política operativa exige configurar al menos una aprobación y aprobación
-  del último push revisable.
+  repositorio.
+- El workflow **Owner approval** corre en cada push candidato de `bundle_work`.
+  Su job `owner-approval` referencia el Environment protegido
+  `production-promotion-approval` y queda pendiente hasta que `@tomascalomino`
+  lo aprueba personalmente en GitHub. Un nuevo SHA genera otro check y exige una
+  decisión nueva; el fast-forward post-merge no solicita aprobación porque ya
+  no existen commits por promover.
+- El ruleset activo `Protect main` no tiene bypass, exige PR, conversaciones
+  resueltas, una rama actualizada y los checks `app-version`, `promotion-gate` y
+  `owner-approval`. Permite solo **merge commit** y bloquea borrado y force-push;
+  no exige historial lineal ni una review formal del PR porque su autor y el
+  único propietario usan la misma identidad de GitHub.
+- Los agentes no pueden aprobar o rechazar el deployment, iniciar todos los
+  jobs pendientes, saltar la protección del Environment ni simular esa decisión
+  mediante ninguna interfaz. La aprobación tampoco activa un merge automático:
+  el propietario conserva la acción final o puede pedirla explícitamente a un
+  agente después de que los tres checks estén en verde.
 
 ## Fuentes de verdad
 

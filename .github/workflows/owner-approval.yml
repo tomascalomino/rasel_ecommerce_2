@@ -1,0 +1,45 @@
+name: Owner approval
+
+on:
+  push:
+    branches:
+      - bundle_work
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-check:
+    runs-on: ubuntu-latest
+    outputs:
+      approval-required: ${{ steps.compare.outputs.approval-required }}
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Compare candidate with main
+        id: compare
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "bundle_work must include the current main branch."
+            exit 1
+          fi
+          if [ "$(git rev-list --count origin/main..HEAD)" = "0" ]; then
+            echo "approval-required=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "approval-required=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  owner-approval:
+    name: owner-approval
+    needs: candidate-check
+    if: needs.candidate-check.outputs.approval-required == 'true'
+    runs-on: ubuntu-latest
+    environment: production-promotion-approval
+    steps:
+      - name: Record owner approval
+        run: echo "The repository owner approved this candidate in GitHub."

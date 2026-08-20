@@ -79,28 +79,41 @@ El flujo obligatorio es:
 2. Pushear únicamente a `bundle_work` y esperar que staging quede `Live`.
 3. Probar el flujo afectado en staging, incluidos escritorio y móvil cuando
    corresponda.
-4. Abrir un pull request con origen `bundle_work` y destino `main`.
-5. Esperar los workflows **Version check** y **Promotion gate**. Sus status
-   checks obligatorios son `app-version` y `promotion-gate`; el segundo rechaza
-   otros orígenes y ejecuta `manage.py check` más la suite completa de Django.
-6. El responsable del sitio revisa el SHA, la versión y staging, y aprueba la
-   promoción usando exclusivamente **Create a merge commit**. No se admite push
+4. Abrir o actualizar en borrador el pull request `bundle_work` → `main`.
+5. El workflow **Owner approval** publica el check `owner-approval` sobre cada
+   SHA candidato. Tras validar staging, `@tomascalomino` abre el run pendiente,
+   selecciona **Review deployments** y luego **Approve and deploy** para el
+   Environment `production-promotion-approval`. Cada nuevo push requiere repetir
+   esta aprobación.
+6. Esperar también **Version check** y **Promotion gate**. Los status checks
+   obligatorios son `owner-approval`, `app-version` y `promotion-gate`; el último
+   rechaza otros orígenes y ejecuta `manage.py check` más la suite completa de
+   Django. Los agentes no pueden aprobar o rechazar el deployment, iniciar jobs
+   pendientes, saltar la protección ni simular la decisión mediante API,
+   conector, CLI o UI.
+7. La aprobación no activa un merge automático. El propietario ejecuta
+   exclusivamente **Create a merge commit** o se lo pide expresamente a un
+   agente después de que GitHub muestre la aprobación vigente. No se admite push
    directo a `main`.
-7. Verificar que `main`, el PR aprobado y `app_version` identifican el mismo
+8. Verificar que `main`, el PR aprobado y `app_version` identifican el mismo
    candidato antes de iniciar un deploy productivo.
-8. Antes de otro desarrollo, avanzar `bundle_work` por fast-forward al merge
+9. Antes de otro desarrollo, avanzar `bundle_work` por fast-forward al merge
    commit de `main` mediante el procedimiento seguro de esta sección.
 
 El ruleset activo `Protect main` apunta a la rama por defecto (`main`), no tiene
-bypass, exige pull request y conversaciones resueltas, requiere el método
-**merge commit** y bloquea force-push y eliminación. No exige historial lineal.
-También exige que la rama esté actualizada y que los status checks
-`app-version` y `promotion-gate` finalicen correctamente. Mantiene cero
-aprobaciones formales porque existe un único responsable: su revisión de
-staging y su acción manual de ejecutar **Create a merge commit** son la
-aprobación. Al sumar otro colaborador, configurar al menos una aprobación
-requerida, descartar aprobaciones obsoletas ante nuevos commits y exigir
-aprobación del último push revisable.
+bypass, exige pull request, conversaciones resueltas, el método **merge commit**
+y una rama actualizada, y bloquea force-push y eliminación. No exige historial
+lineal. También requiere `owner-approval`, `app-version` y `promotion-gate`.
+
+El Environment `production-promotion-approval` tiene como único revisor
+requerido a `@tomascalomino` y no permite bypass administrativo. Mantiene
+desactivado **Prevent self-review** porque la conexión usada para preparar el PR
+y el propietario comparten la misma identidad de GitHub; activarlo impediría
+también la aprobación humana. Por esa razón, el contrato de agentes prohíbe de
+forma absoluta invocar las APIs o controles de aprobación, rechazo o bypass.
+Una separación criptográfica completa requeriría una segunda identidad para los
+agentes; mientras no exista, el check manual de GitHub y esta prohibición operan
+en conjunto.
 
 En la configuración del repositorio se debe habilitar exclusivamente **Allow
 merge commits** y deshabilitar **Allow squash merging** y **Allow rebase
@@ -435,8 +448,9 @@ política.
    automático y producción a `main` con Auto-Deploy apagado.
 2. Esperar que staging quede `Live` y revisar allí el cambio en escritorio y
    móvil.
-3. Abrir y aprobar el PR `bundle_work` → `main` después de que pasen los checks
-   `app-version` y `promotion-gate`, y usar solo **Create a merge commit**.
+3. Aprobar personalmente el Environment del último SHA y abrir o actualizar el
+   PR `bundle_work` → `main` después de que pasen `owner-approval`,
+   `app-version` y `promotion-gate`; usar solo **Create a merge commit**.
 4. Confirmar que el SHA y `app_version` de `main` coinciden con el PR aprobado.
 5. Avanzar `bundle_work` por fast-forward mediante el procedimiento post-merge
    y comprobar que su job `app-version` quede verde.
@@ -536,7 +550,7 @@ aprobación → producción.
 - Confirmar qué servicios externos y variables toca el cambio.
 - Ejecutar tests y verificaciones relevantes en el entorno Conda.
 - Publicar primero en staging y validar allí el flujo público afectado.
-- Promover mediante PR, checks verdes, aprobación manual y **Create a merge
+- Promover mediante PR, `owner-approval`, checks verdes y **Create a merge
   commit**.
 - Avanzar `bundle_work` por fast-forward hasta el mismo SHA de `main` y verificar
   `app-version`.
