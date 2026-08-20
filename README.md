@@ -51,13 +51,16 @@ GitHub Actions vuelve a comprobar cada commit publicado.
 
 1. Desarrollar, incrementar la versión y pushear a `bundle_work`.
 2. Esperar el deploy automático y validar staging.
-3. Abrir un PR `bundle_work` → `main`; no pushear directamente a `main`.
-4. Superar los checks `app-version` y `promotion-gate` y obtener la aprobación
-   manual del responsable del sitio.
-5. Integrar exclusivamente con **Create a merge commit**.
-6. Avanzar `bundle_work` por fast-forward al nuevo commit de `main` y confirmar
+3. Abrir o actualizar en borrador el PR `bundle_work` → `main`.
+4. `@tomascalomino` revisa el último push y aprueba personalmente el check
+   `owner-approval` desde **Review deployments** en GitHub. Los agentes no
+   pueden emitir, rechazar ni saltar esa aprobación.
+5. Superar también los checks `app-version` y `promotion-gate`.
+6. Integrar exclusivamente con **Create a merge commit**; la aprobación no
+   activa un merge automático.
+7. Avanzar `bundle_work` por fast-forward al nuevo commit de `main` y confirmar
    que ambas ramas apunten al mismo SHA y árbol.
-7. Desplegar manualmente en Render el SHA aprobado de `main`.
+8. Desplegar manualmente en Render el SHA aprobado de `main`.
 
 La rama `main` debe estar protegida mediante un ruleset de GitHub y producción
 debe permanecer vinculada a `main` con Auto-Deploy desactivado. El merge commit

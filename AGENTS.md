@@ -46,8 +46,16 @@ operativos o de configuración.
   proponerlo para producción.
 - Promover únicamente mediante un pull request `bundle_work` → `main`. Los
   status checks `app-version` y `promotion-gate` deben finalizar correctamente.
-- El responsable del sitio debe aprobar la promoción. Usar exclusivamente
-  **Create a merge commit** para preservar los commits y el historial.
+- El agente puede abrir o actualizar el PR en borrador, pero `@tomascalomino`
+  debe aprobar personalmente cada SHA candidato mediante el check
+  `owner-approval` y el Environment protegido de GitHub. Cada nuevo push exige
+  una aprobación nueva.
+- Ningún agente puede aprobar o rechazar el deployment, iniciar todos los jobs
+  pendientes, saltar la protección del Environment ni simular esa decisión por
+  API, conector, CLI o interfaz.
+- La aprobación no activa un merge automático. El responsable puede ejecutar
+  **Create a merge commit** o pedirlo explícitamente a un agente una vez que
+  GitHub muestre `owner-approval`, `app-version` y `promotion-gate` en verde.
 - Después del merge y antes de otro desarrollo, avanzar `bundle_work` por
   fast-forward al nuevo commit de `main`. Confirmar que ambas ramas apunten al
   mismo SHA y árbol; no usar reset ni force-push.
