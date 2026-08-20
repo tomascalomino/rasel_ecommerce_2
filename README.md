@@ -29,8 +29,8 @@ sin secretos en `docs/OPERATIONS.md`.
 ## Versionado
 
 La versión actual vive en `app_version`, usa SemVer y aparece en el encabezado
-del admin. Todo commit normal debe incrementarla, incluidos cambios de
-documentación y configuración:
+del admin. Todo commit creado durante el desarrollo debe incrementarla,
+incluidos cambios de documentación y configuración:
 
 ```powershell
 python scripts/bump_version.py patch
@@ -54,13 +54,14 @@ GitHub Actions vuelve a comprobar cada commit publicado.
 3. Abrir un PR `bundle_work` → `main`; no pushear directamente a `main`.
 4. Superar los checks `app-version` y `promotion-gate` y obtener la aprobación
    manual del responsable del sitio.
-5. Integrar con **Squash and merge**.
-6. Realinear `bundle_work` al nuevo commit de `main` después de confirmar que
-   ambos árboles Git son idénticos.
+5. Integrar exclusivamente con **Create a merge commit**.
+6. Avanzar `bundle_work` por fast-forward al nuevo commit de `main` y confirmar
+   que ambas ramas apunten al mismo SHA y árbol.
 7. Desplegar manualmente en Render el SHA aprobado de `main`.
 
 La rama `main` debe estar protegida mediante un ruleset de GitHub y producción
-debe permanecer vinculada a `main` con Auto-Deploy desactivado. La realineación
-post-squash conserva la misma versión y solo es válida cuando no cambia ningún
-archivo. El procedimiento completo y sus comprobaciones están en
+debe permanecer vinculada a `main` con Auto-Deploy desactivado. El merge commit
+de promoción conserva la versión y el árbol del candidato; la sincronización
+posterior de `bundle_work` es un fast-forward sin commits nuevos. El
+procedimiento completo y sus comprobaciones están en
 [docs/OPERATIONS.md](docs/OPERATIONS.md#flujo-obligatorio-de-ramas-y-aprobación).

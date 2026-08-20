@@ -36,12 +36,11 @@
         </a>
 
         <form action="{% url 'shop:product_list' %}" method="get" class="search-form" role="search">
-          <label for="q" class="sr-only">Buscar productos</label>
-          <input id="q" class="search-input" type="search" name="q" value="{{ request.GET.q|default:'' }}"
-            placeholder="Buscar" />
-          <button class="btn btn-small" type="submit">
+          <label for="header-search" class="sr-only">Buscar productos</label>
+          <input id="header-search" class="search-input" type="search" name="q"
+            value="{{ request.GET.q|default:'' }}" placeholder="Buscar productos" />
+          <button class="search-submit" type="submit" aria-label="Buscar productos">
             <span class="icon">{% include "partials/icons/search.svg" %}</span>
-            Buscar
           </button>
         </form>
       </div>

@@ -31,18 +31,20 @@ jobs:
           BEFORE: ${{ github.event.before }}
           AFTER: ${{ github.sha }}
           BRANCH: ${{ github.ref_name }}
-          FORCED: ${{ github.event.forced }}
         run: |
-          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            python scripts/check_app_version.py --range "$AFTER"
-          elif git merge-base --is-ancestor "$BEFORE" "$AFTER"; then
-            python scripts/check_app_version.py --range "$BEFORE..$AFTER"
-          elif [ "$FORCED" = "true" ] && [ "$BRANCH" = "bundle_work" ]; then
-            if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-              git fetch --no-tags origin "$BEFORE"
+          validate_range() {
+            if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "bundle_work" ]; then
+              python scripts/check_app_version.py --range "$1" --allow-promotion-merge
+            else
+              python scripts/check_app_version.py --range "$1"
             fi
-            python scripts/check_app_version.py --sync "$BEFORE" "$AFTER"
+          }
+
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            validate_range "$AFTER"
+          elif git merge-base --is-ancestor "$BEFORE" "$AFTER"; then
+            validate_range "$BEFORE..$AFTER"
           else
-            echo "Non-fast-forward updates are only allowed for identical bundle_work post-squash syncs."
+            echo "Non-fast-forward updates are not allowed."
             exit 1
           fi

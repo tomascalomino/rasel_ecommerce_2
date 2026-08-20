@@ -134,6 +134,29 @@
 <div class="spacer"></div>
 {% endif %}
 
+<section class="card wholesale-home-banner" aria-label="Compras mayoristas">
+  <div class="wholesale-home-banner-copy">
+    <strong>¿Comprás para tu comercio?</strong>
+    <span class="wholesale-home-banner-copy-full">Precios preferenciales para compras mayoristas según la cantidad que necesites.</span>
+    <span class="wholesale-home-banner-copy-mobile">Precios preferenciales</span>
+  </div>
+  {% if whatsapp_link %}
+    <a
+      class="btn btn-primary btn-small wholesale-home-banner-cta"
+      href="{{ whatsapp_link }}?text=Hola%20RaSel%2C%20quisiera%20consultar%20por%20compras%20mayoristas%20y%20precios%20preferenciales."
+      target="_blank"
+      rel="noopener"
+    >
+      <span class="wholesale-home-banner-cta-full">Consultar por WhatsApp</span>
+      <span class="wholesale-home-banner-cta-mobile">WhatsApp</span>
+    </a>
+  {% else %}
+    <a class="btn btn-primary btn-small wholesale-home-banner-cta" href="{% url 'contact' %}">Contactanos</a>
+  {% endif %}
+</section>
+
+<div class="spacer"></div>
+
 <section class="content-section">
   <div class="card home-origin">
     <img class="home-origin-img" src="{% static 'img/gallery-1.webp' %}" alt="Olivar en Andalgalá, Catamarca">

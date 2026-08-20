@@ -3,6 +3,62 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-08-18 — Buscador unificado del encabezado (1.1.2)
+
+- Corrección visual: el campo y la lupa forman una única píldora, con borde
+  fino y uniforme, sin la sombra ni el contorno nativo pixelado del navegador.
+- Interacción: el botón de texto separado se reemplaza por una lupa integrada;
+  el foco de teclado sigue siendo visible y la búsqueda conserva el parámetro
+  `q` y su valor al mostrar resultados.
+- Responsive y accesibilidad: el control ocupa todo el ancho del menú móvil,
+  ofrece un nombre accesible y evita duplicar el identificador del filtro de la
+  tienda.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
+## 2026-08-17 — Avisos compactos y ordenados en el inicio (1.1.1)
+
+- Corrección visual: el aviso mayorista adopta el mismo ancho, tipografía y
+  espaciado compacto que el aviso de Mercado Pago, sin superarlo visualmente.
+- Jerarquía: cuando Mercado Pago está habilitado, su aviso aparece primero y el
+  de compras mayoristas queda inmediatamente debajo.
+- Responsive: en pantallas pequeñas el aviso mayorista usa copias breves y un
+  botón reducido en una sola fila, sin superar el tamaño del aviso de pago ni
+  desbordar el contenedor.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
+## 2026-08-17 — Consultas para compras mayoristas (1.1.0)
+
+- Experiencia: el inicio incorpora, debajo de la selección de productos, un
+  aviso compacto para comercios con precios preferenciales en compras
+  mayoristas y acceso directo a WhatsApp con un mensaje precargado.
+- Contacto: la introducción de la página menciona expresamente las consultas
+  mayoristas; si WhatsApp no está configurado, el aviso del inicio dirige a
+  **Contacto** en lugar de generar un enlace incompleto.
+- Alcance comercial: no se publican porcentajes, cantidades mínimas ni listas
+  de precios; las condiciones se coordinan directamente con la empresa.
+- Pruebas: se cubren el contenido, el enlace a WhatsApp, el fallback y el orden
+  del aviso respecto de la selección y Mercado Pago.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
+## 2026-08-17 — Promoción con merge commit y ramas idénticas (1.0.6)
+
+- Promoción: los PR `bundle_work` → `main` pasan a integrarse exclusivamente
+  con **Create a merge commit**, preservando todos los commits del candidato y
+  un punto explícito de promoción.
+- Sincronización: después del merge, `bundle_work` avanza por fast-forward hasta
+  el mismo SHA de `main`; se eliminan el reset y el force-push post-squash.
+- Versionado: `Version check` admite el merge commit generado por GitHub sin un
+  incremento adicional únicamente cuando tiene dos padres, conserva exactamente
+  el árbol y la versión del candidato, y esa versión supera la de `main`.
+- Protección: `Protect main` deja de exigir historial lineal, requiere el método
+  merge y conserva PR obligatorio, rama actualizada, conversaciones resueltas,
+  checks `app-version` y `promotion-gate`, y bloqueo de borrado y force-push.
+- Repositorio: se habilitan únicamente merge commits; squash y rebase quedan
+  deshabilitados para evitar métodos de promoción alternativos.
+- Pruebas: se cubren el merge válido y los rechazos por reutilización ordinaria
+  de versión, árbol alterado, versión no incremental o ausencia de dos padres.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+
 ## 2026-08-17 — Integración de rama para promoción (1.0.5)
 
 - Integración: `bundle_work` incorpora el commit squash vigente de `main` para

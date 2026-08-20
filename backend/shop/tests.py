@@ -96,6 +96,52 @@ class ProductListViewTests(TestCase):
 				response = self.client.get(url)
 				self.assertNotContains(response, "mercado-pago-horizontal.svg")
 
+	@override_settings(WHATSAPP_NUMBER="1162002357", MP_CHECKOUT_ENABLED=True)
+	def test_home_promotes_wholesale_contact_by_whatsapp(self):
+		response = self.client.get(reverse("home"))
+		content = response.content.decode()
+
+		self.assertContains(response, "¿Comprás para tu comercio?")
+		self.assertContains(
+			response,
+			"Precios preferenciales para compras mayoristas según la cantidad que necesites.",
+		)
+		self.assertContains(
+			response,
+			'href="https://wa.me/5491162002357?text=Hola%20RaSel%2C%20quisiera%20consultar%20por%20compras%20mayoristas%20y%20precios%20preferenciales."',
+		)
+		self.assertContains(
+			response,
+			'<span class="wholesale-home-banner-cta-full">Consultar por WhatsApp</span>',
+			html=True,
+		)
+		self.assertContains(
+			response,
+			'<span class="wholesale-home-banner-cta-mobile">WhatsApp</span>',
+			html=True,
+		)
+		self.assertLess(content.index("Nuestra selección"), content.index("Pagá como prefieras"))
+		self.assertLess(content.index("Pagá como prefieras"), content.index("¿Comprás para tu comercio?"))
+
+	@override_settings(WHATSAPP_NUMBER="")
+	def test_home_wholesale_banner_falls_back_to_contact(self):
+		response = self.client.get(reverse("home"))
+
+		self.assertContains(
+			response,
+			'<a class="btn btn-primary btn-small wholesale-home-banner-cta" href="/contact/">Contactanos</a>',
+			html=True,
+		)
+		self.assertNotContains(response, "Consultar por WhatsApp")
+
+	def test_contact_mentions_wholesale_purchases(self):
+		response = self.client.get(reverse("contact"))
+
+		self.assertContains(
+			response,
+			"¿Tenés dudas, querés hacer un pedido especial o consultar por compras mayoristas?",
+		)
+
 
 class ProductCardPricingTests(TestCase):
 	def setUp(self):
@@ -285,6 +331,23 @@ class PublicNavigationCopyTests(TestCase):
 		self.assertIn("Acidez menor a 0,3%", hero)
 		self.assertContains(response, "img/rasel-logo-header.webp")
 		self.assertNotContains(response, "img/rasel-escudo.webp")
+
+	def test_header_search_uses_one_accessible_control_and_unique_id(self):
+		for index in range(5):
+			Product.objects.create(name=f"Blend {index}", is_active=True)
+
+		response = self.client.get(reverse("shop:product_list"), {"q": "Blend"})
+		content = response.content.decode()
+
+		self.assertEqual(content.count('id="header-search"'), 1)
+		self.assertEqual(content.count('id="q"'), 1)
+		self.assertContains(response, 'for="header-search"')
+		self.assertContains(response, 'value="Blend" placeholder="Buscar productos"')
+		self.assertContains(
+			response,
+			'class="search-submit" type="submit" aria-label="Buscar productos"',
+		)
+		self.assertNotContains(response, 'class="btn btn-small" type="submit"')
 
 
 class SocialMetadataTests(TestCase):
