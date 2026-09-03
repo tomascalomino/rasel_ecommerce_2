@@ -38,7 +38,7 @@ UptimeRobot → GET https://rasel.ar/healthz
 
 | Aplicación | Responsabilidad |
 | --- | --- |
-| `shop` | Categorías, productos, variantes, catálogo público, home, SEO y health check. |
+| `shop` | Categorías, productos, variantes, configuración comercial, catálogo público, home, SEO y health check. |
 | `cart` | Carrito por sesión de navegador; no existe cuenta de cliente. |
 | `orders` | Checkout, órdenes, ítems, estados, stock, administración y emails. |
 | `shipping` | Zonas, reglas de código postal, puntos de retiro y cotización. |
@@ -104,9 +104,10 @@ del servidor y nunca confía en el total enviado por el navegador.
   dirección del cliente.
 - **Pagos activos en producción:** transferencia bancaria, efectivo contra
   entrega o retiro y Mercado Pago Checkout Pro.
-- **Descuento por medio de pago:** transferencia y efectivo reciben un descuento
-  mínimo del 5% sobre los productos. Para cada variante se calcula el 5% y su
-  precio promocional se redondea hacia abajo al múltiplo de $50; la diferencia
+- **Descuento por medio de pago:** transferencia y efectivo reciben el descuento
+  mínimo global configurado en el admin, inicialmente 10% sobre los productos.
+  Admite enteros de 0 a 50. Para cada variante se calcula el porcentaje vigente y
+  su precio promocional se redondea hacia abajo al múltiplo de $50; la diferencia
   efectiva se multiplica por la cantidad comprada. El costo de envío no se
   descuenta y el umbral de envío gratis continúa evaluándose sobre el subtotal
   del precio de venta vigente. Mercado Pago conserva ese precio completo; el
@@ -117,7 +118,8 @@ del servidor y nunca confía en el total enviado por el navegador.
   del inicio, la tienda y las recomendaciones muestran debajo del precio
   vigente el importe exacto por transferencia o efectivo de la misma variante
   activa más económica. El resumen del checkout cambia en el acto al seleccionar
-  cada medio.
+  cada medio. Con 0% no se aplica el redondeo ni descuento y se ocultan los
+  precios y textos promocionales, pero los medios offline continúan disponibles.
 - Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
   imagen, precio, precio offline, cantidad y las presentaciones activas que
   tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un
@@ -141,8 +143,10 @@ stock dentro de una transacción, vuelve a calcular precios y el descuento del
 lado del servidor, crea una orden `pending`, descuenta stock, vacía el carrito
 y envía la confirmación por email. Transferencia se coordina con el comprobante
 por WhatsApp; efectivo se cobra al retirar o recibir. La orden conserva el
-subtotal de lista en sus ítems y el descuento aplicado en
-`payment_discount_amount`, de modo que el total histórico sea auditable.
+subtotal de lista en sus ítems, el descuento aplicado en
+`payment_discount_amount` y el porcentaje vigente en
+`payment_discount_percent`, de modo que importes, pantallas y emails históricos
+no cambien cuando se edite la configuración comercial.
 
 Para Mercado Pago, el POST del checkout vuelve a validar precios, envío y
 stock, descuenta las unidades como reserva por 30 minutos y crea un
@@ -188,17 +192,18 @@ envía una alerta. Reintegros y contracargos se sincronizan sin reponer stock de
 forma automática.
 
 Cada email usa un flag de idempotencia: reintentar una acción no debe mandar el
-mismo correo dos veces. Las órdenes guardan snapshots de ítems, precios,
-descuento por medio de pago, dirección y punto de retiro para preservar su
-historial aunque cambie el catálogo o la regla comercial.
+mismo correo dos veces. Las órdenes guardan snapshots de ítems, precios, importe
+y porcentaje de descuento por medio de pago, dirección y punto de retiro para
+preservar su historial aunque cambie el catálogo o la regla comercial.
 
 ## Administración y permisos
 
-`/admin/` es el panel operativo con branding RaSel. Gestiona productos,
-variantes, categorías, zonas, reglas postales, puntos de retiro, órdenes y
-usuarios.
+`/admin/` es el panel operativo con branding RaSel. Gestiona configuración
+comercial, productos, variantes, categorías, zonas, reglas postales, puntos de
+retiro, órdenes y usuarios.
 
-- **Operador:** puede ver y editar órdenes, catálogo, zonas y puntos de retiro.
+- **Operador:** puede ver y editar órdenes, configuración comercial, catálogo,
+  zonas y puntos de retiro.
 - **Solo lectura:** puede consultar los mismos datos sin modificarlos.
 - Los usuarios y roles los gestiona un administrador. El dashboard muestra
   pendientes, ventas cobradas y órdenes recientes.

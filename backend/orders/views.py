@@ -8,7 +8,7 @@ from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
 from config.pricing import (
-    OFFLINE_PAYMENT_DISCOUNT_PERCENT,
+    get_offline_payment_discount_percent,
     payment_discount_for_lines,
 )
 from payments.mercadopago import MercadoPagoError
@@ -26,12 +26,13 @@ from .forms import CheckoutForm
 from .models import Order, OrderItem
 
 
-def _render_checkout(request, cart, form):
+def _render_checkout(request, cart, form, discount_percent):
     cart_rows = list(cart.items())
     subtotal = sum((item.line_total for item in cart_rows), Decimal("0.00"))
     offline_discount = payment_discount_for_lines(
         ((item.unit_price, item.qty) for item in cart_rows),
         "transfer",
+        discount_percent,
     )
     return render(
         request,
@@ -42,7 +43,7 @@ def _render_checkout(request, cart, form):
             "mp_enabled": settings.MP_CHECKOUT_ENABLED,
             "mp_max_installments": settings.MP_MAX_INSTALLMENTS,
             "offline_discount_amount": offline_discount,
-            "offline_discount_percent": OFFLINE_PAYMENT_DISCOUNT_PERCENT,
+            "offline_discount_percent": discount_percent,
             "pickup_points": PickupPoint.objects.filter(is_active=True),
         },
     )
@@ -96,7 +97,9 @@ def _customer_from_form(form):
     }
 
 
-def _create_offline_order(customer, delivery, cart_rows, payment_method):
+def _create_offline_order(
+    customer, delivery, cart_rows, payment_method, discount_percent
+):
     with transaction.atomic():
         validated = []
         validated_subtotal = Decimal("0.00")
@@ -122,6 +125,7 @@ def _create_offline_order(customer, delivery, cart_rows, payment_method):
         discount_amount = payment_discount_for_lines(
             ((unit_price, quantity) for _, quantity, unit_price, _ in validated),
             payment_method,
+            discount_percent,
         )
         grand_total = validated_subtotal - discount_amount + delivery["shipping_cost"]
 
@@ -134,6 +138,9 @@ def _create_offline_order(customer, delivery, cart_rows, payment_method):
             shipping_zone=delivery["shipping_zone"],
             shipping_carrier_arranged=delivery["shipping_carrier_arranged"],
             payment_discount_amount=discount_amount,
+            payment_discount_percent=(
+                discount_percent if payment_method in {"transfer", "cod"} else 0
+            ),
             total_amount=grand_total,
             status="pending",
             payment_status="pending",
@@ -161,12 +168,19 @@ def checkout(request):
     if len(cart) == 0:
         return redirect("shop:product_list")
 
-    if request.method != "POST":
-        return _render_checkout(request, cart, CheckoutForm())
+    discount_percent = get_offline_payment_discount_percent(request)
 
-    form = CheckoutForm(request.POST)
+    if request.method != "POST":
+        return _render_checkout(
+            request,
+            cart,
+            CheckoutForm(discount_percent=discount_percent),
+            discount_percent,
+        )
+
+    form = CheckoutForm(request.POST, discount_percent=discount_percent)
     if not form.is_valid():
-        return _render_checkout(request, cart, form)
+        return _render_checkout(request, cart, form, discount_percent)
 
     payment_method = form.cleaned_data.get("payment_method", "transfer")
     cart_rows = list(cart.items())
@@ -177,6 +191,7 @@ def checkout(request):
     discount_amount = payment_discount_for_lines(
         ((item.unit_price, item.qty) for item in cart_rows),
         payment_method,
+        discount_percent,
     )
     delivery = _delivery_from_form(
         form,
@@ -191,18 +206,24 @@ def checkout(request):
             "payment_method",
             "El pago en efectivo a contraentrega esta disponible solo para CABA y GBA.",
         )
-        return _render_checkout(request, cart, form)
+        return _render_checkout(request, cart, form, discount_percent)
 
     if payment_method in {"transfer", "cod"}:
         try:
-            order = _create_offline_order(customer, delivery, cart_rows, payment_method)
+            order = _create_offline_order(
+                customer,
+                delivery,
+                cart_rows,
+                payment_method,
+                discount_percent,
+            )
         except (ValueError, Variant.DoesNotExist) as exc:
             messages.error(
                 request,
                 str(exc) if isinstance(exc, ValueError)
                 else "Uno de los productos ya no esta disponible.",
             )
-            return _render_checkout(request, cart, form)
+            return _render_checkout(request, cart, form, discount_percent)
         cart.clear()
         send_order_confirmation(order.id)
         destination = "orders:cod_info" if payment_method == "cod" else "orders:transfer_info"
@@ -210,7 +231,7 @@ def checkout(request):
 
     if not settings.MP_CHECKOUT_ENABLED:
         form.add_error("payment_method", "Mercado Pago no esta disponible en este momento.")
-        return _render_checkout(request, cart, form)
+        return _render_checkout(request, cart, form, discount_percent)
 
     draft_delivery = {
         key: delivery[key]
@@ -236,7 +257,7 @@ def checkout(request):
             str(exc) if isinstance(exc, PaymentValidationError)
             else "Uno de los productos ya no esta disponible.",
         )
-        return _render_checkout(request, cart, form)
+        return _render_checkout(request, cart, form, discount_percent)
 
     request.session["active_payment_draft"] = str(draft.token)
     request.session.modified = True
@@ -253,7 +274,7 @@ def checkout(request):
         )
     except PaymentValidationError as exc:
         messages.error(request, str(exc))
-        return _render_checkout(request, cart, form)
+        return _render_checkout(request, cart, form, discount_percent)
     return redirect(draft.mp_init_point)
 
 

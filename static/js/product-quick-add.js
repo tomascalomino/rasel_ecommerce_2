@@ -34,7 +34,9 @@
       compareAtPrice.textContent = money(compareValue);
       compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
     }
-    offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
+    if (offlinePrice) {
+      offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
+    }
     quantity.max = stock;
     if ((parseInt(quantity.value, 10) || 1) > stock) quantity.value = stock;
   }

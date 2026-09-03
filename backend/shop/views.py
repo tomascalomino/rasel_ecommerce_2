@@ -5,17 +5,22 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import escape
 
-from config.pricing import discounted_amount
+from config.pricing import (
+    discounted_amount,
+    get_offline_payment_discount_percent,
+)
 
 from .models import Product, Variant
 
 
-def _attach_product_card_data(products):
+def _attach_product_card_data(products, discount_percent):
     """Adjunta precios de una misma variante y stock a previews de producto."""
     for product in products:
         active_variants = [variant for variant in product.variants.all() if variant.is_active]
         for variant in active_variants:
-            variant.offline_price_ars = discounted_amount(variant.price_ars)
+            variant.offline_price_ars = discounted_amount(
+                variant.price_ars, discount_percent
+            )
         price_variant = min(
             active_variants,
             key=lambda variant: variant.price_ars,
@@ -26,7 +31,9 @@ def _attach_product_card_data(products):
             price_variant.compare_at_price_ars if price_variant else None
         )
         product.promotion_label = price_variant.promotion_label if price_variant else ""
-        product.offline_price_ars = discounted_amount(product.min_price_ars)
+        product.offline_price_ars = discounted_amount(
+            product.min_price_ars, discount_percent
+        )
         product.in_stock = any(variant.stock_qty > 0 for variant in active_variants)
         product.card_variants = [
             variant for variant in active_variants if variant.stock_qty > 0
@@ -80,7 +87,8 @@ def home(request):
         .order_by("name")
         .prefetch_related("variants")[:3]
     )
-    _attach_product_card_data(featured)
+    discount_percent = get_offline_payment_discount_percent(request)
+    _attach_product_card_data(featured, discount_percent)
     return render(request, "home.html", {"featured_products": featured})
 
 
@@ -93,7 +101,8 @@ def product_list(request):
     all_products = list(Product.objects.filter(is_active=True).prefetch_related("variants"))
 
     # 2. Attach card properties in memory to avoid DB annotation errors in Postgres
-    _attach_product_card_data(all_products)
+    discount_percent = get_offline_payment_discount_percent(request)
+    _attach_product_card_data(all_products, discount_percent)
 
     # 3. Apply filters
     filtered_products = []
@@ -146,6 +155,7 @@ def product_list(request):
 
 
 def product_detail(request, slug: str):
+    discount_percent = get_offline_payment_discount_percent(request)
     product = get_object_or_404(
         Product.objects.select_related("category").prefetch_related(
             Prefetch("variants", queryset=Variant.objects.filter(is_active=True))
@@ -154,7 +164,7 @@ def product_detail(request, slug: str):
         is_active=True,
     )
 
-    _attach_product_card_data([product])
+    _attach_product_card_data([product], discount_percent)
 
     # "También te puede gustar": otros productos activos con su precio mínimo.
     related = list(
@@ -162,7 +172,7 @@ def product_detail(request, slug: str):
         .exclude(pk=product.pk)
         .prefetch_related("variants")[:3]
     )
-    _attach_product_card_data(related)
+    _attach_product_card_data(related, discount_percent)
 
     return render(
         request,

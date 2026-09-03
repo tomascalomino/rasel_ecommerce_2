@@ -157,7 +157,7 @@
   var promotionLabel = document.getElementById("product-promotion-label");
   var compareAtPrice = document.getElementById("product-compare-at-price");
   var offlinePrice = document.getElementById("product-offline-price");
-  if (!select || !currentPrice || !promotionComparison || !promotionLabel || !compareAtPrice || !offlinePrice) return;
+  if (!select || !currentPrice || !promotionComparison || !promotionLabel || !compareAtPrice) return;
 
   function money(value) {
     return "$ " + new Intl.NumberFormat("es-AR", {
@@ -181,7 +181,9 @@
       compareAtPrice.textContent = money(compareValue);
       compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
     }
-    offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
+    if (offlinePrice) {
+      offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
+    }
   }
 
   select.addEventListener("change", refreshPrice);

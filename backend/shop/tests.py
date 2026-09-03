@@ -8,8 +8,42 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
-from .admin import VariantAdmin, VariantInline
-from .models import Category, Product, Variant
+from .admin import CommercialSettingsAdmin, VariantAdmin, VariantInline
+from .models import Category, CommercialSettings, Product, Variant
+
+
+class CommercialSettingsTests(TestCase):
+	def test_seeded_discount_is_ten_percent(self):
+		settings = CommercialSettings.objects.get(pk=1)
+
+		self.assertEqual(settings.offline_payment_discount_percent, 10)
+
+	def test_discount_accepts_zero_and_fifty_but_rejects_values_outside_range(self):
+		settings = CommercialSettings.objects.get(pk=1)
+		for value in (0, 50):
+			with self.subTest(value=value):
+				settings.offline_payment_discount_percent = value
+				settings.full_clean()
+
+		settings.offline_payment_discount_percent = 51
+		with self.assertRaises(ValidationError):
+			settings.full_clean()
+
+	def test_database_enforces_range_and_singleton(self):
+		with self.assertRaises(IntegrityError), transaction.atomic():
+			CommercialSettings.objects.filter(pk=1).update(
+				offline_payment_discount_percent=51
+			)
+		with self.assertRaises(IntegrityError), transaction.atomic():
+			CommercialSettings.objects.filter(pk=1).update(id=2)
+
+	def test_admin_only_exposes_the_discount_and_disables_deletion(self):
+		settings_admin = CommercialSettingsAdmin(
+			CommercialSettings, django_admin.site
+		)
+
+		self.assertEqual(settings_admin.fields, ("offline_payment_discount_percent",))
+		self.assertFalse(settings_admin.has_delete_permission(None))
 
 
 class VariantPromotionTests(TestCase):
@@ -201,7 +235,7 @@ class ProductListViewTests(TestCase):
 		product_response = self.client.get(
 			reverse("shop:product_detail", args=[self.p1.slug])
 		)
-		self.assertContains(product_response, "MÍN. 5% OFF")
+		self.assertContains(product_response, "MÍN. 10% OFF")
 		self.assertContains(product_response, "transferencia o efectivo")
 		self.assertContains(product_response, "$ 100")
 		self.assertContains(product_response, 'data-offline-price="100.00"')
@@ -362,11 +396,11 @@ class ProductCardPricingTests(TestCase):
 					products[self.primary.pk].promotion_label,
 					"Precio de lanzamiento",
 				)
-				self.assertEqual(products[self.primary.pk].offline_price_ars, Decimal("7000.00"))
+				self.assertEqual(products[self.primary.pk].offline_price_ars, Decimal("6650.00"))
 				self.assertTrue(products[self.primary.pk].in_stock)
 				self.assertEqual(
 					products[self.out_of_stock.pk].offline_price_ars,
-					Decimal("1900.00"),
+					Decimal("1800.00"),
 				)
 				self.assertFalse(products[self.out_of_stock.pk].in_stock)
 				self.assertIsNone(products[self.without_variants.pk].offline_price_ars)
@@ -374,8 +408,8 @@ class ProductCardPricingTests(TestCase):
 				self.assertContains(response, 'class="product-card-compare-price"', count=1)
 				self.assertContains(response, "Precio de lanzamiento")
 				self.assertContains(response, "$ 10.000")
-				self.assertContains(response, "$ 7.000")
-				self.assertContains(response, "$ 1.900")
+				self.assertContains(response, "$ 6.650")
+				self.assertContains(response, "$ 1.800")
 				self.assertContains(response, "con transferencia o efectivo")
 
 	def test_related_product_cards_show_offline_price(self):
@@ -384,11 +418,11 @@ class ProductCardPricingTests(TestCase):
 		)
 		related = {product.pk: product for product in response.context["related_products"]}
 
-		self.assertEqual(related[self.out_of_stock.pk].offline_price_ars, Decimal("1900.00"))
+		self.assertEqual(related[self.out_of_stock.pk].offline_price_ars, Decimal("1800.00"))
 		self.assertFalse(related[self.out_of_stock.pk].in_stock)
 		self.assertIsNone(related[self.without_variants.pk].offline_price_ars)
 		self.assertContains(response, 'class="product-card-offline-price"', count=1)
-		self.assertContains(response, "$ 1.900")
+		self.assertContains(response, "$ 1.800")
 
 	def test_quick_add_is_available_on_home_catalog_and_related_cards(self):
 		for url in (reverse("home"), reverse("shop:product_list")):
@@ -406,7 +440,7 @@ class ProductCardPricingTests(TestCase):
 				self.assertContains(response, 'data-promotion-label="Precio de lanzamiento"')
 				self.assertContains(response, 'data-promotion-label="Black Friday"')
 				self.assertContains(response, 'data-promotion-label=""')
-				self.assertContains(response, 'data-offline-price="7000.00"')
+				self.assertContains(response, 'data-offline-price="6650.00"')
 				self.assertContains(response, "Agregar al carrito")
 				self.assertNotContains(response, "Variante retirada")
 				self.assertNotContains(
@@ -465,6 +499,39 @@ class ProductCardPricingTests(TestCase):
 
 		self.assertNotContains(response, "offline-home-banner")
 		self.assertNotContains(response, "Ahorrá pagando por transferencia o efectivo")
+
+	def test_admin_percentage_updates_prices_and_all_public_copy(self):
+		CommercialSettings.objects.filter(pk=1).update(
+			offline_payment_discount_percent=15
+		)
+
+		product_response = self.client.get(
+			reverse("shop:product_detail", args=[self.primary.slug])
+		)
+		terms_response = self.client.get(reverse("terms"))
+
+		self.assertContains(product_response, "MÍN. 15% OFF")
+		self.assertContains(product_response, "$ 6.250")
+		self.assertContains(terms_response, "del 15% sobre los productos")
+
+	def test_zero_percent_hides_offline_prices_and_discount_copy(self):
+		CommercialSettings.objects.filter(pk=1).update(
+			offline_payment_discount_percent=0
+		)
+
+		for url in (
+			reverse("home"),
+			reverse("shop:product_list"),
+			reverse("shop:product_detail", args=[self.primary.slug]),
+		):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				self.assertNotContains(response, "product-card-offline-price")
+				self.assertNotContains(response, "offline-payment-note")
+				self.assertNotContains(response, "con transferencia o efectivo")
+
+		terms_response = self.client.get(reverse("terms"))
+		self.assertNotContains(terms_response, "descuento mínimo")
 
 
 class HomeProductOrderTests(TestCase):

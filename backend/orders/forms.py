@@ -1,7 +1,7 @@
 from django import forms
 from django.conf import settings
 
-from config.pricing import OFFLINE_PAYMENT_DISCOUNT_PERCENT
+from config.pricing import get_offline_payment_discount_percent
 from shipping.models import PickupPoint
 from shipping.services import normalize_cp
 
@@ -39,21 +39,29 @@ class CheckoutForm(forms.Form):
 
     PAYMENT_CHOICES = [
         ("mp", "Mercado Pago"),
-        (
-            "transfer",
-            f"Transferencia Bancaria — mínimo {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
-        ),
-        (
-            "cod",
-            f"Efectivo (al recibir o al retirar) — mínimo {OFFLINE_PAYMENT_DISCOUNT_PERCENT}% de descuento",
-        ),
+        ("transfer", "Transferencia Bancaria"),
+        ("cod", "Efectivo (al recibir o al retirar)"),
     ]
     payment_method = forms.ChoiceField(
         choices=PAYMENT_CHOICES, widget=forms.RadioSelect, initial="mp"
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, discount_percent=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if discount_percent is None:
+            discount_percent = get_offline_payment_discount_percent()
+        self.offline_discount_percent = int(discount_percent)
+        suffix = (
+            f" — mínimo {self.offline_discount_percent}% de descuento"
+            if self.offline_discount_percent > 0
+            else ""
+        )
+        payment_choices = [
+            self.PAYMENT_CHOICES[0],
+            ("transfer", f"{self.PAYMENT_CHOICES[1][1]}{suffix}"),
+            ("cod", f"{self.PAYMENT_CHOICES[2][1]}{suffix}"),
+        ]
+        self.fields["payment_method"].choices = payment_choices
         # Queryset fresco en cada instancia (no a nivel de clase).
         self.fields["pickup_point"].queryset = PickupPoint.objects.filter(
             is_active=True
@@ -61,8 +69,8 @@ class CheckoutForm(forms.Form):
         # Con MercadoPago apagado quedan transferencia y efectivo.
         if not settings.MP_CHECKOUT_ENABLED:
             self.fields["payment_method"].choices = [
-                self.PAYMENT_CHOICES[1],
-                self.PAYMENT_CHOICES[2],
+                payment_choices[1],
+                payment_choices[2],
             ]
             self.fields["payment_method"].initial = "transfer"
 
