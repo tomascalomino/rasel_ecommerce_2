@@ -1741,6 +1741,38 @@ textarea:focus {
   min-width: 0;
 }
 
+.promotion-badge {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 4px 9px;
+  border: 1px solid rgba(169, 133, 69, .24);
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: var(--brand);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  box-shadow: 0 3px 10px rgba(61, 71, 40, .08);
+}
+
+.product-card-price-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.product-card-compare-price {
+  color: var(--text-2);
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  white-space: nowrap;
+}
+
 .product-card-offline-price {
   display: flex;
   flex-direction: column;
@@ -1858,6 +1890,25 @@ textarea:focus {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.quick-add-promotion-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 8px;
+}
+
+.quick-add-promotion-comparison[hidden] {
+  display: none;
+}
+
+.quick-add-promotion-comparison del {
+  color: var(--text-2);
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 600;
+  text-decoration-thickness: 1px;
 }
 
 .quick-add-prices > strong {
@@ -2114,6 +2165,32 @@ textarea:focus {
 
 .product-intro {
   margin: 8px 0 6px;
+}
+
+.detail-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.detail-promotion-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 9px;
+}
+
+.detail-promotion-comparison[hidden] {
+  display: none;
+}
+
+.detail-promotion-comparison del {
+  color: var(--text-2);
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration-thickness: 1px;
 }
 
 .detail-price {

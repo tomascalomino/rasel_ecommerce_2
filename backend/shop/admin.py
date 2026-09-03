@@ -5,6 +5,17 @@ from .models import Category, Product, Variant
 class VariantInline(admin.TabularInline):
     model = Variant
     fk_name = "product"
+    fields = (
+        "name",
+        "sku",
+        "price_ars",
+        "compare_at_price_ars",
+        "promotion_label",
+        "stock_qty",
+        "is_active",
+        "pack_units",
+        "unit_variant",
+    )
     extra = 1
 
 
@@ -29,7 +40,22 @@ class ProductAdmin(admin.ModelAdmin):
 class VariantAdmin(admin.ModelAdmin):
     """Sección "Stock y precios": reposición rápida editando en la lista."""
 
-    list_display = ("product", "name", "sku", "price_ars", "stock_qty", "is_active")
-    list_editable = ("price_ars", "stock_qty", "is_active")
+    list_display = (
+        "product",
+        "name",
+        "sku",
+        "price_ars",
+        "compare_at_price_ars",
+        "promotion_label",
+        "stock_qty",
+        "is_active",
+    )
+    list_editable = (
+        "price_ars",
+        "compare_at_price_ars",
+        "promotion_label",
+        "stock_qty",
+        "is_active",
+    )
     list_filter = ("is_active", "product")
     search_fields = ("sku", "product__name", "name")

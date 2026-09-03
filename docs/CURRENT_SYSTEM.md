@@ -50,6 +50,15 @@ UptimeRobot → GET https://rasel.ar/healthz
 - Un **Producto** puede tener varias **Variantes**. El precio y el stock viven
   en la variante; los packs pueden referenciar una variante unitaria para
   calcular ahorro.
+- Cada variante puede tener un **precio regular** y un **texto de promoción**.
+  Ambos son opcionales pero deben cargarse o vaciarse juntos, y el precio
+  regular debe superar al de venta. Inicio, tienda, recomendaciones, detalle y
+  compra rápida muestran el texto exactamente como fue cargado dentro de una
+  burbuja, el precio regular tachado y el vigente destacado. En tarjetas, los
+  tres valores pertenecen a la misma variante activa más económica; en detalle
+  y compra rápida cambian juntos al elegir la presentación. El comparativo no
+  aparece en carrito, checkout, órdenes ni emails y nunca interviene en el
+  importe cobrado.
 - La sección **Nuestra selección** del inicio muestra hasta tres productos
   activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
   coloca primero las botellas y después los packs.
@@ -75,7 +84,9 @@ UptimeRobot → GET https://rasel.ar/healthz
   usan una portada JPEG de 1200 × 800 basada en la fotografía real de la
   botella y el aceite. Los metadatos Open Graph y Twitter declaran esa imagen,
   sus dimensiones y un texto alternativo descriptivo.
-- El administrador activa o desactiva productos y variantes. Las imágenes de
+- El administrador activa o desactiva productos y variantes, y permite editar
+  juntos el precio de venta, el precio regular y el texto de promoción. Rechaza campañas
+  incompletas o un precio regular que no sea mayor al vigente. Las imágenes de
   producto se cargan desde el admin y quedan en R2 en producción.
 - El carrito se guarda en la sesión del navegador con `variant_id` como clave.
   No hay login, persistencia entre dispositivos ni reserva de stock al agregar
@@ -98,12 +109,15 @@ del servidor y nunca confía en el total enviado por el navegador.
   precio promocional se redondea hacia abajo al múltiplo de $50; la diferencia
   efectiva se multiplica por la cantidad comprada. El costo de envío no se
   descuenta y el umbral de envío gratis continúa evaluándose sobre el subtotal
-  de lista. Mercado Pago conserva el precio completo. El detalle de producto
-  muestra el precio promocional de la presentación elegida. Las tarjetas del
-  inicio, la tienda y las recomendaciones muestran debajo del precio de lista el
-  importe exacto por transferencia o efectivo de la variante activa más
-  económica. El resumen del checkout cambia en el acto al seleccionar cada
-  medio.
+  del precio de venta vigente. Mercado Pago conserva ese precio completo; el
+  precio regular tachado es solo informativo. Cada variante puede acompañarlo
+  con un texto de promoción administrable, mostrado dentro de una burbuja; ambos
+  campos se cargan o retiran juntos. El detalle de producto muestra el texto, el
+  comparativo y el precio promocional de la presentación elegida. Las tarjetas
+  del inicio, la tienda y las recomendaciones muestran debajo del precio
+  vigente el importe exacto por transferencia o efectivo de la misma variante
+  activa más económica. El resumen del checkout cambia en el acto al seleccionar
+  cada medio.
 - Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
   imagen, precio, precio offline, cantidad y las presentaciones activas que
   tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un

@@ -235,6 +235,8 @@ class MercadoPagoIntegrationTests(TestCase):
             name="500 ml",
             sku="RASEL-CHECKOUT-MP",
             price_ars=Decimal("800.00"),
+            compare_at_price_ars=Decimal("1200.00"),
+            promotion_label="Black Friday",
             stock_qty=3,
         )
         point = PickupPoint.objects.filter(is_active=True).first()
@@ -270,6 +272,8 @@ class MercadoPagoIntegrationTests(TestCase):
         variant.refresh_from_db()
         self.assertEqual(draft.state, "preference_created")
         self.assertEqual(draft.total_amount, Decimal("1600.00"))
+        self.assertEqual(draft.items[0]["unit_price"], "800.00")
+        self.assertEqual(draft.items[0]["line_total"], "1600.00")
         self.assertEqual(variant.stock_qty, 1)
         self.assertEqual(
             self.client.session["active_payment_draft"], str(draft.token)

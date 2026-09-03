@@ -3,6 +3,27 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-03 — Promoción de precio administrable (1.2.0)
+
+- Catálogo: cada variante admite un precio regular y un texto de promoción que
+  aparecen como importe tachado y burbuja administrable en inicio, tienda,
+  recomendaciones, detalle y compra rápida. La leyenda puede cambiarse, por
+  ejemplo, entre “Precio de lanzamiento” y “Black Friday”.
+- Consistencia: las tarjetas comparan importes de una misma variante y los
+  precios y el texto cambian juntos al elegir otra presentación. El comparativo
+  no aparece ni interviene en carrito, checkout, Mercado Pago, órdenes o emails.
+- Administración: “Stock y precios” permite editar juntos precio de venta,
+  precio regular y texto de promoción; la validación de Django y restricciones
+  de base exigen que los dos campos promocionales estén completos o vacíos y
+  rechazan comparativos iguales o menores al precio cobrado.
+- Operación: el alta y el retiro son manuales desde cada admin. Al finalizar el
+  período promocional se coloca el importe definitivo como precio de venta y se
+  vacían juntos el comparativo y el texto.
+- Migraciones o variables: se agrega `shop.0006`; no se agregan variables de
+  entorno y las variantes existentes quedan sin comparativo ni texto.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-08-20 — Aprobación obligatoria del propietario en GitHub (1.1.3)
 
 - Aprobación: cada push candidato a `bundle_work` genera el check

@@ -1,8 +1,19 @@
 {% load money %}
 <div class="product-price-block">
-  <div class="price-meta">Precio</div>
-  <div class="price">
-    {% if product.min_price_ars %}{{ product.min_price_ars|ars }}{% else %}—{% endif %}
+  {% if product.compare_at_price_ars %}
+    <span class="promotion-badge">{{ product.promotion_label }}</span>
+  {% else %}
+    <div class="price-meta">Precio</div>
+  {% endif %}
+  <div class="product-card-price-line">
+    {% if product.compare_at_price_ars %}
+      <del class="product-card-compare-price" aria-label="Precio regular {{ product.compare_at_price_ars|ars }}">
+        {{ product.compare_at_price_ars|ars }}
+      </del>
+    {% endif %}
+    <div class="price">
+      {% if product.min_price_ars %}{{ product.min_price_ars|ars }}{% else %}—{% endif %}
+    </div>
   </div>
   {% if product.min_price_ars %}
     <div class="product-card-offline-price">

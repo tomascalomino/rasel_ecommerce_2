@@ -34,7 +34,20 @@
     </div>
 
     {% if product.min_price_ars %}
-      <div class="detail-price" id="product-current-price">{{ product.min_price_ars|ars }}</div>
+      <div class="detail-price-block" aria-live="polite">
+        <div
+          class="detail-promotion-comparison"
+          id="product-promotion-comparison"
+          {% if not product.compare_at_price_ars %}hidden{% endif %}
+        >
+          <span class="promotion-badge" id="product-promotion-label">{{ product.promotion_label }}</span>
+          <del
+            id="product-compare-at-price"
+            aria-label="Precio regular {{ product.compare_at_price_ars|ars }}"
+          >{{ product.compare_at_price_ars|ars }}</del>
+        </div>
+        <div class="detail-price" id="product-current-price">{{ product.min_price_ars|ars }}</div>
+      </div>
     {% endif %}
 
     {% if product.offline_price_ars %}
@@ -79,6 +92,8 @@
               <option
                 value="{{ v.id }}"
                 data-price="{{ v.price_ars|unlocalize }}"
+                data-compare-at-price="{% if v.compare_at_price_ars %}{{ v.compare_at_price_ars|unlocalize }}{% endif %}"
+                data-promotion-label="{{ v.promotion_label }}"
                 data-offline-price="{{ v.offline_price_ars|unlocalize }}"
                 {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}
               >
@@ -137,9 +152,12 @@
 <script>
 (function () {
   var select = document.getElementById("product-variant");
-  var regularPrice = document.getElementById("product-current-price");
+  var currentPrice = document.getElementById("product-current-price");
+  var promotionComparison = document.getElementById("product-promotion-comparison");
+  var promotionLabel = document.getElementById("product-promotion-label");
+  var compareAtPrice = document.getElementById("product-compare-at-price");
   var offlinePrice = document.getElementById("product-offline-price");
-  if (!select || !regularPrice || !offlinePrice) return;
+  if (!select || !currentPrice || !promotionComparison || !promotionLabel || !compareAtPrice || !offlinePrice) return;
 
   function money(value) {
     return "$ " + new Intl.NumberFormat("es-AR", {
@@ -151,7 +169,18 @@
   function refreshPrice() {
     var option = select.options[select.selectedIndex];
     if (!option) return;
-    regularPrice.textContent = money(parseFloat(option.dataset.price) || 0);
+    var currentValue = parseFloat(option.dataset.price) || 0;
+    var compareValue = parseFloat(option.dataset.compareAtPrice);
+    var label = (option.dataset.promotionLabel || "").trim();
+    var hasComparison = Number.isFinite(compareValue) && compareValue > currentValue && Boolean(label);
+
+    currentPrice.textContent = money(currentValue);
+    promotionComparison.hidden = !hasComparison;
+    if (hasComparison) {
+      promotionLabel.textContent = label;
+      compareAtPrice.textContent = money(compareValue);
+      compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
+    }
     offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
   }
 

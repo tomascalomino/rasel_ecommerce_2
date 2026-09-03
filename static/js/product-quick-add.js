@@ -15,12 +15,25 @@
     var option = select.options[select.selectedIndex];
     if (!option) return;
 
-    var regularPrice = dialog.querySelector("[data-quick-add-regular-price]");
+    var currentPrice = dialog.querySelector("[data-quick-add-current-price]");
+    var promotionComparison = dialog.querySelector("[data-quick-add-promotion-comparison]");
+    var promotionLabel = dialog.querySelector("[data-quick-add-promotion-label]");
+    var compareAtPrice = dialog.querySelector("[data-quick-add-compare-at-price]");
     var offlinePrice = dialog.querySelector("[data-quick-add-offline-price]");
     var quantity = dialog.querySelector("[data-quick-add-qty-input]");
     var stock = parseInt(option.dataset.stock, 10) || 1;
+    var currentValue = parseFloat(option.dataset.price) || 0;
+    var compareValue = parseFloat(option.dataset.compareAtPrice);
+    var label = (option.dataset.promotionLabel || "").trim();
+    var hasComparison = Number.isFinite(compareValue) && compareValue > currentValue && Boolean(label);
 
-    regularPrice.textContent = money(parseFloat(option.dataset.price) || 0);
+    currentPrice.textContent = money(currentValue);
+    promotionComparison.hidden = !hasComparison;
+    if (hasComparison) {
+      promotionLabel.textContent = label;
+      compareAtPrice.textContent = money(compareValue);
+      compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
+    }
     offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
     quantity.max = stock;
     if ((parseInt(quantity.value, 10) || 1) > stock) quantity.value = stock;

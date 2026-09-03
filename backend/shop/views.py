@@ -11,15 +11,21 @@ from .models import Product, Variant
 
 
 def _attach_product_card_data(products):
-    """Adjunta precio mínimo, precio offline y stock a previews de producto."""
+    """Adjunta precios de una misma variante y stock a previews de producto."""
     for product in products:
         active_variants = [variant for variant in product.variants.all() if variant.is_active]
         for variant in active_variants:
             variant.offline_price_ars = discounted_amount(variant.price_ars)
-        product.min_price_ars = min(
-            (variant.price_ars for variant in active_variants),
+        price_variant = min(
+            active_variants,
+            key=lambda variant: variant.price_ars,
             default=None,
         )
+        product.min_price_ars = price_variant.price_ars if price_variant else None
+        product.compare_at_price_ars = (
+            price_variant.compare_at_price_ars if price_variant else None
+        )
+        product.promotion_label = price_variant.promotion_label if price_variant else ""
         product.offline_price_ars = discounted_amount(product.min_price_ars)
         product.in_stock = any(variant.stock_qty > 0 for variant in active_variants)
         product.card_variants = [
