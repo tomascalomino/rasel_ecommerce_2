@@ -17,7 +17,6 @@ from shop.models import Variant
 from .mercadopago import MercadoPagoError, create_preference
 from .models import PaymentDraft
 
-
 logger = logging.getLogger("payments.services")
 
 
@@ -40,7 +39,9 @@ def _decimal(value) -> Decimal:
         raise PaymentValidationError("invalid_amount") from exc
 
 
-def reserve_payment_draft(*, customer, delivery, cart_rows, total_amount) -> PaymentDraft:
+def reserve_payment_draft(
+    *, customer, delivery, cart_rows, total_amount
+) -> PaymentDraft:
     now = timezone.now()
     expires_at = now + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
 
@@ -74,12 +75,16 @@ def reserve_payment_draft(*, customer, delivery, cart_rows, total_amount) -> Pay
             )
 
         if not snapshots:
-            raise PaymentValidationError("El carrito ya no tiene productos disponibles.")
+            raise PaymentValidationError(
+                "El carrito ya no tiene productos disponibles."
+            )
 
         shipping_cost = _decimal(delivery["shipping_cost"])
         expected_total = (subtotal + shipping_cost).quantize(Decimal("0.01"))
         if expected_total != _decimal(total_amount):
-            raise PaymentValidationError("El total del carrito cambio. Volve a intentarlo.")
+            raise PaymentValidationError(
+                "El total del carrito cambio. Volve a intentarlo."
+            )
 
         for row in snapshots:
             Variant.objects.filter(pk=row["variant_id"]).update(
@@ -208,7 +213,9 @@ def release_reserved_stock(draft_token, state="released") -> bool:
         variant_ids = sorted(int(row["variant_id"]) for row in draft.items)
         variants = {
             variant.id: variant
-            for variant in Variant.objects.select_for_update().filter(id__in=variant_ids)
+            for variant in Variant.objects.select_for_update().filter(
+                id__in=variant_ids
+            )
         }
         for row in draft.items:
             variant = variants.get(int(row["variant_id"]))
@@ -253,7 +260,9 @@ def _validate_payment(payment: dict, requested_payment_id: str):
         raise PaymentValidationError("payment_id_mismatch")
     external_reference = str(payment.get("external_reference") or "")
     metadata_token = _metadata_token(payment)
-    if not external_reference or (metadata_token and metadata_token != external_reference):
+    if not external_reference or (
+        metadata_token and metadata_token != external_reference
+    ):
         raise PaymentValidationError("draft_reference_mismatch")
     try:
         draft = PaymentDraft.objects.get(token=external_reference)
@@ -264,10 +273,16 @@ def _validate_payment(payment: dict, requested_payment_id: str):
         raise PaymentValidationError("amount_mismatch")
     if str(payment.get("currency_id") or "") != "ARS":
         raise PaymentValidationError("currency_mismatch")
-    if not draft.mp_collector_id or str(payment.get("collector_id") or "") != draft.mp_collector_id:
+    if (
+        not draft.mp_collector_id
+        or str(payment.get("collector_id") or "") != draft.mp_collector_id
+    ):
         raise PaymentValidationError("collector_mismatch")
     expected_live = _expected_live_mode(draft)
-    if not isinstance(payment.get("live_mode"), bool) or payment.get("live_mode") != expected_live:
+    if (
+        not isinstance(payment.get("live_mode"), bool)
+        or payment.get("live_mode") != expected_live
+    ):
         raise PaymentValidationError("live_mode_mismatch")
     return draft
 
@@ -320,7 +335,7 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         shipping_carrier_arranged=draft.shipping_carrier_arranged,
         payment_discount_percent=0,
         total_amount=draft.total_amount,
-        status="payment_review" if review else "paid",
+        fulfillment_status="pending",
         payment_method="mp",
         payment_status="review" if review else "approved",
         mp_preference_id=draft.mp_preference_id,
@@ -340,10 +355,11 @@ def _approve(draft_id, payment):
         draft = PaymentDraft.objects.select_for_update().get(pk=draft_id)
         if draft.order_id:
             order = draft.order
-            if order.mp_payment_id and order.mp_payment_id != str(payment.get("id") or ""):
-                order.status = "payment_review"
+            if order.mp_payment_id and order.mp_payment_id != str(
+                payment.get("id") or ""
+            ):
                 order.payment_status = "review"
-                order.save(update_fields=["status", "payment_status"])
+                order.save(update_fields=["payment_status"])
                 draft.state = "review"
                 draft.processing_error = "multiple_approved_payments"
                 draft.save(update_fields=["state", "processing_error"])
@@ -356,19 +372,16 @@ def _approve(draft_id, payment):
                 )
                 return order
             resolving_live_mode_review = (
-                order.status == "payment_review"
-                and order.payment_status == "review"
+                order.payment_status == "review"
                 and order.stock_deducted
                 and draft.processing_error == "live_mode_mismatch"
             )
-            if order.status == "payment_review" and not resolving_live_mode_review:
+            if order.payment_status == "review" and not resolving_live_mode_review:
                 return order
             if order.payment_status not in {"refunded", "charged_back"}:
                 order.payment_status = "approved"
-                if order.status == "pending" or resolving_live_mode_review:
-                    order.status = "paid"
                 order.mp_status = "approved"
-                order.save(update_fields=["payment_status", "status", "mp_status"])
+                order.save(update_fields=["payment_status", "mp_status"])
             draft.state = "approved"
             draft.processing_error = ""
             draft.save(update_fields=["state", "processing_error"])
@@ -443,9 +456,8 @@ def _review_payment(draft, payment, reason):
             review=True,
             stock_deducted=_reservation_holds_stock(locked),
         )
-        order.status = "payment_review"
         order.payment_status = "review"
-        order.save(update_fields=["status", "payment_status"])
+        order.save(update_fields=["payment_status"])
         locked.state = "review"
         locked.processing_error = reason
         locked.save(update_fields=["state", "processing_error"])
@@ -475,13 +487,19 @@ def _sync_refund(order, payment):
     order.save(update_fields=["payment_status", "mp_refunded_amount", "mp_status"])
 
 
-def process_payment(payment: dict, requested_payment_id: str, *, reconciled=False) -> PaymentResult:
+def process_payment(
+    payment: dict, requested_payment_id: str, *, reconciled=False
+) -> PaymentResult:
     try:
         draft = _validate_payment(payment, requested_payment_id)
     except PaymentValidationError as exc:
         reference = str(payment.get("external_reference") or "")
         try:
-            draft = PaymentDraft.objects.filter(token=reference).first() if reference else None
+            draft = (
+                PaymentDraft.objects.filter(token=reference).first()
+                if reference
+                else None
+            )
         except (ValidationError, ValueError):
             draft = None
         if draft and str(payment.get("status") or "") == "approved":
@@ -512,9 +530,7 @@ def process_payment(payment: dict, requested_payment_id: str, *, reconciled=Fals
         # Extend from the current deadline (or from now if it already passed),
         # so receiving a pending status always adds a real reservation window.
         extension_base = max(draft.reservation_expires_at or now, now)
-        extension = extension_base + timedelta(
-            minutes=settings.MP_RESERVATION_MINUTES
-        )
+        extension = extension_base + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
         PaymentDraft.objects.filter(pk=draft.pk, stock_released_at__isnull=True).update(
             state="pending", reservation_expires_at=extension, processing_error=""
         )
@@ -528,7 +544,9 @@ def process_payment(payment: dict, requested_payment_id: str, *, reconciled=Fals
         release_reserved_stock(draft.token, status)
         draft.refresh_from_db()
         return PaymentResult(draft, draft.order, status)
-    if status in {"refunded", "charged_back"} or payment.get("transaction_amount_refunded"):
+    if status in {"refunded", "charged_back"} or payment.get(
+        "transaction_amount_refunded"
+    ):
         if draft.order:
             _sync_refund(draft.order, payment)
             return PaymentResult(draft, draft.order, draft.order.payment_status)

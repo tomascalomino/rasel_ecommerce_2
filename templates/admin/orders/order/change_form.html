@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+  {{ block.super }}
+  {% if order_transition_buttons %}
+    <div class="submit-row rasel-order-actions">
+      <span class="rasel-order-actions-label">Actualizar orden:</span>
+      {% for name, label in order_transition_buttons %}
+        <button type="submit" name="{{ name }}" value="1">{{ label }}</button>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

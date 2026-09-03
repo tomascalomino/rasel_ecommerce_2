@@ -340,7 +340,7 @@ la operación manual es obligatoria:
 3. Entrar en **Payments → Payment drafts**, filtrar estados creados, con stock
    reservado, preferencia creada, pago pendiente o revisión manual, seleccionar
    los borradores y ejecutar **Conciliar y liberar reservas vencidas**.
-4. Revisar también órdenes en `payment_review`, eventos con firma o
+4. Revisar también órdenes con el pago **En revisión**, eventos con firma o
    procesamiento fallido, stock liberado y `processing_error`.
 5. Si la API o la base fallan, mantener o colocar
    `MP_CHECKOUT_ENABLED=0`, conservar el stock y repetir la conciliación cuando
@@ -520,21 +520,29 @@ recuperación de Neon.
 
 ### Pedidos
 
-1. Una orden por transferencia o efectivo llega `pending`; una aprobación MP
-   llega `paid`, y una anomalía MP llega `payment_review`.
+1. Toda orden nueva tiene la entrega **Pendiente**. Transferencia y efectivo
+   comienzan con el pago **Pendiente**; Mercado Pago queda **Aprobado** o **En
+   revisión** según la respuesta validada de la API.
 2. Las órdenes por transferencia o efectivo muestran el descuento mínimo que
    quedó guardado al crearlas. El precio promocional se calcula por variante,
    redondeando hacia abajo al múltiplo de $50, y luego se multiplica por la
    cantidad. Revisar `descuento por medio de pago`, subtotal, envío y total antes
    de cobrar o confirmar; Mercado Pago debe mostrar descuento cero. El envío
    nunca forma parte de la base promocional.
-3. Para transferencia, verificar el comprobante recibido por WhatsApp antes de
-   marcar la orden como pagada.
-4. Marcar `paid` manualmente solo para métodos offline. Las órdenes MP se
-   actualizan mediante API y conciliación.
-5. Marcar `shipped` cuando se despacha o queda listo para retirar.
-6. En una orden MP aprobada, reintegrar primero en Mercado Pago; cancelar en
-   RaSel no mueve dinero. No restaurar stock enviado sin devolución física.
+3. Para transferencia, verificar el comprobante de WhatsApp y usar **Confirmar
+   pago**. Nunca confirmar manualmente un pago de Mercado Pago.
+4. Usar **Despachar / dejar listo para retirar** cuando el pedido sale o queda
+   disponible. Transferencia y Mercado Pago requieren pago aprobado; efectivo
+   contraentrega puede avanzar con el cobro pendiente.
+5. Al confirmar la recepción, usar **Marcar como entregado / retirado**. Para
+   registrar simultáneamente un cobro offline y la entrega, usar **Cobrar y
+   completar**; esta acción envía un único correo final. En Mercado Pago solo
+   completa si la API ya aprobó el pago.
+6. Leer siempre las columnas **Situación**, **Pago** y **Entrega**; los estados
+   no se editan manualmente y los botones disponibles dependen del estado real.
+7. En una orden MP aprobada, reintegrar primero en Mercado Pago; cancelar en
+   RaSel no mueve dinero. No restaurar stock despachado o completado sin
+   devolución física confirmada.
 
 Antes de aprobar un despliegue, probar en staging una compra con envío y otra
 con retiro: al alternar Mercado Pago, transferencia y efectivo, el resumen debe
@@ -554,7 +562,7 @@ producción.
 | Imagen faltante | Confirmar el producto en admin, las variables R2 y la existencia del objeto en el bucket; no asumir que `MEDIA_ROOT` local la recuperará. |
 | No llega un email | Revisar `BREVO_API_KEY`, remitente verificado, destinatario y registros de Brevo; buscar la excepción en Render. |
 | Stock incorrecto | Revisar ítems y estado de la orden; cancelar desde admin restaura stock una vez. |
-| Pago aprobado sin orden normal | Buscar el borrador y evento, ejecutar **Reconciliar con Mercado Pago** y revisar `payment_review`; no prometer entrega ni cobrar de nuevo. |
+| Pago aprobado sin orden normal | Buscar el borrador y evento, ejecutar **Reconciliar con Mercado Pago** y revisar las órdenes con pago **En revisión**; no prometer entrega ni cobrar de nuevo. |
 | Pago cambia solo al volver desde Mercado Pago | Comprobar que la preferencia contiene la `notification_url` HTTPS de `SITE_URL` con `source_news=webhooks`, revisar entregas en Webhooks y reconciliar el borrador. No depender del retorno del navegador. |
 | Webhook sandbox MP devuelve `401` | Abrir el evento en la `TestApp-*` del vendedor de prueba y comparar su clave de **Modo productivo** con `MP_WEBHOOK_SECRET` de staging. No usar las claves de la aplicación principal. |
 | Webhook productivo MP devuelve `401` | Comparar la clave de modo productivo de la aplicación real con Render; rotar y reemplazarla si existe duda de exposición. |

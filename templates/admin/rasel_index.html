@@ -4,10 +4,15 @@
 <div class="rasel-dashboard">
 
   <div class="rasel-cards">
-    <a class="rasel-card rasel-card-pending" href="{% url 'admin:orders_order_changelist' %}?status__exact=pending">
-      <span class="rasel-card-value">{{ dash_pending_count }}</span>
-      <span class="rasel-card-label">Órdenes pendientes</span>
-      <span class="rasel-card-hint">Esperando pago o entrega — clic para verlas</span>
+    <a class="rasel-card rasel-card-pending" href="{% url 'admin:orders_order_changelist' %}?situacion=cobro_pendiente">
+      <span class="rasel-card-value">{{ dash_pending_payment_count }}</span>
+      <span class="rasel-card-label">Cobros pendientes</span>
+      <span class="rasel-card-hint">Incluye contraentregas todavía no cobradas</span>
+    </a>
+    <a class="rasel-card rasel-card-pending" href="{% url 'admin:orders_order_changelist' %}?situacion=preparar">
+      <span class="rasel-card-value">{{ dash_orders_to_prepare_count }}</span>
+      <span class="rasel-card-label">Pedidos para preparar</span>
+      <span class="rasel-card-hint">Pagados o con cobro contraentrega</span>
     </a>
     <div class="rasel-card">
       <span class="rasel-card-value">$ {{ dash_sales_today.total|floatformat:"0g" }}</span>
@@ -31,7 +36,7 @@
     {% if dash_recent_orders %}
       <table class="rasel-recent-table">
         <thead>
-          <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th></tr>
+          <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Situación</th><th>Pago</th><th>Entrega</th></tr>
         </thead>
         <tbody>
           {% for order in dash_recent_orders %}
@@ -40,7 +45,9 @@
             <td>{{ order.created_at|date:"d/m H:i" }}</td>
             <td>{{ order.full_name }}</td>
             <td>$ {{ order.total_amount|floatformat:"0g" }}</td>
-            <td><span class="rasel-status rasel-status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+            <td><span class="rasel-status rasel-status-{{ order.situation_tone }}">{{ order.situation_label }}</span></td>
+            <td><span class="rasel-status rasel-status-{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></td>
+            <td><span class="rasel-status rasel-status-{{ order.fulfillment_status }}">{{ order.fulfillment_label }}</span></td>
           </tr>
           {% endfor %}
         </tbody>

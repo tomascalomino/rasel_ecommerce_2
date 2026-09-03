@@ -19,7 +19,6 @@ from .services import (
     process_payment,
 )
 
-
 logger = logging.getLogger("payments.flow")
 
 
@@ -37,7 +36,9 @@ def _session_draft(request):
 def start(request, draft_id):
     """Retry preference creation; the initial attempt happens in checkout POST."""
     if not settings.MP_CHECKOUT_ENABLED:
-        return HttpResponse("Mercado Pago no esta disponible para pagos nuevos.", status=503)
+        return HttpResponse(
+            "Mercado Pago no esta disponible para pagos nuevos.", status=503
+        )
     if str(request.session.get("active_payment_draft") or "") != str(draft_id):
         return HttpResponse(status=403)
 
@@ -55,7 +56,9 @@ def start(request, draft_id):
             status=409,
         )
     except MercadoPagoError:
-        logger.exception("Mercado Pago no disponible al reintentar draft=%s", draft.token)
+        logger.exception(
+            "Mercado Pago no disponible al reintentar draft=%s", draft.token
+        )
         return render(
             request,
             "payments/payment_retry.html",
@@ -82,9 +85,13 @@ def payment_return(request, result: str):
         except MercadoPagoError:
             logger.exception("No se pudo verificar retorno payment_id=%s", payment_id)
         except PaymentValidationError as exc:
-            logger.warning("Retorno no asociado payment_id=%s reason=%s", payment_id, exc)
+            logger.warning(
+                "Retorno no asociado payment_id=%s reason=%s", payment_id, exc
+            )
         except (DatabaseError, IntegrityError):
-            logger.exception("Error de base verificando retorno payment_id=%s", payment_id)
+            logger.exception(
+                "Error de base verificando retorno payment_id=%s", payment_id
+            )
 
     draft = active_draft
     order = active_draft.order if active_draft else None
@@ -94,7 +101,7 @@ def payment_return(request, result: str):
             order = processed.order
 
     display_state = "verifying"
-    if order and order.status == "payment_review":
+    if order and order.payment_status == "review":
         display_state = "review"
     elif order and order.payment_status == "approved":
         display_state = "approved"
@@ -180,14 +187,18 @@ def webhook(request):
         if not data_id:
             event.processing_error = "missing_payment_id"
             event.save(update_fields=["processing_error"])
-            return JsonResponse({"ok": False, "error": "missing payment id"}, status=400)
+            return JsonResponse(
+                {"ok": False, "error": "missing payment id"}, status=400
+            )
 
         try:
             payment = get_payment(data_id)
             result = process_payment(payment, data_id)
         except PaymentValidationError as exc:
             event.processing_error = str(exc)
-            event.notes = "Evento autentico no asociado a una operacion valida de RaSel."
+            event.notes = (
+                "Evento autentico no asociado a una operacion valida de RaSel."
+            )
             event.save(update_fields=["processing_error", "notes"])
             send_payment_alert(
                 "Notificacion MP requiere revision",
@@ -197,7 +208,9 @@ def webhook(request):
         except MercadoPagoError as exc:
             event.processing_error = str(exc)
             event.save(update_fields=["processing_error"])
-            return JsonResponse({"ok": False, "error": "provider unavailable"}, status=500)
+            return JsonResponse(
+                {"ok": False, "error": "provider unavailable"}, status=500
+            )
 
         event.processed_ok = True
         event.processing_error = ""
@@ -208,5 +221,7 @@ def webhook(request):
         event.save(update_fields=["processed_ok", "processing_error", "notes"])
         return JsonResponse({"ok": True})
     except (DatabaseError, IntegrityError):
-        logger.exception("Fallo transitorio procesando webhook request_id=%s", request_id)
+        logger.exception(
+            "Fallo transitorio procesando webhook request_id=%s", request_id
+        )
         return JsonResponse({"ok": False, "error": "temporary failure"}, status=500)

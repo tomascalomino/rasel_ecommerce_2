@@ -1,9 +1,17 @@
 from decimal import Decimal
+import threading
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core import mail
-from django.test import RequestFactory, TestCase
+from django.db import close_old_connections
+from django.test import (
+    RequestFactory,
+    TestCase,
+    TransactionTestCase,
+    skipUnlessDBFeature,
+)
 from django.urls import reverse
 
 from shipping.models import PickupPoint
@@ -17,8 +25,16 @@ from config.pricing import (
     payment_discount_for_lines,
 )
 
-from .admin import OrderAdmin, cancel_and_restore_stock, mark_paid, mark_shipped
+from .admin import (
+    OrderAdmin,
+    cancel_and_restore_stock,
+    collect_and_complete,
+    mark_completed,
+    mark_dispatched,
+    mark_paid,
+)
 from .models import Order, OrderItem
+from .services import collect_and_complete as collect_and_complete_order
 
 
 def _request_with_messages():
@@ -53,9 +69,7 @@ class PaymentPricingTests(TestCase):
             payment_discount_for_lines(lines, "transfer", 10),
             Decimal("2900.00"),
         )
-        self.assertEqual(
-            payment_discount_for_lines(lines, "mp", 10), Decimal("0.00")
-        )
+        self.assertEqual(payment_discount_for_lines(lines, "mp", 10), Decimal("0.00"))
 
     def test_discount_applies_only_to_transfer_and_cash(self):
         subtotal = Decimal("1000.00")
@@ -74,7 +88,9 @@ class PaymentPricingTests(TestCase):
 class TransferCheckoutTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name="Aceites")
-        self.product = Product.objects.create(name="RaSel", category=self.category, is_active=True)
+        self.product = Product.objects.create(
+            name="RaSel", category=self.category, is_active=True
+        )
         self.variant = Variant.objects.create(
             product=self.product,
             name="250 ml",
@@ -109,7 +125,7 @@ class TransferCheckoutTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
         order = Order.objects.get()
-        self.assertEqual(order.status, "pending")
+        self.assertEqual(order.fulfillment_status, "pending")
         self.assertEqual(order.payment_method, "transfer")
         self.assertEqual(order.items.count(), 1)
         self.assertEqual(order.items.first().unit_price, Decimal("100.00"))
@@ -128,7 +144,9 @@ class TransferCheckoutTests(TestCase):
         body = mail.outbox[0].body
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
-        self.assertIn("Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body)
+        self.assertIn(
+            "Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body
+        )
         self.assertNotIn("Precio de lanzamiento", body)
         # CABA/GBA: promesa de entrega en 48hs desde el pago.
         self.assertIn("48hs", body)
@@ -184,9 +202,7 @@ class TransferCheckoutTests(TestCase):
             offline_payment_discount_percent=20
         )
 
-        response = self.client.get(
-            reverse("orders:transfer_info", args=[order.id])
-        )
+        response = self.client.get(reverse("orders:transfer_info", args=[order.id]))
 
         self.assertContains(response, "mínimo 10%")
         self.assertNotContains(response, "mínimo 20%")
@@ -224,7 +240,9 @@ class CodCheckoutTests(TestCase):
 
     def setUp(self):
         self.category = Category.objects.create(name="Aceites")
-        self.product = Product.objects.create(name="RaSel", category=self.category, is_active=True)
+        self.product = Product.objects.create(
+            name="RaSel", category=self.category, is_active=True
+        )
         self.variant = Variant.objects.create(
             product=self.product,
             name="250 ml",
@@ -258,7 +276,7 @@ class CodCheckoutTests(TestCase):
 
         order = Order.objects.get()
         self.assertRedirects(resp, reverse("orders:cod_info", args=[order.id]))
-        self.assertEqual(order.status, "pending")
+        self.assertEqual(order.fulfillment_status, "pending")
         self.assertEqual(order.payment_method, "cod")
         # El descuento mínimo se aplica a productos; el envío mantiene su costo completo.
         quote = resolve_shipping("1425", subtotal=Decimal("200.00"))
@@ -273,7 +291,9 @@ class CodCheckoutTests(TestCase):
         self.assertIn("buyer@example.com", mail.outbox[0].to)
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento de la entrega", body)
-        self.assertIn("Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body)
+        self.assertIn(
+            "Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body
+        )
         self.assertIn("48hs", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
 
@@ -293,7 +313,9 @@ class PickupCheckoutTests(TestCase):
 
     def setUp(self):
         self.category = Category.objects.create(name="Aceites")
-        self.product = Product.objects.create(name="RaSel", category=self.category, is_active=True)
+        self.product = Product.objects.create(
+            name="RaSel", category=self.category, is_active=True
+        )
         self.variant = Variant.objects.create(
             product=self.product,
             name="250 ml",
@@ -324,7 +346,9 @@ class PickupCheckoutTests(TestCase):
 
     def test_pickup_transfer_creates_order_without_address(self):
         self._add_to_cart(2)
-        resp = self.client.post(reverse("orders:checkout"), self._pickup_data("transfer"))
+        resp = self.client.post(
+            reverse("orders:checkout"), self._pickup_data("transfer")
+        )
 
         order = Order.objects.get()
         self.assertRedirects(resp, reverse("orders:transfer_info", args=[order.id]))
@@ -397,7 +421,9 @@ class PickupCheckoutTests(TestCase):
 class OrderAdminActionTests(TestCase):
     def setUp(self):
         self.category = Category.objects.create(name="Aceites")
-        self.product = Product.objects.create(name="RaSel", category=self.category, is_active=True)
+        self.product = Product.objects.create(
+            name="RaSel", category=self.category, is_active=True
+        )
         self.variant = Variant.objects.create(
             product=self.product,
             name="250 ml",
@@ -426,15 +452,29 @@ class OrderAdminActionTests(TestCase):
         )
         return Order.objects.get()
 
-    def _create_mp_order(self, *, status="paid", payment_status="approved", qty=2):
+    def _create_mp_order(
+        self,
+        *,
+        status="paid",
+        payment_status="approved",
+        payment_method="mp",
+        delivery_method="ship",
+        qty=2,
+    ):
         order = Order.objects.create(
             full_name="MP User",
             email="mp@example.com",
             total_amount=Decimal("200.00"),
-            payment_method="mp",
-            status=status,
+            payment_method=payment_method,
+            delivery_method=delivery_method,
+            pickup_point_label=("Punto Centro" if delivery_method == "pickup" else ""),
+            fulfillment_status=(
+                "pending" if status in {"paid", "payment_review"} else status
+            ),
             payment_status=payment_status,
-            mp_payment_id=f"PAY-{status}-{payment_status}",
+            mp_payment_id=(
+                f"PAY-{status}-{payment_status}" if payment_method == "mp" else ""
+            ),
             mp_status=payment_status,
             stock_deducted=True,
         )
@@ -459,7 +499,8 @@ class OrderAdminActionTests(TestCase):
         mark_paid(None, req, Order.objects.filter(id=order.id))
 
         order.refresh_from_db()
-        self.assertEqual(order.status, "paid")
+        self.assertEqual(order.payment_status, "approved")
+        self.assertEqual(order.fulfillment_status, "pending")
         self.assertEqual(len(mail.outbox), 1)  # "pago confirmado" al cliente
 
         # Idempotente: repetir la acción no reenvía el email.
@@ -471,16 +512,18 @@ class OrderAdminActionTests(TestCase):
         mail.outbox.clear()
 
         req = _request_with_messages()
-        mark_shipped(None, req, Order.objects.filter(id=order.id))
+        mark_paid(None, req, Order.objects.filter(id=order.id))
+        mail.outbox.clear()
+        mark_dispatched(None, req, Order.objects.filter(id=order.id))
 
         order.refresh_from_db()
-        self.assertEqual(order.status, "shipped")
+        self.assertEqual(order.fulfillment_status, "shipped")
         self.assertEqual(len(mail.outbox), 1)  # "pedido enviado" al cliente
         self.assertIn("en camino", mail.outbox[0].subject)
         self.assertIn("despachado", mail.outbox[0].body)
 
         # Idempotente: repetir la acción no reenvía el email.
-        mark_shipped(None, req, Order.objects.filter(id=order.id))
+        mark_dispatched(None, req, Order.objects.filter(id=order.id))
         self.assertEqual(len(mail.outbox), 1)
 
     def test_status_change_in_admin_form_sends_emails(self):
@@ -490,18 +533,16 @@ class OrderAdminActionTests(TestCase):
         model_admin = OrderAdmin(Order, django_admin.site)
         req = _request_with_messages()
 
-        order.status = "paid"
-        model_admin.save_model(req, order, None, change=True)
+        mark_paid(None, req, Order.objects.filter(pk=order.pk))
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("Pago confirmado", mail.outbox[0].subject)
 
-        order.status = "shipped"
-        model_admin.save_model(req, order, None, change=True)
+        mark_dispatched(None, req, Order.objects.filter(pk=order.pk))
         self.assertEqual(len(mail.outbox), 2)
         self.assertIn("en camino", mail.outbox[1].subject)
 
         # Guardar sin cambiar el estado no reenvía nada.
-        model_admin.save_model(req, order, None, change=True)
+        mark_dispatched(None, req, Order.objects.filter(pk=order.pk))
         self.assertEqual(len(mail.outbox), 2)
 
     def test_owner_email_shows_customer_email_without_angle_brackets(self):
@@ -523,7 +564,7 @@ class OrderAdminActionTests(TestCase):
 
         order.refresh_from_db()
         self.variant.refresh_from_db()
-        self.assertEqual(order.status, "cancelled")
+        self.assertEqual(order.fulfillment_status, "cancelled")
         self.assertEqual(self.variant.stock_qty, 5)  # repuesto
 
         # Idempotente: no devuelve stock dos veces.
@@ -532,12 +573,10 @@ class OrderAdminActionTests(TestCase):
         self.assertEqual(self.variant.stock_qty, 5)
 
     def test_mp_review_cannot_be_marked_paid_manually(self):
-        order = self._create_mp_order(
-            status="payment_review", payment_status="review"
-        )
+        order = self._create_mp_order(status="payment_review", payment_status="review")
         mark_paid(None, _request_with_messages(), Order.objects.filter(id=order.id))
         order.refresh_from_db()
-        self.assertEqual(order.status, "payment_review")
+        self.assertEqual(order.fulfillment_status, "pending")
         self.assertEqual(order.payment_status, "review")
 
     def test_mp_approved_cannot_be_cancelled_as_if_it_were_a_refund(self):
@@ -547,7 +586,7 @@ class OrderAdminActionTests(TestCase):
         )
         order.refresh_from_db()
         self.variant.refresh_from_db()
-        self.assertEqual(order.status, "paid")
+        self.assertEqual(order.fulfillment_status, "pending")
         self.assertFalse(order.stock_restored)
         self.assertEqual(self.variant.stock_qty, 3)
 
@@ -558,7 +597,7 @@ class OrderAdminActionTests(TestCase):
         )
         order.refresh_from_db()
         self.variant.refresh_from_db()
-        self.assertEqual(order.status, "cancelled")
+        self.assertEqual(order.fulfillment_status, "cancelled")
         self.assertTrue(order.stock_restored)
         self.assertEqual(self.variant.stock_qty, 5)
 
@@ -569,9 +608,175 @@ class OrderAdminActionTests(TestCase):
         )
         order.refresh_from_db()
         self.variant.refresh_from_db()
-        self.assertEqual(order.status, "shipped")
+        self.assertEqual(order.fulfillment_status, "shipped")
         self.assertFalse(order.stock_restored)
         self.assertEqual(self.variant.stock_qty, 3)
+
+    def test_transfer_cannot_dispatch_before_payment(self):
+        order = self._create_transfer_order()
+        mail.outbox.clear()
+
+        mark_dispatched(
+            None, _request_with_messages(), Order.objects.filter(pk=order.pk)
+        )
+
+        order.refresh_from_db()
+        self.assertEqual(order.fulfillment_status, "pending")
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_cod_can_dispatch_while_payment_is_pending(self):
+        order = self._create_mp_order(
+            payment_method="cod", payment_status="pending", qty=1
+        )
+        mail.outbox.clear()
+
+        mark_dispatched(
+            None, _request_with_messages(), Order.objects.filter(pk=order.pk)
+        )
+
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "pending")
+        self.assertEqual(order.fulfillment_status, "shipped")
+        self.assertEqual(order.situation_label, "En camino · cobrar")
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_collect_and_complete_sends_only_final_email(self):
+        order = self._create_mp_order(
+            payment_method="cod", payment_status="pending", qty=1
+        )
+        mail.outbox.clear()
+        request = _request_with_messages()
+
+        collect_and_complete(None, request, Order.objects.filter(pk=order.pk))
+
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "approved")
+        self.assertEqual(order.fulfillment_status, "completed")
+        self.assertIsNotNone(order.completed_at)
+        self.assertTrue(order.completion_email_sent)
+        self.assertFalse(order.paid_email_sent)
+        self.assertFalse(order.shipped_email_sent)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Entrega confirmada", mail.outbox[0].subject)
+        self.assertIn("pago figura confirmado", mail.outbox[0].body)
+
+        collect_and_complete(None, request, Order.objects.filter(pk=order.pk))
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_pickup_uses_ready_and_retired_labels(self):
+        order = self._create_mp_order(
+            payment_method="transfer",
+            payment_status="approved",
+            delivery_method="pickup",
+            qty=1,
+        )
+        mail.outbox.clear()
+        request = _request_with_messages()
+
+        mark_dispatched(None, request, Order.objects.filter(pk=order.pk))
+        order.refresh_from_db()
+        self.assertEqual(order.fulfillment_status, "ready_for_pickup")
+        self.assertEqual(order.fulfillment_label, "Lista para retirar")
+        self.assertIn("listo para retirar", mail.outbox[0].subject)
+
+        mark_completed(None, request, Order.objects.filter(pk=order.pk))
+        order.refresh_from_db()
+        self.assertEqual(order.fulfillment_status, "completed")
+        self.assertEqual(order.fulfillment_label, "Retirada")
+        self.assertIn("Retiro confirmado", mail.outbox[1].subject)
+
+    def test_mp_approved_can_complete_but_mp_review_cannot(self):
+        review = self._create_mp_order(
+            status="payment_review", payment_status="review", qty=1
+        )
+        collect_and_complete(
+            None, _request_with_messages(), Order.objects.filter(pk=review.pk)
+        )
+        review.refresh_from_db()
+        self.assertEqual(review.fulfillment_status, "pending")
+
+        approved = self._create_mp_order(qty=1)
+        mail.outbox.clear()
+        collect_and_complete(
+            None, _request_with_messages(), Order.objects.filter(pk=approved.pk)
+        )
+        approved.refresh_from_db()
+        self.assertEqual(approved.payment_status, "approved")
+        self.assertEqual(approved.fulfillment_status, "completed")
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_admin_exposes_states_readonly_and_protects_all_actions(self):
+        model_admin = OrderAdmin(Order, django_admin.site)
+        self.assertIn("payment_status", model_admin.readonly_fields)
+        self.assertIn("fulfillment_status", model_admin.readonly_fields)
+        for action in (
+            mark_paid,
+            mark_dispatched,
+            mark_completed,
+            collect_and_complete,
+            cancel_and_restore_stock,
+        ):
+            self.assertEqual(action.allowed_permissions, ["change"])
+
+    def test_change_form_shows_contextual_transition_buttons(self):
+        user = get_user_model().objects.create_superuser(
+            username="order-admin",
+            email="order-admin@example.com",
+            password="test-password",
+        )
+        order = self._create_transfer_order()
+        self.client.force_login(user)
+
+        response = self.client.get(
+            reverse("admin:orders_order_change", args=[order.pk])
+        )
+        self.assertContains(response, "Confirmar pago")
+        self.assertContains(response, "Cobrar y completar")
+        self.assertNotContains(response, "Marcar como despachado")
+
+        mark_paid(None, _request_with_messages(), Order.objects.filter(pk=order.pk))
+        response = self.client.get(
+            reverse("admin:orders_order_change", args=[order.pk])
+        )
+        self.assertContains(response, "Marcar como despachado")
+        self.assertContains(response, "Marcar como entregado")
+
+
+class OrderTransitionConcurrencyTests(TransactionTestCase):
+    @skipUnlessDBFeature("has_select_for_update")
+    def test_collect_and_complete_is_atomic_under_concurrency(self):
+        order = Order.objects.create(
+            full_name="Concurrente",
+            email="concurrente@example.com",
+            total_amount=Decimal("100.00"),
+            payment_method="cod",
+            payment_status="pending",
+            fulfillment_status="pending",
+        )
+        barrier = threading.Barrier(2)
+        errors = []
+
+        def worker():
+            close_old_connections()
+            try:
+                barrier.wait(timeout=5)
+                collect_and_complete_order(order.pk)
+            except Exception as exc:  # pragma: no cover - asserted on PostgreSQL
+                errors.append(exc)
+            finally:
+                close_old_connections()
+
+        threads = [threading.Thread(target=worker) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join(timeout=10)
+
+        self.assertEqual(errors, [])
+        order.refresh_from_db()
+        self.assertEqual(order.payment_status, "approved")
+        self.assertEqual(order.fulfillment_status, "completed")
+        self.assertTrue(order.completion_email_sent)
 
 
 class AdminRolesTests(TestCase):

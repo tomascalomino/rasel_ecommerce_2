@@ -26,8 +26,13 @@ class Command(BaseCommand):
         since = now - timedelta(days=days)
         stale_cutoff = now - timedelta(hours=2)
 
-        paid_orders = Order.objects.filter(status="paid", created_at__gte=since)
-        cancelled_orders = Order.objects.filter(status="cancelled", created_at__gte=since)
+        paid_orders = Order.objects.filter(
+            payment_status__in=["approved", "partially_refunded"],
+            created_at__gte=since,
+        ).exclude(fulfillment_status="cancelled")
+        cancelled_orders = Order.objects.filter(
+            fulfillment_status="cancelled", created_at__gte=since
+        )
 
         payment_events = PaymentEvent.objects.filter(created_at__gte=since)
         payment_topics = payment_events.filter(topic__in=["payment", "payments"])
@@ -46,15 +51,19 @@ class Command(BaseCommand):
         out_of_stock_variants = active_variants.filter(stock_qty=0)
         low_stock_variants = active_variants.filter(stock_qty__gt=0, stock_qty__lte=5)
 
-        self.stdout.write(self.style.MIGRATE_HEADING(f"KPIs operativos (últimos {days} días)"))
+        self.stdout.write(
+            self.style.MIGRATE_HEADING(f"KPIs operativos (últimos {days} días)")
+        )
         self.stdout.write(f"Ventana: {since.isoformat()} -> {now.isoformat()}")
         self.stdout.write("")
 
         self.stdout.write(self.style.HTTP_INFO("Pagos y órdenes"))
-        self.stdout.write(f"- Órdenes paid: {paid_orders.count()}")
-        self.stdout.write(f"- Órdenes cancelled: {cancelled_orders.count()}")
+        self.stdout.write(f"- Órdenes cobradas: {paid_orders.count()}")
+        self.stdout.write(f"- Órdenes canceladas: {cancelled_orders.count()}")
         self.stdout.write(f"- Eventos payment/payments: {payment_topics.count()}")
-        self.stdout.write(f"- Eventos procesados OK: {payment_topics.filter(processed_ok=True).count()}")
+        self.stdout.write(
+            f"- Eventos procesados OK: {payment_topics.filter(processed_ok=True).count()}"
+        )
         self.stdout.write(f"- Eventos con error/alerta: {payment_errors.count()}")
         self.stdout.write("")
 
@@ -68,9 +77,15 @@ class Command(BaseCommand):
         self.stdout.write(self.style.HTTP_INFO("Salud de stock"))
         self.stdout.write(f"- Variantes activas: {active_variants.count()}")
         self.stdout.write(f"- Variantes sin stock: {out_of_stock_variants.count()}")
-        self.stdout.write(f"- Variantes con stock bajo (<=5): {low_stock_variants.count()}")
+        self.stdout.write(
+            f"- Variantes con stock bajo (<=5): {low_stock_variants.count()}"
+        )
 
-        if payment_errors.exists() or stale_pending_drafts.exists() or out_of_stock_variants.exists():
+        if (
+            payment_errors.exists()
+            or stale_pending_drafts.exists()
+            or out_of_stock_variants.exists()
+        ):
             self.stdout.write("")
             self.stdout.write(self.style.WARNING("Alertas operativas detectadas"))
             self.stdout.write("- Revisar admin: PaymentEvent, PaymentDraft, Variant")
