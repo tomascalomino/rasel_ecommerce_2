@@ -3,7 +3,7 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
-## 2026-09-03 — Porcentaje de descuento sin “mínimo” (1.4.1)
+## 2026-09-03 — Porcentaje de descuento sin “mínimo” (1.4.2)
 
 - Comunicación: producto, checkout, medios de pago, totales, instrucciones de
   efectivo, Términos y correos muestran el porcentaje configurado sin la palabra
