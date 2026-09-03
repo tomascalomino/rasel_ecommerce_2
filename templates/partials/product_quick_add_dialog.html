@@ -30,7 +30,18 @@
       </div>
 
       <div class="quick-add-prices" aria-live="polite">
-        <strong data-quick-add-regular-price>{{ first_variant.price_ars|ars }}</strong>
+        <div
+          class="quick-add-promotion-comparison"
+          data-quick-add-promotion-comparison
+          {% if not first_variant.compare_at_price_ars %}hidden{% endif %}
+        >
+          <span class="promotion-badge" data-quick-add-promotion-label>{{ first_variant.promotion_label }}</span>
+          <del
+            data-quick-add-compare-at-price
+            aria-label="Precio regular {{ first_variant.compare_at_price_ars|ars }}"
+          >{{ first_variant.compare_at_price_ars|ars }}</del>
+        </div>
+        <strong data-quick-add-current-price>{{ first_variant.price_ars|ars }}</strong>
         <span>
           <b data-quick-add-offline-price>{{ first_variant.offline_price_ars|ars }}</b>
           con transferencia o efectivo
@@ -49,6 +60,8 @@
                 <option
                   value="{{ variant.pk }}"
                   data-price="{{ variant.price_ars|unlocalize }}"
+                  data-compare-at-price="{% if variant.compare_at_price_ars %}{{ variant.compare_at_price_ars|unlocalize }}{% endif %}"
+                  data-promotion-label="{{ variant.promotion_label }}"
                   data-offline-price="{{ variant.offline_price_ars|unlocalize }}"
                   data-stock="{{ variant.stock_qty }}"
                 >{{ variant.name }} — {{ variant.price_ars|ars }}</option>

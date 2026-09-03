@@ -14,6 +14,8 @@ class CartAddViewTests(TestCase):
             name="500 ml",
             sku="CART-500",
             price_ars=Decimal("7400.00"),
+            compare_at_price_ars=Decimal("9000.00"),
+            promotion_label="Precio de lanzamiento",
             stock_qty=5,
             is_active=True,
         )
@@ -49,3 +51,16 @@ class CartAddViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("cart:detail"))
+
+    def test_cart_uses_only_the_sale_price(self):
+        session = self.client.session
+        session["cart"] = {str(self.variant.pk): {"qty": 1}}
+        session.save()
+
+        response = self.client.get(reverse("cart:detail"))
+
+        self.assertContains(response, "$ 7.400")
+        self.assertNotContains(response, "$ 9.000")
+        self.assertNotContains(response, "Precio de lanzamiento")
+        cart_item = next(iter(response.context["cart"].items()))
+        self.assertEqual(cart_item.unit_price, Decimal("7400.00"))

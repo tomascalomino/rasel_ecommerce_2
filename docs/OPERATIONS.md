@@ -476,8 +476,23 @@ recuperación de Neon.
 ### Catálogo y stock
 
 1. Crear o editar el producto y sus variantes.
-2. Mantener precio, SKU, stock, estado activo y relación de packs correctos.
-3. Cargar o reemplazar imágenes; confirmar que la URL generada usa R2 y que la
+2. Mantener precio de venta, SKU, stock, estado activo y relación de packs
+   correctos. El precio de venta es siempre el importe base que cobran carrito,
+   checkout y Mercado Pago.
+3. Para comunicar una campaña, completar juntos **precio regular (ARS)** y
+   **texto de promoción** en cada presentación. El precio debe ser una referencia
+   verdadera y mayor al precio de venta; el texto, de hasta 40 caracteres, se
+   muestra exactamente como se carga dentro de una burbuja (por ejemplo,
+   “Precio de lanzamiento” o “Black Friday”). El admin rechaza los campos
+   incompletos o un precio regular igual o menor al cobrado.
+4. Confirmar en inicio, tienda, recomendados, detalle y compra rápida que la
+   burbuja y el precio tachado corresponden a la misma presentación. Al terminar
+   la campaña, colocar el importe definitivo como precio de venta y vaciar juntos
+   el precio regular y el texto. No queda un historial ni hay cambio automático
+   por fecha.
+5. Como staging y producción usan bases separadas, cargar, cambiar o retirar estos
+   valores en cada admin después del despliegue correspondiente.
+6. Cargar o reemplazar imágenes; confirmar que la URL generada usa R2 y que la
    imagen se ve en listado y detalle público.
 
 ### Envíos y retiros

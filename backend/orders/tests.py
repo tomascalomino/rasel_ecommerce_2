@@ -68,6 +68,8 @@ class TransferCheckoutTests(TestCase):
             name="250 ml",
             sku="T-250",
             price_ars=Decimal("100.00"),
+            compare_at_price_ars=Decimal("150.00"),
+            promotion_label="Precio de lanzamiento",
             stock_qty=5,
             is_active=True,
         )
@@ -98,6 +100,7 @@ class TransferCheckoutTests(TestCase):
         self.assertEqual(order.status, "pending")
         self.assertEqual(order.payment_method, "transfer")
         self.assertEqual(order.items.count(), 1)
+        self.assertEqual(order.items.first().unit_price, Decimal("100.00"))
         self.assertEqual(order.items.first().line_total, Decimal("200.00"))
         self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
         quote = resolve_shipping("1000", subtotal=Decimal("200.00"))
@@ -113,6 +116,7 @@ class TransferCheckoutTests(TestCase):
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
         self.assertIn("Descuento por transferencia/efectivo (mínimo 5%): -$100.00", body)
+        self.assertNotIn("Precio de lanzamiento", body)
         # CABA/GBA: promesa de entrega en 48hs desde el pago.
         self.assertIn("48hs", body)
 
@@ -123,6 +127,8 @@ class TransferCheckoutTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-offline-discount="100.00"')
         self.assertContains(response, "mínimo 5% de descuento")
+        self.assertNotContains(response, "$ 150")
+        self.assertNotContains(response, "Precio de lanzamiento")
         self.assertContains(response, 'id="payment-discount-row"')
 
     def test_transfer_interior_email_coordinates_by_whatsapp(self):

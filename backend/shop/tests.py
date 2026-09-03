@@ -1,11 +1,139 @@
 from decimal import Decimal
 
+from django.contrib import admin as django_admin
+from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
+from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from PIL import Image
 
+from .admin import VariantAdmin, VariantInline
 from .models import Category, Product, Variant
+
+
+class VariantPromotionTests(TestCase):
+	def setUp(self):
+		self.product = Product.objects.create(name="Aceite lanzamiento", is_active=True)
+
+	def test_regular_price_is_optional_and_accepts_a_higher_value(self):
+		without_comparison = Variant(
+			product=self.product,
+			name="250 ml",
+			sku="LAUNCH-250",
+			price_ars=Decimal("7400.00"),
+		)
+		without_comparison.full_clean()
+
+		with_comparison = Variant(
+			product=self.product,
+			name="500 ml",
+			sku="LAUNCH-500",
+			price_ars=Decimal("9000.00"),
+			compare_at_price_ars=Decimal("11000.00"),
+			promotion_label="Precio de lanzamiento",
+		)
+		with_comparison.full_clean()
+		self.assertEqual(with_comparison.promotion_label, "Precio de lanzamiento")
+
+	def test_regular_price_and_promotion_label_must_be_completed_together(self):
+		for compare_at_price, label, message in (
+			(
+				Decimal("11000.00"),
+				"",
+				"Ingresá el texto de promoción junto con el precio regular.",
+			),
+			(
+				None,
+				"Black Friday",
+				"Ingresá el precio regular junto con el texto de promoción.",
+			),
+		):
+			with self.subTest(compare_at_price=compare_at_price, label=label):
+				variant = Variant(
+					product=self.product,
+					name=f"Presentación {label or 'sin texto'}",
+					sku=f"PAIR-{label or 'EMPTY'}",
+					price_ars=Decimal("9000.00"),
+					compare_at_price_ars=compare_at_price,
+					promotion_label=label,
+				)
+				with self.assertRaisesMessage(ValidationError, message):
+					variant.full_clean()
+
+	def test_promotion_label_is_trimmed_without_changing_its_case(self):
+		variant = Variant(
+			product=self.product,
+			name="750 ml",
+			sku="PROMO-750",
+			price_ars=Decimal("9000.00"),
+			compare_at_price_ars=Decimal("11000.00"),
+			promotion_label="  Black Friday  ",
+		)
+
+		variant.full_clean()
+
+		self.assertEqual(variant.promotion_label, "Black Friday")
+
+	def test_regular_price_must_be_greater_than_the_sale_price(self):
+		for regular_price in (Decimal("7400.00"), Decimal("7000.00")):
+			with self.subTest(regular_price=regular_price):
+				variant = Variant(
+					product=self.product,
+					name=f"Presentación {regular_price}",
+					sku=f"INVALID-{regular_price}",
+					price_ars=Decimal("7400.00"),
+					compare_at_price_ars=regular_price,
+					promotion_label="Precio de lanzamiento",
+				)
+				with self.assertRaisesMessage(
+					ValidationError,
+					"El precio regular debe ser mayor al precio de venta.",
+				):
+					variant.full_clean()
+
+	def test_database_constraint_rejects_an_invalid_regular_price(self):
+		with self.assertRaises(IntegrityError), transaction.atomic():
+			Variant.objects.create(
+				product=self.product,
+				name="1 litro",
+				sku="INVALID-DB",
+				price_ars=Decimal("10000.00"),
+				compare_at_price_ars=Decimal("9000.00"),
+				promotion_label="Black Friday",
+			)
+
+	def test_database_constraint_rejects_unpaired_promotion_fields(self):
+		invalid_values = (
+			(Decimal("11000.00"), ""),
+			(None, "Black Friday"),
+		)
+		for index, (compare_at_price, label) in enumerate(invalid_values):
+			with self.subTest(compare_at_price=compare_at_price, label=label):
+				with self.assertRaises(IntegrityError), transaction.atomic():
+					Variant.objects.create(
+						product=self.product,
+						name=f"Inválida {index}",
+						sku=f"PAIR-DB-{index}",
+						price_ars=Decimal("9000.00"),
+						compare_at_price_ars=compare_at_price,
+						promotion_label=label,
+					)
+
+	def test_admin_exposes_promotion_fields_as_adjacent_editable_fields(self):
+		variant_admin = VariantAdmin(Variant, django_admin.site)
+		self.assertEqual(
+			variant_admin.list_display[3:6],
+			("price_ars", "compare_at_price_ars", "promotion_label"),
+		)
+		self.assertEqual(
+			variant_admin.list_editable[:3],
+			("price_ars", "compare_at_price_ars", "promotion_label"),
+		)
+		self.assertEqual(
+			VariantInline.fields[2:5],
+			("price_ars", "compare_at_price_ars", "promotion_label"),
+		)
 
 
 class ProductListViewTests(TestCase):
@@ -156,6 +284,8 @@ class ProductCardPricingTests(TestCase):
 			name="500 ml",
 			sku="AOVE-500",
 			price_ars=Decimal("7400.00"),
+			compare_at_price_ars=Decimal("10000.00"),
+			promotion_label="Precio de lanzamiento",
 			stock_qty=2,
 			is_active=True,
 		)
@@ -164,7 +294,17 @@ class ProductCardPricingTests(TestCase):
 			name="750 ml",
 			sku="AOVE-750",
 			price_ars=Decimal("9000.00"),
+			compare_at_price_ars=Decimal("9500.00"),
+			promotion_label="Black Friday",
 			stock_qty=3,
+			is_active=True,
+		)
+		Variant.objects.create(
+			product=self.primary,
+			name="1 litro",
+			sku="AOVE-1000",
+			price_ars=Decimal("13000.00"),
+			stock_qty=2,
 			is_active=True,
 		)
 		Variant.objects.create(
@@ -214,6 +354,14 @@ class ProductCardPricingTests(TestCase):
 				products = {product.pk: product for product in response.context[context_name]}
 
 				self.assertEqual(products[self.primary.pk].min_price_ars, Decimal("7400.00"))
+				self.assertEqual(
+					products[self.primary.pk].compare_at_price_ars,
+					Decimal("10000.00"),
+				)
+				self.assertEqual(
+					products[self.primary.pk].promotion_label,
+					"Precio de lanzamiento",
+				)
 				self.assertEqual(products[self.primary.pk].offline_price_ars, Decimal("7000.00"))
 				self.assertTrue(products[self.primary.pk].in_stock)
 				self.assertEqual(
@@ -223,6 +371,9 @@ class ProductCardPricingTests(TestCase):
 				self.assertFalse(products[self.out_of_stock.pk].in_stock)
 				self.assertIsNone(products[self.without_variants.pk].offline_price_ars)
 				self.assertContains(response, 'class="product-card-offline-price"', count=2)
+				self.assertContains(response, 'class="product-card-compare-price"', count=1)
+				self.assertContains(response, "Precio de lanzamiento")
+				self.assertContains(response, "$ 10.000")
 				self.assertContains(response, "$ 7.000")
 				self.assertContains(response, "$ 1.900")
 				self.assertContains(response, "con transferencia o efectivo")
@@ -249,6 +400,12 @@ class ProductCardPricingTests(TestCase):
 				)
 				self.assertContains(response, f'id="quick-add-{self.primary.pk}"')
 				self.assertContains(response, 'data-price="7400.00"')
+				self.assertContains(response, 'data-compare-at-price="10000.00"')
+				self.assertContains(response, 'data-compare-at-price="9500.00"')
+				self.assertContains(response, 'data-compare-at-price=""')
+				self.assertContains(response, 'data-promotion-label="Precio de lanzamiento"')
+				self.assertContains(response, 'data-promotion-label="Black Friday"')
+				self.assertContains(response, 'data-promotion-label=""')
 				self.assertContains(response, 'data-offline-price="7000.00"')
 				self.assertContains(response, "Agregar al carrito")
 				self.assertNotContains(response, "Variante retirada")
@@ -265,6 +422,22 @@ class ProductCardPricingTests(TestCase):
 			f'data-quick-add-open="quick-add-{self.primary.pk}"',
 		)
 		self.assertContains(response, f'id="quick-add-{self.primary.pk}"')
+
+	def test_detail_exposes_promotion_fields_for_each_variant(self):
+		response = self.client.get(
+			reverse("shop:product_detail", args=[self.primary.slug])
+		)
+
+		self.assertContains(response, 'id="product-promotion-comparison"')
+		self.assertContains(response, 'id="product-promotion-label"')
+		self.assertContains(response, 'id="product-compare-at-price"')
+		self.assertContains(response, "$ 10.000")
+		self.assertContains(response, 'data-compare-at-price="10000.00"')
+		self.assertContains(response, 'data-compare-at-price="9500.00"')
+		self.assertContains(response, 'data-compare-at-price=""')
+		self.assertContains(response, 'data-promotion-label="Precio de lanzamiento"')
+		self.assertContains(response, 'data-promotion-label="Black Friday"')
+		self.assertContains(response, 'data-promotion-label=""')
 
 	def test_quick_add_hides_variant_selector_when_only_one_is_available(self):
 		product = Product.objects.create(name="Única presentación", is_active=True)
