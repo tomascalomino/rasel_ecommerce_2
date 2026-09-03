@@ -145,7 +145,7 @@ class TransferCheckoutTests(TestCase):
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
         self.assertIn(
-            "Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body
+            "Descuento por transferencia/efectivo (10%): -$100.00", body
         )
         self.assertNotIn("Precio de lanzamiento", body)
         # CABA/GBA: promesa de entrega en 48hs desde el pago.
@@ -157,7 +157,8 @@ class TransferCheckoutTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-offline-discount="100.00"')
-        self.assertContains(response, "mínimo 10% de descuento")
+        self.assertContains(response, "10% de descuento")
+        self.assertNotContains(response, "mínimo 10%")
         self.assertNotContains(response, "$ 150")
         self.assertNotContains(response, "Precio de lanzamiento")
         self.assertContains(response, 'id="payment-discount-row"')
@@ -170,9 +171,9 @@ class TransferCheckoutTests(TestCase):
 
         response = self.client.get(reverse("orders:checkout"))
 
-        self.assertContains(response, "mínimo 15% de descuento")
+        self.assertContains(response, "15% de descuento")
         self.assertContains(response, 'data-discount-percent="15"')
-        self.assertNotContains(response, "mínimo 10% de descuento")
+        self.assertNotContains(response, "10% de descuento")
 
     def test_zero_percent_removes_discount_from_checkout_and_order(self):
         CommercialSettings.objects.filter(pk=1).update(
@@ -182,7 +183,7 @@ class TransferCheckoutTests(TestCase):
 
         checkout_response = self.client.get(reverse("orders:checkout"))
         self.assertContains(checkout_response, 'data-offline-discount="0.00"')
-        self.assertNotContains(checkout_response, "mínimo 0%")
+        self.assertNotContains(checkout_response, "0% de descuento")
         self.assertNotContains(checkout_response, "de descuento sobre los productos")
 
         response = self.client.post(reverse("orders:checkout"), self._checkout_data())
@@ -204,13 +205,13 @@ class TransferCheckoutTests(TestCase):
 
         response = self.client.get(reverse("orders:transfer_info", args=[order.id]))
 
-        self.assertContains(response, "mínimo 10%")
-        self.assertNotContains(response, "mínimo 20%")
+        self.assertContains(response, "(10%)")
+        self.assertNotContains(response, "(20%)")
 
         mail.outbox.clear()
         mark_paid(None, _request_with_messages(), Order.objects.filter(pk=order.pk))
-        self.assertIn("mínimo 10%", mail.outbox[0].body)
-        self.assertNotIn("mínimo 20%", mail.outbox[0].body)
+        self.assertIn("(10%)", mail.outbox[0].body)
+        self.assertNotIn("(20%)", mail.outbox[0].body)
 
     def test_transfer_interior_email_coordinates_by_whatsapp(self):
         # Interior (carrier_arranged): sin promesa de 48hs, la entrega se
@@ -278,7 +279,7 @@ class CodCheckoutTests(TestCase):
         self.assertRedirects(resp, reverse("orders:cod_info", args=[order.id]))
         self.assertEqual(order.fulfillment_status, "pending")
         self.assertEqual(order.payment_method, "cod")
-        # El descuento mínimo se aplica a productos; el envío mantiene su costo completo.
+        # El descuento se aplica a productos; el envío mantiene su costo completo.
         quote = resolve_shipping("1425", subtotal=Decimal("200.00"))
         self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
         self.assertEqual(order.payment_discount_percent, 10)
@@ -292,7 +293,7 @@ class CodCheckoutTests(TestCase):
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento de la entrega", body)
         self.assertIn(
-            "Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body
+            "Descuento por transferencia/efectivo (10%): -$100.00", body
         )
         self.assertIn("48hs", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)

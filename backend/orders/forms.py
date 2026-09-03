@@ -52,7 +52,7 @@ class CheckoutForm(forms.Form):
             discount_percent = get_offline_payment_discount_percent()
         self.offline_discount_percent = int(discount_percent)
         suffix = (
-            f" — mínimo {self.offline_discount_percent}% de descuento"
+            f" — {self.offline_discount_percent}% OFF"
             if self.offline_discount_percent > 0
             else ""
         )

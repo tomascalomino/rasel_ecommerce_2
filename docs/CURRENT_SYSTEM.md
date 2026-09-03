@@ -105,7 +105,7 @@ del servidor y nunca confía en el total enviado por el navegador.
 - **Pagos activos en producción:** transferencia bancaria, efectivo contra
   entrega o retiro y Mercado Pago Checkout Pro.
 - **Descuento por medio de pago:** transferencia y efectivo reciben el descuento
-  mínimo global configurado en el admin, inicialmente 10% sobre los productos.
+  global configurado en el admin, inicialmente 10% sobre los productos.
   Admite enteros de 0 a 50. Para cada variante se calcula el porcentaje vigente y
   su precio promocional se redondea hacia abajo al múltiplo de $50; la diferencia
   efectiva se multiplica por la cantidad comprada. El costo de envío no se
@@ -118,7 +118,8 @@ del servidor y nunca confía en el total enviado por el navegador.
   del inicio, la tienda y las recomendaciones muestran debajo del precio
   vigente el importe exacto por transferencia o efectivo de la misma variante
   activa más económica. El resumen del checkout cambia en el acto al seleccionar
-  cada medio. Con 0% no se aplica el redondeo ni descuento y se ocultan los
+  cada medio. La comunicación pública muestra el porcentaje configurado sin la
+  palabra “mínimo”. Con 0% no se aplica el redondeo ni descuento y se ocultan los
   precios y textos promocionales, pero los medios offline continúan disponibles.
 - Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
   imagen, precio, precio offline, cantidad y las presentaciones activas que

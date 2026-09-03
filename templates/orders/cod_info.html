@@ -46,9 +46,9 @@
       <div class="alert" style="text-align: center; border-color: var(--gold);">
         {% if order.payment_discount_amount %}
           {% if order.delivery_method == "pickup" %}
-          <p>Pagás en efectivo al momento del retiro. <strong>El descuento mínimo del {{ order.payment_discount_percent }}% ya está aplicado.</strong></p>
+          <p>Pagás en efectivo al momento del retiro. <strong>El descuento del {{ order.payment_discount_percent }}% ya está aplicado.</strong></p>
           {% else %}
-          <p>Pagás en efectivo al momento de la entrega. <strong>El descuento mínimo del {{ order.payment_discount_percent }}% ya está aplicado.</strong></p>
+          <p>Pagás en efectivo al momento de la entrega. <strong>El descuento del {{ order.payment_discount_percent }}% ya está aplicado.</strong></p>
           {% endif %}
         {% endif %}
         <p class="muted tiny mt-6">

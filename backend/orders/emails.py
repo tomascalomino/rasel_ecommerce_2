@@ -81,7 +81,7 @@ def _totals_block(order) -> str:
     if discount > 0:
         lines.append(
             f"Descuento por transferencia/efectivo "
-            f"(mínimo {order.payment_discount_percent}%): -${discount}"
+            f"({order.payment_discount_percent}%): -${discount}"
         )
     if getattr(order, "delivery_method", "ship") == "pickup":
         lines.extend(

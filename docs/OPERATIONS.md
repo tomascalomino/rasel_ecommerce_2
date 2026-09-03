@@ -523,7 +523,7 @@ recuperación de Neon.
 1. Toda orden nueva tiene la entrega **Pendiente**. Transferencia y efectivo
    comienzan con el pago **Pendiente**; Mercado Pago queda **Aprobado** o **En
    revisión** según la respuesta validada de la API.
-2. Las órdenes por transferencia o efectivo muestran el descuento mínimo que
+2. Las órdenes por transferencia o efectivo muestran el descuento que
    quedó guardado al crearlas. El precio promocional se calcula por variante,
    redondeando hacia abajo al múltiplo de $50, y luego se multiplica por la
    cantidad. Revisar `descuento por medio de pago`, subtotal, envío y total antes

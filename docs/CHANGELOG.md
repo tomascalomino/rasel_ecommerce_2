@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-03 — Porcentaje de descuento sin “mínimo” (1.4.2)
+
+- Comunicación: producto, checkout, medios de pago, totales, instrucciones de
+  efectivo, Términos y correos muestran el porcentaje configurado sin la palabra
+  “mínimo”; la insignia principal queda como, por ejemplo, **10% OFF**.
+- Consistencia: el texto continúa tomando el valor administrable y cada orden
+  conserva el porcentaje con el que fue creada.
+- Cálculo: no cambia la regla comercial ni el redondeo hacia abajo al múltiplo
+  de $50; tampoco se modifican precios, envío ni Mercado Pago.
+- Migraciones o variables: se agrega `shop.0008` para actualizar la ayuda del
+  campo en el admin; no se agregan variables de entorno.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-09-03 — Pago y entrega separados en órdenes (1.4.0)
 
 - Administración: las órdenes muestran por separado **Situación**, **Pago** y

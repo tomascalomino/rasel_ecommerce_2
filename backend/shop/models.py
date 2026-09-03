@@ -34,7 +34,7 @@ class CommercialSettings(models.Model):
         default=10,
         validators=[MinValueValidator(0), MaxValueValidator(50)],
         help_text=(
-            "Porcentaje mínimo aplicado a los productos al pagar por transferencia "
+            "Porcentaje aplicado a los productos al pagar por transferencia "
             "o efectivo. Usá 0 para desactivar el descuento y ocultar sus leyendas."
         ),
     )
