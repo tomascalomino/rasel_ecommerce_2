@@ -235,7 +235,8 @@ class ProductListViewTests(TestCase):
 		product_response = self.client.get(
 			reverse("shop:product_detail", args=[self.p1.slug])
 		)
-		self.assertContains(product_response, "MÍN. 10% OFF")
+		self.assertContains(product_response, "10% OFF")
+		self.assertNotContains(product_response, "MÍN.")
 		self.assertContains(product_response, "transferencia o efectivo")
 		self.assertContains(product_response, "$ 100")
 		self.assertContains(product_response, 'data-offline-price="100.00"')
@@ -510,7 +511,8 @@ class ProductCardPricingTests(TestCase):
 		)
 		terms_response = self.client.get(reverse("terms"))
 
-		self.assertContains(product_response, "MÍN. 15% OFF")
+		self.assertContains(product_response, "15% OFF")
+		self.assertNotContains(product_response, "MÍN.")
 		self.assertContains(product_response, "$ 6.250")
 		self.assertContains(terms_response, "del 15% sobre los productos")
 

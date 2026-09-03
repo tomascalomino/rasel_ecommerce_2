@@ -123,11 +123,11 @@
           <p class="field-hint">Tarjeta, débito o dinero en cuenta. Hasta {{ mp_max_installments }} cuotas. Sin descuento por medio de pago.</p>
           {% elif radio.data.value == "transfer" %}
           {% if offline_discount_percent %}
-          <p class="field-hint payment-discount-hint">Aplicamos como mínimo {{ offline_discount_percent }}% de descuento sobre los productos.</p>
+          <p class="field-hint payment-discount-hint">Aplicamos {{ offline_discount_percent }}% de descuento sobre los productos.</p>
           {% endif %}
           {% elif radio.data.value == "cod" %}
           <p id="cod-hint" class="muted tiny">
-            {% if offline_discount_percent %}Mínimo {{ offline_discount_percent }}% de descuento. {% endif %}Disponible para retiro o entrega en persona en CABA y GBA.
+            {% if offline_discount_percent %}{{ offline_discount_percent }}% de descuento. {% endif %}Disponible para retiro o entrega en persona en CABA y GBA.
           </p>
           {% endif %}
           {% endfor %}
@@ -217,13 +217,13 @@
   var paymentRadios = document.querySelectorAll('input[name="payment_method"]');
   var codHint = document.getElementById("cod-hint");
   var COD_HINT_DEFAULT = discountEnabled
-    ? "Mínimo " + discountPercent + "% de descuento. Disponible para retiro o entrega en persona en CABA y GBA."
+    ? discountPercent + "% de descuento. Disponible para retiro o entrega en persona en CABA y GBA."
     : "Disponible para retiro o entrega en persona en CABA y GBA.";
 
   function codPaymentMessage(moment) {
     var message = "Pagás en efectivo al " + moment + ".";
     return discountEnabled
-      ? message.slice(0, -1) + " con un mínimo de " + discountPercent + "% de descuento."
+      ? message.slice(0, -1) + " con " + discountPercent + "% de descuento."
       : message;
   }
 

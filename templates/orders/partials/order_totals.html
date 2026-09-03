@@ -6,7 +6,7 @@
   </div>
   {% if order.payment_discount_amount %}
   <div class="row payment-discount-total">
-    <span>Descuento por transferencia/efectivo (mínimo {{ order.payment_discount_percent }}%)</span>
+    <span>Descuento por transferencia/efectivo ({{ order.payment_discount_percent }}%)</span>
     <strong>− {{ order.payment_discount_amount|ars }}</strong>
   </div>
   {% endif %}
