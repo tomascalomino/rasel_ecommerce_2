@@ -16,8 +16,6 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.db import transaction
 
-from config.pricing import OFFLINE_PAYMENT_DISCOUNT_PERCENT
-
 logger = logging.getLogger("orders.email")
 
 BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
@@ -76,7 +74,7 @@ def _totals_block(order) -> str:
     if discount > 0:
         lines.append(
             f"Descuento por transferencia/efectivo "
-            f"(mínimo {OFFLINE_PAYMENT_DISCOUNT_PERCENT}%): -${discount}"
+            f"(mínimo {order.payment_discount_percent}%): -${discount}"
         )
     if getattr(order, "delivery_method", "ship") == "pickup":
         lines.extend(

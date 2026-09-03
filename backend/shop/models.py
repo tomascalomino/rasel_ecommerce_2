@@ -1,6 +1,7 @@
 import re
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -22,6 +23,45 @@ class Category(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class CommercialSettings(models.Model):
+    """Configuración comercial global administrable por el equipo de RaSel."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    offline_payment_discount_percent = models.PositiveSmallIntegerField(
+        "descuento por efectivo/transferencia (%)",
+        default=10,
+        validators=[MinValueValidator(0), MaxValueValidator(50)],
+        help_text=(
+            "Porcentaje mínimo aplicado a los productos al pagar por transferencia "
+            "o efectivo. Usá 0 para desactivar el descuento y ocultar sus leyendas."
+        ),
+    )
+
+    class Meta:
+        verbose_name = "configuración comercial"
+        verbose_name_plural = "configuración comercial"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(id=1),
+                name="shop_commercial_settings_singleton",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(offline_payment_discount_percent__gte=0)
+                    & models.Q(offline_payment_discount_percent__lte=50)
+                ),
+                name="shop_offline_discount_percent_range",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return "Descuento por medios de pago"
 
 
 class Product(models.Model):

@@ -318,6 +318,7 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         shipping_cost=draft.shipping_cost,
         shipping_zone=draft.shipping_zone,
         shipping_carrier_arranged=draft.shipping_carrier_arranged,
+        payment_discount_percent=0,
         total_amount=draft.total_amount,
         status="payment_review" if review else "paid",
         payment_method="mp",

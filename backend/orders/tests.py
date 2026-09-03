@@ -8,7 +8,7 @@ from django.urls import reverse
 
 from shipping.models import PickupPoint
 from shipping.services import resolve_shipping
-from shop.models import Category, Product, Variant
+from shop.models import Category, CommercialSettings, Product, Variant
 from django.contrib import admin as django_admin
 
 from config.pricing import (
@@ -30,16 +30,19 @@ def _request_with_messages():
 
 
 class PaymentPricingTests(TestCase):
-    def test_minimum_five_percent_discount_rounds_price_down_to_fifty(self):
+    def test_minimum_ten_percent_discount_rounds_price_down_to_fifty(self):
         self.assertEqual(
-            payment_discount(Decimal("7400.00"), "transfer"),
-            Decimal("400.00"),
+            payment_discount(Decimal("7400.00"), "transfer", 10),
+            Decimal("750.00"),
         )
         self.assertEqual(
-            discounted_amount(Decimal("7400.00")),
-            Decimal("7000.00"),
+            discounted_amount(Decimal("7400.00"), 10),
+            Decimal("6650.00"),
         )
-        self.assertEqual(discounted_amount(Decimal("13700.00")), Decimal("13000.00"))
+        self.assertEqual(
+            discounted_amount(Decimal("13700.00"), 10),
+            Decimal("12300.00"),
+        )
 
     def test_line_discount_preserves_promotional_unit_prices(self):
         lines = [
@@ -47,16 +50,25 @@ class PaymentPricingTests(TestCase):
             (Decimal("13700.00"), 1),
         ]
         self.assertEqual(
-            payment_discount_for_lines(lines, "transfer"),
-            Decimal("1500.00"),
+            payment_discount_for_lines(lines, "transfer", 10),
+            Decimal("2900.00"),
         )
-        self.assertEqual(payment_discount_for_lines(lines, "mp"), Decimal("0.00"))
+        self.assertEqual(
+            payment_discount_for_lines(lines, "mp", 10), Decimal("0.00")
+        )
 
     def test_discount_applies_only_to_transfer_and_cash(self):
         subtotal = Decimal("1000.00")
-        self.assertEqual(payment_discount(subtotal, "transfer"), Decimal("50.00"))
-        self.assertEqual(payment_discount(subtotal, "cod"), Decimal("50.00"))
-        self.assertEqual(payment_discount(subtotal, "mp"), Decimal("0.00"))
+        self.assertEqual(payment_discount(subtotal, "transfer", 10), Decimal("100.00"))
+        self.assertEqual(payment_discount(subtotal, "cod", 10), Decimal("100.00"))
+        self.assertEqual(payment_discount(subtotal, "mp", 10), Decimal("0.00"))
+
+    def test_zero_percent_disables_discount_and_rounding(self):
+        self.assertEqual(
+            payment_discount(Decimal("13725.00"), "transfer", 0),
+            Decimal("0.00"),
+        )
+        self.assertIsNone(discounted_amount(Decimal("13725.00"), 0))
 
 
 class TransferCheckoutTests(TestCase):
@@ -103,6 +115,7 @@ class TransferCheckoutTests(TestCase):
         self.assertEqual(order.items.first().unit_price, Decimal("100.00"))
         self.assertEqual(order.items.first().line_total, Decimal("200.00"))
         self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
+        self.assertEqual(order.payment_discount_percent, 10)
         quote = resolve_shipping("1000", subtotal=Decimal("200.00"))
         self.assertEqual(order.total_amount, Decimal("100.00") + quote.cost)
 
@@ -115,7 +128,7 @@ class TransferCheckoutTests(TestCase):
         body = mail.outbox[0].body
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
-        self.assertIn("Descuento por transferencia/efectivo (mínimo 5%): -$100.00", body)
+        self.assertIn("Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body)
         self.assertNotIn("Precio de lanzamiento", body)
         # CABA/GBA: promesa de entrega en 48hs desde el pago.
         self.assertIn("48hs", body)
@@ -126,10 +139,62 @@ class TransferCheckoutTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-offline-discount="100.00"')
-        self.assertContains(response, "mínimo 5% de descuento")
+        self.assertContains(response, "mínimo 10% de descuento")
         self.assertNotContains(response, "$ 150")
         self.assertNotContains(response, "Precio de lanzamiento")
         self.assertContains(response, 'id="payment-discount-row"')
+
+    def test_admin_percentage_updates_checkout_labels_and_data(self):
+        CommercialSettings.objects.filter(pk=1).update(
+            offline_payment_discount_percent=15
+        )
+        self._add_to_cart(2)
+
+        response = self.client.get(reverse("orders:checkout"))
+
+        self.assertContains(response, "mínimo 15% de descuento")
+        self.assertContains(response, 'data-discount-percent="15"')
+        self.assertNotContains(response, "mínimo 10% de descuento")
+
+    def test_zero_percent_removes_discount_from_checkout_and_order(self):
+        CommercialSettings.objects.filter(pk=1).update(
+            offline_payment_discount_percent=0
+        )
+        self._add_to_cart(2)
+
+        checkout_response = self.client.get(reverse("orders:checkout"))
+        self.assertContains(checkout_response, 'data-offline-discount="0.00"')
+        self.assertNotContains(checkout_response, "mínimo 0%")
+        self.assertNotContains(checkout_response, "de descuento sobre los productos")
+
+        response = self.client.post(reverse("orders:checkout"), self._checkout_data())
+        self.assertEqual(response.status_code, 302)
+        order = Order.objects.get()
+        quote = resolve_shipping("1000", subtotal=Decimal("200.00"))
+        self.assertEqual(order.payment_discount_amount, Decimal("0.00"))
+        self.assertEqual(order.payment_discount_percent, 0)
+        self.assertEqual(order.total_amount, Decimal("200.00") + quote.cost)
+        self.assertNotIn("Descuento por transferencia/efectivo", mail.outbox[0].body)
+
+    def test_order_keeps_applied_percentage_after_admin_change(self):
+        self._add_to_cart(2)
+        self.client.post(reverse("orders:checkout"), self._checkout_data())
+        order = Order.objects.get()
+        CommercialSettings.objects.filter(pk=1).update(
+            offline_payment_discount_percent=20
+        )
+
+        response = self.client.get(
+            reverse("orders:transfer_info", args=[order.id])
+        )
+
+        self.assertContains(response, "mínimo 10%")
+        self.assertNotContains(response, "mínimo 20%")
+
+        mail.outbox.clear()
+        mark_paid(None, _request_with_messages(), Order.objects.filter(pk=order.pk))
+        self.assertIn("mínimo 10%", mail.outbox[0].body)
+        self.assertNotIn("mínimo 20%", mail.outbox[0].body)
 
     def test_transfer_interior_email_coordinates_by_whatsapp(self):
         # Interior (carrier_arranged): sin promesa de 48hs, la entrega se
@@ -198,6 +263,7 @@ class CodCheckoutTests(TestCase):
         # El descuento mínimo se aplica a productos; el envío mantiene su costo completo.
         quote = resolve_shipping("1425", subtotal=Decimal("200.00"))
         self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
+        self.assertEqual(order.payment_discount_percent, 10)
         self.assertEqual(order.total_amount, Decimal("100.00") + quote.cost)
 
         self.variant.refresh_from_db()
@@ -207,7 +273,7 @@ class CodCheckoutTests(TestCase):
         self.assertIn("buyer@example.com", mail.outbox[0].to)
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento de la entrega", body)
-        self.assertIn("Descuento por transferencia/efectivo (mínimo 5%): -$100.00", body)
+        self.assertIn("Descuento por transferencia/efectivo (mínimo 10%): -$100.00", body)
         self.assertIn("48hs", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
 
@@ -267,6 +333,7 @@ class PickupCheckoutTests(TestCase):
         self.assertIn(self.point.name, order.pickup_point_label)
         self.assertEqual(order.shipping_cost, Decimal("0.00"))
         self.assertEqual(order.payment_discount_amount, Decimal("100.00"))
+        self.assertEqual(order.payment_discount_percent, 10)
         self.assertEqual(order.total_amount, Decimal("100.00"))
         self.assertEqual(order.address_line, "")
         self.assertEqual(order.postal_code, "")
@@ -288,6 +355,7 @@ class PickupCheckoutTests(TestCase):
         self.assertEqual(order.payment_method, "cod")
         self.assertEqual(order.delivery_method, "pickup")
         self.assertEqual(order.payment_discount_amount, Decimal("50.00"))
+        self.assertEqual(order.payment_discount_percent, 10)
         self.assertEqual(order.total_amount, Decimal("50.00"))
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento del retiro", body)
@@ -517,6 +585,7 @@ class AdminRolesTests(TestCase):
         # Gestiona el día a día...
         self.assertIn("change_order", codenames)
         self.assertIn("change_variant", codenames)
+        self.assertIn("change_commercialsettings", codenames)
         self.assertIn("add_product", codenames)
         self.assertIn("change_shippingzone", codenames)
         # ...pero no borra datos críticos ni administra usuarios.

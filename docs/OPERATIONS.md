@@ -503,12 +503,27 @@ recuperación de Neon.
 3. Editar puntos de retiro activos, dirección e indicaciones antes de ofrecerlos
    al cliente.
 
+### Descuento por efectivo y transferencia
+
+1. Abrir **Catálogo → Configuración comercial → Descuento por medios de
+   pago** y editar **Descuento por efectivo/transferencia (%)**. Admite enteros
+   entre 0 y 50; el valor inicial es 10.
+2. Guardar y comprobar en una ficha de producto, compra rápida, checkout y
+   Términos que el importe y todos los textos muestran el nuevo porcentaje.
+   Staging y producción tienen bases separadas y deben configurarse por separado.
+3. Usar 0 para desactivar el beneficio: no se aplica el redondeo a $50 ni se
+   muestran precios o leyendas de descuento. Transferencia y efectivo siguen
+   disponibles con el precio de venta completo.
+4. El cambio afecta cotizaciones y pedidos nuevos de inmediato. Cada orden ya
+   creada conserva el porcentaje y el importe aplicados; nunca recalcularla con
+   el valor actual del admin.
+
 ### Pedidos
 
 1. Una orden por transferencia o efectivo llega `pending`; una aprobación MP
    llega `paid`, y una anomalía MP llega `payment_review`.
-2. Las órdenes por transferencia o efectivo muestran un descuento mínimo del
-   5% sobre los productos. El precio promocional se calcula por variante,
+2. Las órdenes por transferencia o efectivo muestran el descuento mínimo que
+   quedó guardado al crearlas. El precio promocional se calcula por variante,
    redondeando hacia abajo al múltiplo de $50, y luego se multiplica por la
    cantidad. Revisar `descuento por medio de pago`, subtotal, envío y total antes
    de cobrar o confirmar; Mercado Pago debe mostrar descuento cero. El envío
@@ -524,10 +539,11 @@ recuperación de Neon.
 Antes de aprobar un despliegue, probar en staging una compra con envío y otra
 con retiro: al alternar Mercado Pago, transferencia y efectivo, el resumen debe
 mostrar u ocultar el descuento sin recargar la página. Al confirmar, el total de
-la orden y del email debe coincidir con el resumen. La tasa mínima y el múltiplo
-de redondeo son reglas versionadas en `config/pricing.py`; cambiarlos requiere
-código, pruebas, actualización de la comunicación visible y el flujo staging →
-aprobación → producción.
+la orden y del email debe coincidir con el resumen. La tasa mínima se administra
+desde **Configuración comercial**; el múltiplo de redondeo de $50 sigue
+versionado en `config/pricing.py` y cambiarlo requiere código, pruebas,
+actualización de la comunicación visible y el flujo staging → aprobación →
+producción.
 
 ## Incidentes frecuentes
 

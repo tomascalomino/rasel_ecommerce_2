@@ -15,7 +15,7 @@
       {% if product.min_price_ars %}{{ product.min_price_ars|ars }}{% else %}—{% endif %}
     </div>
   </div>
-  {% if product.min_price_ars %}
+  {% if product.offline_price_ars %}
     <div class="product-card-offline-price">
       <strong>{{ product.offline_price_ars|ars }}</strong>
       <span>con transferencia o efectivo</span>

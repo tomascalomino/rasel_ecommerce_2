@@ -28,6 +28,7 @@ _OPERATOR_MATRIX = {
     "shop.category": ("view", "add", "change"),
     "shop.product": ("view", "add", "change"),
     "shop.variant": ("view", "add", "change"),
+    "shop.commercialsettings": ("view", "change"),
     "shipping.shippingzone": ("view", "add", "change"),
     # Las reglas de CP se editan inline dentro de la zona; sin "delete" no se
     # podría corregir un rango mal cargado.
@@ -74,7 +75,7 @@ class RaselAdminSite(admin.AdminSite):
     # Menú por importancia: primero lo que se usa todos los días.
     _APP_ORDER = ("orders", "shop", "shipping", "auth")
     _MODEL_ORDER = {
-        "shop": ("product", "variant", "category"),
+        "shop": ("commercialsettings", "product", "variant", "category"),
         "shipping": ("shippingzone", "pickuppoint"),
     }
 

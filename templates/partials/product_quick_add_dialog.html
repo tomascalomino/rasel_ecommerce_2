@@ -42,10 +42,10 @@
           >{{ first_variant.compare_at_price_ars|ars }}</del>
         </div>
         <strong data-quick-add-current-price>{{ first_variant.price_ars|ars }}</strong>
-        <span>
+        {% if first_variant.offline_price_ars %}<span>
           <b data-quick-add-offline-price>{{ first_variant.offline_price_ars|ars }}</b>
           con transferencia o efectivo
-        </span>
+        </span>{% endif %}
       </div>
 
       <form action="{% url 'cart:add' %}" method="post" class="quick-add-form">

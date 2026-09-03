@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, Variant
+from .models import Category, CommercialSettings, Product, Variant
 
 
 class VariantInline(admin.TabularInline):
@@ -17,6 +17,20 @@ class VariantInline(admin.TabularInline):
         "unit_variant",
     )
     extra = 1
+
+
+@admin.register(CommercialSettings)
+class CommercialSettingsAdmin(admin.ModelAdmin):
+    fields = ("offline_payment_discount_percent",)
+    list_display = ("offline_payment_discount_percent",)
+
+    def has_add_permission(self, request):
+        return not CommercialSettings.objects.exists() and super().has_add_permission(
+            request
+        )
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Category)

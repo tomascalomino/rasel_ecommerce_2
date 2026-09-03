@@ -3,6 +3,25 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-03 — Descuento offline administrable (1.3.0)
+
+- Administración: se incorpora una configuración comercial global para editar
+  entre 0% y 50% el descuento por transferencia o efectivo; la migración lo
+  establece inicialmente en 10% y los operadores pueden modificarlo sin deploy.
+- Consistencia: catálogo, detalle, compra rápida, checkout, opciones de pago,
+  totales, Términos y emails obtienen porcentaje y cálculos de la misma fuente.
+  Se conserva el redondeo por variante al múltiplo de $50.
+- Desactivación: 0% elimina descuento y redondeo, oculta precios y leyendas
+  promocionales y mantiene transferencia y efectivo disponibles al precio de
+  venta completo.
+- Historial: cada orden guarda el porcentaje aplicado. Las órdenes offline
+  existentes con descuento se migran a 5% y las demás a 0%, evitando que un
+  cambio posterior altere pantallas o emails históricos.
+- Migraciones o variables: se agregan `shop.0007` y `orders.0015`; no se agregan
+  variables de entorno.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-09-03 — Promoción de precio administrable (1.2.0)
 
 - Catálogo: cada variante admite un precio regular y un texto de promoción que

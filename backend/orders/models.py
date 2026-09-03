@@ -91,6 +91,11 @@ class Order(models.Model):
         decimal_places=2,
         default=0,
     )
+    payment_discount_percent = models.PositiveSmallIntegerField(
+        "porcentaje de descuento aplicado",
+        default=0,
+        help_text="Snapshot del porcentaje aplicado al crear la orden.",
+    )
 
     total_amount = models.DecimalField("total", max_digits=12, decimal_places=2)
 
