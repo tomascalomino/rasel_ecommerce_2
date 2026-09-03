@@ -6,8 +6,10 @@ Diseño:
   `Order.confirmation_email_sent` con un claim atómico para que, aunque
   MercadoPago dispare el webhook varias veces (o se solapen webhook y retorno),
   el cliente reciba un único email.
+- Los avisos de pago, despacho y finalización tienen flags independientes.
 - Nunca rompe el flujo de pago: cualquier error de SMTP se loguea y se traga.
 """
+
 import logging
 from email.utils import parseaddr
 
@@ -36,7 +38,10 @@ def _send_email(subject: str, body: str, to_email: str) -> None:
 
     if api_key:
         payload = {
-            "sender": {"email": sender_email or "no-reply@rasel.ar", "name": sender_name or "RaSel"},
+            "sender": {
+                "email": sender_email or "no-reply@rasel.ar",
+                "name": sender_name or "RaSel",
+            },
             "to": [{"email": to_email}],
             "subject": subject,
             "textContent": body,
@@ -62,7 +67,9 @@ def _send_email(subject: str, body: str, to_email: str) -> None:
 def _build_lines(order) -> str:
     rows = []
     for it in order.items.all():
-        rows.append(f"  - {it.product_name} ({it.variant_name}) x{it.quantity}: ${it.line_total}")
+        rows.append(
+            f"  - {it.product_name} ({it.variant_name}) x{it.quantity}: ${it.line_total}"
+        )
     return "\n".join(rows)
 
 
@@ -100,7 +107,9 @@ def _delivery_block(order) -> str:
     if getattr(order, "delivery_method", "ship") == "pickup":
         return f"Retiro en:\n  {order.pickup_point_label}\n"
     extra = f" ({order.address_extra})" if getattr(order, "address_extra", "") else ""
-    return f"Envío a:\n  {order.address_line}{extra}, {order.city} ({order.postal_code})\n"
+    return (
+        f"Envío a:\n  {order.address_line}{extra}, {order.city} ({order.postal_code})\n"
+    )
 
 
 def _shipping_legend(order) -> str:
@@ -135,9 +144,7 @@ def _customer_body(order) -> str:
     whatsapp = _whatsapp()
     if order.payment_method == "transfer":
         bank_block = _bank_block()
-        datos = (
-            f"\nDatos para transferir:\n{bank_block}\n" if bank_block else ""
-        )
+        datos = f"\nDatos para transferir:\n{bank_block}\n" if bank_block else ""
         comprobante = (
             f"\nEnviá el comprobante de pago vía WhatsApp al {whatsapp} "
             f"indicando tu número de orden (#{order.id}).\n"
@@ -199,12 +206,16 @@ def _owner_body(order) -> str:
     if order.delivery_method == "pickup":
         entrega = f"Retiro en: {order.pickup_point_label}"
     else:
-        extra = f" ({order.address_extra})" if getattr(order, "address_extra", "") else ""
-        entrega = f"Envío: {order.address_line}{extra}, {order.city} ({order.postal_code})"
+        extra = (
+            f" ({order.address_extra})" if getattr(order, "address_extra", "") else ""
+        )
+        entrega = (
+            f"Envío: {order.address_line}{extra}, {order.city} ({order.postal_code})"
+        )
     return (
         # Sin <email> entre corchetes angulares: Brevo genera una parte HTML
         # a partir del texto plano y los interpreta como etiquetas (se pierden).
-        f"Nueva orden #{order.id} ({order.get_status_display()})\n"
+        f"Nueva orden #{order.id} ({order.situation_label})\n"
         f"Método de pago: {order.payment_method}\n\n"
         f"Cliente: {order.full_name}\n"
         f"Email: {order.email}\n"
@@ -282,6 +293,24 @@ def _shipped_body(order) -> str:
     )
 
 
+def _completed_body(order) -> str:
+    if order.delivery_method == "pickup":
+        estado = "Confirmamos que tu pedido fue retirado correctamente."
+        entrega = "Retiro completado"
+    else:
+        estado = "Confirmamos que tu pedido fue entregado correctamente."
+        entrega = "Entrega completada"
+    return (
+        f"Hola {order.full_name}!\n\n"
+        f"{estado}\n"
+        "El pago figura confirmado.\n\n"
+        f"Detalle:\n{_build_lines(order)}\n\n"
+        f"{_totals_block(order)}\n\n"
+        f"{entrega}.\n\n"
+        "Gracias por elegirnos!\nRaSel — Aceite de Oliva\n"
+    )
+
+
 def _idempotent_send(order_id: int, flag_field: str, send_fn, label: str) -> None:
     """
     Claim atómico: marcamos el flag antes de mandar para evitar reenvíos ante
@@ -346,6 +375,29 @@ def send_order_shipped(order_id: int) -> None:
             order.email,
         ),
         "pedido enviado",
+    )
+
+
+def send_order_completed(order_id: int) -> None:
+    """Envía una única confirmación final de entrega o retiro."""
+    from .models import Order
+
+    order = Order.objects.filter(pk=order_id).only("delivery_method").first()
+    if not order:
+        return
+    _idempotent_send(
+        order_id,
+        "completion_email_sent",
+        lambda current: _send_email(
+            (
+                f"RaSel — Retiro confirmado · Pedido #{current.id}"
+                if current.delivery_method == "pickup"
+                else f"RaSel — Entrega confirmada · Pedido #{current.id}"
+            ),
+            _completed_body(current),
+            current.email,
+        ),
+        "pedido completado",
     )
 
 

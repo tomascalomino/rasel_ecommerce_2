@@ -201,13 +201,16 @@ button.theme-toggle {
   border: 1px solid #e8d9b0;
 }
 
-.rasel-status-paid {
+.rasel-status-paid,
+.rasel-status-approved,
+.rasel-status-completed {
   background: #f0f7ef;
   color: #2f7d4f;
   border: 1px solid #d1e7dd;
 }
 
-.rasel-status-shipped {
+.rasel-status-shipped,
+.rasel-status-ready_for_pickup {
   background: #eef3f7;
   color: #33627e;
   border: 1px solid #d0e0ea;
@@ -217,6 +220,62 @@ button.theme-toggle {
   background: #fbe9e9;
   color: #b83c3c;
   border: 1px solid #f0caca;
+}
+
+.rasel-status-alert,
+.rasel-status-review,
+.rasel-status-rejected,
+.rasel-status-refunded,
+.rasel-status-partially_refunded,
+.rasel-status-charged_back {
+  background: #fff0e6;
+  color: #9b4a1b;
+  border: 1px solid #f0c8aa;
+}
+
+.rasel-order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rasel-order-actions-label {
+  margin-right: auto;
+  color: var(--body-quiet-color);
+  font-weight: 700;
+}
+
+.rasel-order-actions button {
+  margin: 0;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--button-bg);
+  color: var(--button-fg);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.rasel-order-actions button:hover,
+.rasel-order-actions button:focus {
+  background: var(--button-hover-bg);
+}
+
+@media (max-width: 767px) {
+  .rasel-recent {
+    overflow-x: auto;
+  }
+
+  .rasel-order-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rasel-order-actions-label {
+    margin: 0 0 4px;
+  }
 }
 
 /* ---- Panel de roles y cajas de ayuda ---- */

@@ -140,7 +140,7 @@ del servidor y nunca confía en el total enviado por el navegador.
 
 Para transferencia o efectivo, el checkout valida todas las variantes y su
 stock dentro de una transacción, vuelve a calcular precios y el descuento del
-lado del servidor, crea una orden `pending`, descuenta stock, vacía el carrito
+lado del servidor, crea una orden con pago y entrega pendientes, descuenta stock, vacía el carrito
 y envía la confirmación por email. Transferencia se coordina con el comprobante
 por WhatsApp; efectivo se cobra al retirar o recibir. La orden conserva el
 subtotal de lista en sus ítems, el descuento aplicado en
@@ -173,23 +173,30 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
 
 ## Órdenes, stock y notificaciones
 
-Los estados operativos son `pending`, `paid`, `shipped`, `cancelled` y
-`payment_review`. Además existe un estado financiero separado: pendiente,
-aprobado, rechazado, cancelado, reintegro parcial, reintegrado, contracargo o
-revisión.
+Pago y entrega son estados independientes. El estado financiero puede ser
+pendiente, aprobado, rechazado, cancelado, reintegro parcial, reintegrado,
+contracargo o revisión. La entrega puede estar pendiente, despachada, lista para
+retirar, completada o cancelada.
 
-1. Una orden nueva queda `pending` y su stock ya fue descontado.
-2. Tras verificar el comprobante, el operador la marca `paid` en admin. El
-   cliente recibe un email de pago confirmado.
-3. Al despachar o dejar listo el retiro, el operador la marca `shipped`. El
-   cliente recibe el email correspondiente.
-4. Al cancelar desde la acción del admin, el stock se restaura una sola vez.
+1. Una orden nueva tiene pago y entrega pendientes y su stock ya fue descontado.
+2. Tras verificar un pago offline, el operador usa **Confirmar pago**. Mercado
+   Pago solo se aprueba mediante su API o la conciliación.
+3. **Despachar / dejar listo para retirar** exige pago aprobado, salvo efectivo
+   contraentrega, que puede avanzar con el cobro pendiente.
+4. **Marcar como entregado / retirado** finaliza una orden ya cobrada. **Cobrar
+   y completar** registra conjuntamente ambos hechos para pagos offline; en
+   Mercado Pago solo completa una orden previamente aprobada por la API.
+5. Cada etapa envía como máximo un correo: pago, despacho/listo para retirar y
+   finalización. La acción conjunta envía únicamente la confirmación final.
+6. Al cancelar antes del despacho, el stock se restaura una sola vez. Una orden
+   despachada, lista para retirar o completada no repone stock sin devolución
+   física confirmada.
 
 Una aprobación de Mercado Pago consume la reserva sin descontar stock por
 segunda vez. Si el stock ya se había liberado, se intenta reservar nuevamente;
-si no alcanza, se crea una orden `payment_review`, no se promete entrega y se
-envía una alerta. Reintegros y contracargos se sincronizan sin reponer stock de
-forma automática.
+si no alcanza, la orden queda con pago en revisión y entrega pendiente, no se
+promete entrega y se envía una alerta. Reintegros y contracargos se sincronizan
+sin reponer stock de forma automática.
 
 Cada email usa un flag de idempotencia: reintentar una acción no debe mandar el
 mismo correo dos veces. Las órdenes guardan snapshots de ítems, precios, importe
@@ -205,8 +212,12 @@ retiro, órdenes y usuarios.
 - **Operador:** puede ver y editar órdenes, configuración comercial, catálogo,
   zonas y puntos de retiro.
 - **Solo lectura:** puede consultar los mismos datos sin modificarlos.
-- Los usuarios y roles los gestiona un administrador. El dashboard muestra
-  pendientes, ventas cobradas y órdenes recientes.
+- Los usuarios y roles los gestiona un administrador. El dashboard separa
+  cobros pendientes de pedidos para preparar; las ventas se calculan desde el
+  estado financiero y descuentan los reintegros parciales.
+- El listado de órdenes muestra **Situación**, **Pago** y **Entrega**. Los
+  estados son de solo lectura y se cambian mediante acciones contextuales tanto
+  dentro de cada orden como sobre una selección del listado.
 - El encabezado del admin muestra la versión desplegada con el formato
   `vMAJOR.MINOR.PATCH`. El valor se lee de `app_version` en la raíz del
   repositorio y no depende de una variable de entorno.
@@ -217,8 +228,9 @@ retiro, órdenes y usuarios.
   la reserva ya venció y no existe un pago. Ante un error del proveedor
   conserva el stock y registra el error.
 - El admin no permite marcar manualmente como pagada una orden Mercado Pago ni
-  cancelar una aprobación como si eso reintegrara dinero. Una orden enviada no
-  repone stock por reintegro hasta confirmar la devolución física.
+  cancelar una aprobación como si eso reintegrara dinero. Una orden despachada
+  o completada no repone stock por reintegro hasta confirmar la devolución
+  física.
 
 ## Estado operativo y límites conocidos
 

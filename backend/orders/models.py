@@ -3,13 +3,12 @@ from django.utils import timezone
 
 
 class Order(models.Model):
-    # Los valores guardados no cambian (pending/paid/...), solo las etiquetas.
-    STATUS_CHOICES = [
+    FULFILLMENT_STATUS_CHOICES = [
         ("pending", "Pendiente"),
-        ("paid", "Pagada"),
-        ("shipped", "Enviada"),
+        ("shipped", "Despachada"),
+        ("ready_for_pickup", "Lista para retirar"),
+        ("completed", "Completada"),
         ("cancelled", "Cancelada"),
-        ("payment_review", "Revision de pago"),
     ]
 
     PAYMENT_STATUS_CHOICES = [
@@ -35,8 +34,11 @@ class Order(models.Model):
     ]
 
     created_at = models.DateTimeField("fecha", default=timezone.now)
-    status = models.CharField(
-        "estado", max_length=20, choices=STATUS_CHOICES, default="pending"
+    fulfillment_status = models.CharField(
+        "estado de entrega",
+        max_length=20,
+        choices=FULFILLMENT_STATUS_CHOICES,
+        default="pending",
     )
     payment_method = models.CharField(
         "método de pago", max_length=20, choices=PAYMENT_CHOICES, default="mp"
@@ -53,7 +55,9 @@ class Order(models.Model):
         "piso / depto / info adicional", max_length=200, blank=True, default=""
     )
     city = models.CharField("ciudad", max_length=100, blank=True, default="")
-    postal_code = models.CharField("código postal", max_length=20, blank=True, default="")
+    postal_code = models.CharField(
+        "código postal", max_length=20, blank=True, default=""
+    )
 
     # Modalidad de entrega. Con "pickup" el envío es sin cargo y el cliente
     # retira en el punto elegido; pickup_point_label es el snapshot histórico
@@ -78,7 +82,9 @@ class Order(models.Model):
     shipping_cost = models.DecimalField(
         "costo de envío", max_digits=12, decimal_places=2, default=0
     )
-    shipping_zone = models.CharField("zona de envío", max_length=80, blank=True, default="")
+    shipping_zone = models.CharField(
+        "zona de envío", max_length=80, blank=True, default=""
+    )
     # Envío a cargo del comprador (resto del país): costo 0 pero NO es gratis,
     # el comprador contrata y paga el correo. Distingue de "envío gratis real".
     shipping_carrier_arranged = models.BooleanField(
@@ -125,6 +131,11 @@ class Order(models.Model):
     paid_email_sent = models.BooleanField(default=False)
     # Email de "pedido enviado / listo para retirar" (al marcar la orden como enviada)
     shipped_email_sent = models.BooleanField(default=False)
+    # Email final de entrega/retiro (independiente de pago y despacho).
+    completion_email_sent = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(
+        "fecha de entrega/retiro", null=True, blank=True
+    )
     # Idempotencia de reposición de stock al cancelar (evita devolver stock dos veces)
     stock_restored = models.BooleanField("stock repuesto", default=False)
 
@@ -142,6 +153,65 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Orden #{self.id} - {self.full_name}"
+
+    @property
+    def fulfillment_label(self):
+        if self.fulfillment_status == "completed":
+            return "Retirada" if self.delivery_method == "pickup" else "Entregada"
+        return self.get_fulfillment_status_display()
+
+    @property
+    def situation_label(self):
+        if self.payment_status == "review":
+            return "Revisar pago"
+        if self.payment_status in {
+            "rejected",
+            "refunded",
+            "partially_refunded",
+            "charged_back",
+        }:
+            return "Revisar postventa"
+        if self.fulfillment_status == "cancelled" or self.payment_status == "cancelled":
+            return "Cancelada"
+        if self.fulfillment_status == "completed":
+            return (
+                "Completada" if self.payment_status == "approved" else "Cobro pendiente"
+            )
+        if self.fulfillment_status == "shipped":
+            return (
+                "En camino"
+                if self.payment_status == "approved"
+                else "En camino · cobrar"
+            )
+        if self.fulfillment_status == "ready_for_pickup":
+            return (
+                "Lista para retirar"
+                if self.payment_status == "approved"
+                else "Lista · cobrar"
+            )
+        if self.payment_status == "approved":
+            return "Preparar pedido"
+        if self.payment_method == "cod" and self.payment_status == "pending":
+            return "Preparar contraentrega"
+        return "Esperando pago"
+
+    @property
+    def situation_tone(self):
+        if self.payment_status in {
+            "review",
+            "rejected",
+            "refunded",
+            "partially_refunded",
+            "charged_back",
+        }:
+            return "alert"
+        if self.fulfillment_status == "cancelled" or self.payment_status == "cancelled":
+            return "cancelled"
+        if self.fulfillment_status == "completed":
+            return "completed"
+        if self.fulfillment_status in {"shipped", "ready_for_pickup"}:
+            return self.fulfillment_status
+        return "pending"
 
 
 class OrderItem(models.Model):

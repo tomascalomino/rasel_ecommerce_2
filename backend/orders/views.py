@@ -120,7 +120,9 @@ def _create_offline_order(
             validated.append((variant, item.qty, unit_price, line_total))
 
         if validated_subtotal != delivery["items_subtotal"]:
-            raise ValueError("El precio de uno de los productos cambió. Revisá el pedido.")
+            raise ValueError(
+                "El precio de uno de los productos cambió. Revisá el pedido."
+            )
 
         discount_amount = payment_discount_for_lines(
             ((unit_price, quantity) for _, quantity, unit_price, _ in validated),
@@ -142,7 +144,7 @@ def _create_offline_order(
                 discount_percent if payment_method in {"transfer", "cod"} else 0
             ),
             total_amount=grand_total,
-            status="pending",
+            fulfillment_status="pending",
             payment_status="pending",
             payment_method=payment_method,
             stock_deducted=True,
@@ -220,17 +222,24 @@ def checkout(request):
         except (ValueError, Variant.DoesNotExist) as exc:
             messages.error(
                 request,
-                str(exc) if isinstance(exc, ValueError)
-                else "Uno de los productos ya no esta disponible.",
+                (
+                    str(exc)
+                    if isinstance(exc, ValueError)
+                    else "Uno de los productos ya no esta disponible."
+                ),
             )
             return _render_checkout(request, cart, form, discount_percent)
         cart.clear()
         send_order_confirmation(order.id)
-        destination = "orders:cod_info" if payment_method == "cod" else "orders:transfer_info"
+        destination = (
+            "orders:cod_info" if payment_method == "cod" else "orders:transfer_info"
+        )
         return redirect(destination, order_id=order.id)
 
     if not settings.MP_CHECKOUT_ENABLED:
-        form.add_error("payment_method", "Mercado Pago no esta disponible en este momento.")
+        form.add_error(
+            "payment_method", "Mercado Pago no esta disponible en este momento."
+        )
         return _render_checkout(request, cart, form, discount_percent)
 
     draft_delivery = {
@@ -254,8 +263,11 @@ def checkout(request):
     except (PaymentValidationError, Variant.DoesNotExist) as exc:
         messages.error(
             request,
-            str(exc) if isinstance(exc, PaymentValidationError)
-            else "Uno de los productos ya no esta disponible.",
+            (
+                str(exc)
+                if isinstance(exc, PaymentValidationError)
+                else "Uno de los productos ya no esta disponible."
+            ),
         )
         return _render_checkout(request, cart, form, discount_percent)
 

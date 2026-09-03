@@ -11,7 +11,7 @@ from datetime import timedelta
 
 from django.apps import apps as global_apps
 from django.contrib import admin
-from django.db.models import Count, Sum
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
 from .version import APP_VERSION
@@ -52,7 +52,10 @@ def sync_roles(sender=None, **kwargs):
     for app_label in ("shop", "orders", "shipping"):
         create_permissions(global_apps.get_app_config(app_label), verbosity=0)
 
-    for name, matrix in ((ROLE_OPERATOR, _OPERATOR_MATRIX), (ROLE_READONLY, _READONLY_MATRIX)):
+    for name, matrix in (
+        (ROLE_OPERATOR, _OPERATOR_MATRIX),
+        (ROLE_READONLY, _READONLY_MATRIX),
+    ):
         group, _ = Group.objects.get_or_create(name=name)
         perms = []
         for model_key, actions in matrix.items():
@@ -93,7 +96,9 @@ class RaselAdminSite(admin.AdminSite):
             if model_order:
                 model_pos = {name: i for i, name in enumerate(model_order)}
                 app["models"].sort(
-                    key=lambda m: model_pos.get(m["object_name"].lower(), len(model_pos))
+                    key=lambda m: model_pos.get(
+                        m["object_name"].lower(), len(model_pos)
+                    )
                 )
         return app_list
 
@@ -109,16 +114,29 @@ class RaselAdminSite(admin.AdminSite):
         week = today - timedelta(days=today.weekday())
         month = today.replace(day=1)
 
-        sold = Order.objects.filter(status__in=("paid", "shipped"))
+        sold = Order.objects.filter(
+            payment_status__in=("approved", "partially_refunded")
+        ).exclude(fulfillment_status="cancelled")
 
         def sales_since(start):
             data = sold.filter(created_at__gte=start).aggregate(
-                total=Sum("total_amount"), count=Count("id")
+                total=Sum(F("total_amount") - F("mp_refunded_amount")),
+                count=Count("id"),
             )
             return {"total": data["total"] or 0, "count": data["count"] or 0}
 
         return {
-            "dash_pending_count": Order.objects.filter(status="pending").count(),
+            "dash_pending_payment_count": Order.objects.filter(payment_status="pending")
+            .exclude(fulfillment_status="cancelled")
+            .count(),
+            "dash_orders_to_prepare_count": Order.objects.filter(
+                fulfillment_status="pending"
+            )
+            .filter(
+                Q(payment_status="approved")
+                | Q(payment_method="cod", payment_status="pending")
+            )
+            .count(),
             "dash_sales_today": sales_since(today),
             "dash_sales_week": sales_since(week),
             "dash_sales_month": sales_since(month),

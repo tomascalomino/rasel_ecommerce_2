@@ -4,6 +4,7 @@ import json
 import threading
 from datetime import timedelta
 from decimal import Decimal
+from io import StringIO
 from unittest.mock import patch
 
 from django.core import mail
@@ -28,7 +29,6 @@ from .mercadopago import MercadoPagoError, validate_webhook_signature
 from .models import PaymentDraft, PaymentEvent
 from .services import process_payment, release_reserved_stock
 
-
 MP_TEST_SETTINGS = {
     "MP_CHECKOUT_ENABLED": True,
     "MP_ENVIRONMENT": "test",
@@ -49,7 +49,9 @@ MP_TEST_SETTINGS = {
 class MercadoPagoIntegrationTests(TestCase):
     def setUp(self):
         category = Category.objects.create(name="Aceites")
-        product = Product.objects.create(name="RaSel", category=category, is_active=True)
+        product = Product.objects.create(
+            name="RaSel", category=category, is_active=True
+        )
         self.variant = Variant.objects.create(
             product=product,
             name="250 ml",
@@ -162,7 +164,9 @@ class MercadoPagoIntegrationTests(TestCase):
             "init_point": "https://www.mercadopago.com.ar/checkout/v1/redirect",
             "collector_id": 445566,
         }
-        with patch("payments.services.create_preference", return_value=preference) as create:
+        with patch(
+            "payments.services.create_preference", return_value=preference
+        ) as create:
             response = self.client.post(url)
             retry_response = self.client.post(url)
         self.assertEqual(response.status_code, 302)
@@ -275,9 +279,7 @@ class MercadoPagoIntegrationTests(TestCase):
         self.assertEqual(draft.items[0]["unit_price"], "800.00")
         self.assertEqual(draft.items[0]["line_total"], "1600.00")
         self.assertEqual(variant.stock_qty, 1)
-        self.assertEqual(
-            self.client.session["active_payment_draft"], str(draft.token)
-        )
+        self.assertEqual(self.client.session["active_payment_draft"], str(draft.token))
 
     def test_invalid_signature_writes_nothing_and_does_not_query_api(self):
         payment = self.payment()
@@ -297,7 +299,7 @@ class MercadoPagoIntegrationTests(TestCase):
         self.draft.refresh_from_db()
         self.variant.refresh_from_db()
         self.assertEqual(Order.objects.count(), 1)
-        self.assertEqual(self.draft.order.status, "paid")
+        self.assertEqual(self.draft.order.fulfillment_status, "pending")
         self.assertEqual(self.draft.order.payment_status, "approved")
         self.assertEqual(self.draft.order.payment_discount_amount, Decimal("0.00"))
         self.assertTrue(self.draft.order.stock_deducted)
@@ -331,7 +333,7 @@ class MercadoPagoIntegrationTests(TestCase):
         response = self.post_webhook(payment, notification_id="evt-mismatch")
         self.assertEqual(response.status_code, 200)
         order = Order.objects.get()
-        self.assertEqual(order.status, "payment_review")
+        self.assertEqual(order.fulfillment_status, "pending")
         self.assertEqual(order.payment_status, "review")
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("alerts@example.com", mail.outbox[0].to)
@@ -368,7 +370,7 @@ class MercadoPagoIntegrationTests(TestCase):
         result = process_payment(self.payment(live_mode=True), "PAY-1")
         self.assertEqual(result.state, "review")
         self.assertEqual(result.error, "live_mode_mismatch")
-        self.assertEqual(result.order.status, "payment_review")
+        self.assertEqual(result.order.fulfillment_status, "pending")
 
     def test_regular_checkout_endpoint_accepts_test_user_live_mode_true(self):
         self.draft.mp_init_point = "https://www.mercadopago.com.ar/checkout/start"
@@ -377,7 +379,7 @@ class MercadoPagoIntegrationTests(TestCase):
         result = process_payment(self.payment(live_mode=True), "PAY-1")
 
         self.assertEqual(result.state, "approved")
-        self.assertEqual(result.order.status, "paid")
+        self.assertEqual(result.order.fulfillment_status, "pending")
         self.assertEqual(result.order.payment_status, "approved")
 
     def test_reconciliation_resolves_live_mode_review_once(self):
@@ -389,14 +391,16 @@ class MercadoPagoIntegrationTests(TestCase):
         self.draft.mp_init_point = "https://www.mercadopago.com.ar/checkout/start"
         self.draft.save(update_fields=["mp_init_point"])
         with self.captureOnCommitCallbacks(execute=True):
-            result = process_payment(self.payment(live_mode=True), "PAY-1", reconciled=True)
+            result = process_payment(
+                self.payment(live_mode=True), "PAY-1", reconciled=True
+            )
 
         result.draft.refresh_from_db()
         result.order.refresh_from_db()
         self.variant.refresh_from_db()
         self.assertEqual(result.draft.state, "approved")
         self.assertEqual(result.draft.processing_error, "")
-        self.assertEqual(result.order.status, "paid")
+        self.assertEqual(result.order.fulfillment_status, "pending")
         self.assertEqual(result.order.payment_status, "approved")
         self.assertTrue(result.order.confirmation_email_sent)
         self.assertEqual(self.variant.stock_qty, 1)
@@ -405,12 +409,12 @@ class MercadoPagoIntegrationTests(TestCase):
     def test_currency_mismatch_is_review_not_fulfilled(self):
         result = process_payment(self.payment(currency_id="USD"), "PAY-1")
         self.assertEqual(result.error, "currency_mismatch")
-        self.assertEqual(result.order.status, "payment_review")
+        self.assertEqual(result.order.fulfillment_status, "pending")
 
     def test_collector_mismatch_is_review_not_fulfilled(self):
         result = process_payment(self.payment(collector_id=999), "PAY-1")
         self.assertEqual(result.error, "collector_mismatch")
-        self.assertEqual(result.order.status, "payment_review")
+        self.assertEqual(result.order.fulfillment_status, "pending")
 
     def test_pending_payment_extends_reservation_without_releasing_stock(self):
         previous_expiry = self.draft.reservation_expires_at
@@ -594,7 +598,7 @@ class ReconciliationTests(TestCase):
         with self.captureOnCommitCallbacks(execute=True):
             call_command("reconcile_mp_payments", batch_size=100)
         self.assertEqual(Order.objects.count(), 1)
-        self.assertEqual(Order.objects.get().status, "paid")
+        self.assertEqual(Order.objects.get().fulfillment_status, "pending")
 
     @patch("payments.management.commands.reconcile_mp_payments.get_payment")
     @patch("payments.management.commands.reconcile_mp_payments.cancel_payment")
@@ -603,10 +607,39 @@ class ReconciliationTests(TestCase):
         self.draft.mp_payment_id = "PAY-CRON"
         self.draft.state = "pending"
         self.draft.save(update_fields=["created_at", "mp_payment_id", "state"])
-        get.side_effect = [self.payment(status="pending"), self.payment(status="cancelled")]
+        get.side_effect = [
+            self.payment(status="pending"),
+            self.payment(status="cancelled"),
+        ]
         cancel.return_value = self.payment(status="cancelled")
         call_command("reconcile_mp_payments", batch_size=100)
         cancel.assert_called_once()
         self.draft.refresh_from_db()
         self.assertEqual(self.draft.state, "cancelled")
         self.assertIsNotNone(self.draft.stock_released_at)
+
+
+class OpsKpiOrderStateTests(TestCase):
+    def test_command_counts_financially_paid_orders_regardless_of_delivery(self):
+        base = {
+            "full_name": "KPI User",
+            "email": "kpi@example.com",
+            "total_amount": Decimal("100.00"),
+            "payment_method": "transfer",
+        }
+        Order.objects.create(
+            **base, payment_status="approved", fulfillment_status="completed"
+        )
+        Order.objects.create(
+            **base, payment_status="pending", fulfillment_status="shipped"
+        )
+        Order.objects.create(
+            **base, payment_status="cancelled", fulfillment_status="cancelled"
+        )
+        output = StringIO()
+
+        call_command("ops_kpis", days=7, stdout=output)
+
+        report = output.getvalue()
+        self.assertIn("Órdenes cobradas: 1", report)
+        self.assertIn("Órdenes canceladas: 1", report)

@@ -3,6 +3,28 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-03 — Pago y entrega separados en órdenes (1.4.0)
+
+- Administración: las órdenes muestran por separado **Situación**, **Pago** y
+  **Entrega**, con filtros y botones contextuales tanto en el detalle como para
+  selecciones masivas.
+- Operación: se agregan las etapas despachada, lista para retirar y completada.
+  **Cobrar y completar** registra conjuntamente pago y entrega para métodos
+  offline; Mercado Pago sigue dependiendo de la aprobación de su API.
+- Notificaciones: pago, despacho y finalización tienen correos idempotentes
+  separados. La acción conjunta envía solo una confirmación final de entrega o
+  retiro.
+- Seguridad: las transiciones se centralizan y bloquean estados incompatibles.
+  El stock de pedidos despachados o completados no se repone sin devolución
+  física confirmada.
+- Indicadores: el dashboard separa cobros pendientes de pedidos para preparar;
+  ventas y KPI usan el estado financiero y descuentan reintegros parciales.
+- Migraciones o variables: se agrega `orders.0016`, que conserva el pago
+  histórico y migra la logística sin presumir que un envío fue entregado. No se
+  agregan variables de entorno.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md`, `docs/OPERATIONS.md` y
+  `docs/CHANGELOG.md`.
+
 ## 2026-09-03 — Descuento offline administrable (1.3.0)
 
 - Administración: se incorpora una configuración comercial global para editar
