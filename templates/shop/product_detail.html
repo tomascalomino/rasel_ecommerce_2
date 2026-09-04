@@ -35,55 +35,52 @@
 
     {% if product.min_price_ars %}
       <div class="detail-price-block" aria-live="polite">
-        <div
-          class="detail-campaign-label"
-          id="product-promotion-label-row"
-          {% if not product.compare_at_price_ars %}hidden{% endif %}
-        >
-          <span class="promotion-badge" id="product-promotion-label">{{ product.promotion_label }}</span>
-        </div>
         <div class="price-hierarchy-panel detail-price-panel">
           <div
-            class="price-comparison-row detail-promotion"
+            class="price-promotion-header detail-promotion"
             id="product-promotion-comparison"
             {% if not product.compare_at_price_ars %}hidden{% endif %}
           >
-            <del
-              id="product-compare-at-price"
-              aria-label="Precio regular {{ product.compare_at_price_ars|ars }}"
-            >{{ product.compare_at_price_ars|ars }}</del>
+            <div class="price-list-row">
+              <span class="price-list-label">Precio de lista</span>
+              <del
+                id="product-compare-at-price"
+                aria-label="Precio de lista {{ product.compare_at_price_ars|ars }}"
+              >{{ product.compare_at_price_ars|ars }}</del>
+            </div>
+            <div class="price-campaign-label" id="product-promotion-label">{{ product.promotion_label }}</div>
           </div>
-          <div class="price-payment-row detail-sale-price{% if not product.offline_price_ars %} is-primary{% endif %}">
-            <strong class="sale-price-amount" id="product-current-price">{{ product.min_price_ars|ars }}</strong>
-            <span class="price-payment-meta">
+          <div class="price-sale-section detail-sale-price{% if not product.offline_price_ars %} is-primary{% endif %}">
+            <div class="price-amount-badge-row">
+              <strong class="sale-price-amount" id="product-current-price">{{ product.min_price_ars|ars }}</strong>
               <span
                 class="promotion-discount-badge"
                 id="product-promotion-discount"
-                aria-label="{{ product.promotion_discount_label }} sobre el precio regular"
+                aria-label="{{ product.promotion_discount_label }} sobre el precio de lista"
                 {% if not product.compare_at_price_ars %}hidden{% endif %}
               >{{ product.promotion_discount_label }}</span>
-              <span class="payment-method-copy">
+            </div>
+            <div class="payment-method-copy">
             {% if product.offline_price_ars and mp_checkout_enabled %}
+              <span>Pagando a través de</span>
               <img src="{% static 'img/mercado-pago-horizontal.svg' %}" alt="Mercado Pago">
             {% else %}
               <span>Precio de venta</span>
             {% endif %}
-              </span>
-            </span>
+            </div>
           </div>
           {% if product.offline_price_ars %}
             <div class="price-panel-divider" aria-hidden="true"></div>
-            <div class="price-payment-row detail-offline-price">
-              <strong class="offline-price-amount" id="product-offline-price">{{ product.offline_price_ars|ars }}</strong>
-              <span class="price-payment-meta">
+            <div class="price-offline-section detail-offline-price">
+              <div class="price-amount-badge-row">
+                <strong class="offline-price-amount" id="product-offline-price">{{ product.offline_price_ars|ars }}</strong>
                 <span
-                  class="promotion-discount-badge"
-                  id="product-offline-promotion-discount"
-                  aria-label="{{ product.offline_promotion_discount_label }} total sobre el precio regular pagando por transferencia o efectivo"
-                  {% if not product.offline_promotion_discount_label %}hidden{% endif %}
-                >{{ product.offline_promotion_discount_label }}</span>
-                <span class="offline-method-copy">Transferencia o efectivo</span>
-              </span>
+                  class="promotion-discount-badge additional-discount-badge"
+                  id="product-offline-additional-discount"
+                  aria-label="{{ offline_payment_discount_percent }}% adicional pagando con efectivo o transferencia"
+                >{{ offline_payment_discount_percent }}% ADICIONAL</span>
+              </div>
+              <span class="offline-method-copy">Efectivo o transferencia</span>
             </div>
           {% endif %}
         </div>
@@ -117,7 +114,6 @@
                 data-promotion-label="{{ v.promotion_label }}"
                 data-promotion-discount="{{ v.promotion_discount_label }}"
                 data-offline-price="{{ v.offline_price_ars|unlocalize }}"
-                data-offline-promotion-discount="{{ v.offline_promotion_discount_label }}"
                 {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}
               >
                 {{ v.name }} — {% if v.offline_price_ars %}{{ v.offline_price_ars|ars }}{% else %}{{ v.price_ars|ars }}{% endif %}
@@ -176,13 +172,11 @@
   var select = document.getElementById("product-variant");
   var currentPrice = document.getElementById("product-current-price");
   var promotionComparison = document.getElementById("product-promotion-comparison");
-  var promotionLabelRow = document.getElementById("product-promotion-label-row");
   var promotionLabel = document.getElementById("product-promotion-label");
   var compareAtPrice = document.getElementById("product-compare-at-price");
   var promotionDiscount = document.getElementById("product-promotion-discount");
   var offlinePrice = document.getElementById("product-offline-price");
-  var offlinePromotionDiscount = document.getElementById("product-offline-promotion-discount");
-  if (!select || !currentPrice || !promotionComparison || !promotionLabelRow || !promotionLabel || !compareAtPrice || !promotionDiscount) return;
+  if (!select || !currentPrice || !promotionComparison || !promotionLabel || !compareAtPrice || !promotionDiscount) return;
 
   function money(value) {
     return "$ " + new Intl.NumberFormat("es-AR", {
@@ -198,32 +192,20 @@
     var compareValue = parseFloat(option.dataset.compareAtPrice);
     var label = (option.dataset.promotionLabel || "").trim();
     var discountLabel = (option.dataset.promotionDiscount || "").trim();
-    var offlineDiscountLabel = (option.dataset.offlinePromotionDiscount || "").trim();
     var hasComparison = Number.isFinite(compareValue) && compareValue > currentValue && Boolean(label) && Boolean(discountLabel);
 
     currentPrice.textContent = money(currentValue);
     promotionComparison.hidden = !hasComparison;
-    promotionLabelRow.hidden = !hasComparison;
     promotionDiscount.hidden = !hasComparison;
     if (hasComparison) {
       promotionLabel.textContent = label;
       compareAtPrice.textContent = money(compareValue);
-      compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
+      compareAtPrice.setAttribute("aria-label", "Precio de lista " + money(compareValue));
       promotionDiscount.textContent = discountLabel;
-      promotionDiscount.setAttribute("aria-label", discountLabel + " sobre el precio regular");
+      promotionDiscount.setAttribute("aria-label", discountLabel + " sobre el precio de lista");
     }
     if (offlinePrice) {
       offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
-    }
-    if (offlinePromotionDiscount) {
-      offlinePromotionDiscount.hidden = !hasComparison || !offlineDiscountLabel;
-      if (hasComparison && offlineDiscountLabel) {
-        offlinePromotionDiscount.textContent = offlineDiscountLabel;
-        offlinePromotionDiscount.setAttribute(
-          "aria-label",
-          offlineDiscountLabel + " total sobre el precio regular pagando por transferencia o efectivo"
-        );
-      }
     }
   }
 
@@ -263,7 +245,7 @@
         </div>
         <div class="spacer"></div>
         <div class="row product-price-row">
-          {% include "partials/product_card_price.html" with product=p show_mp_price=mp_checkout_enabled only %}
+          {% include "partials/product_card_price.html" with product=p show_mp_price=mp_checkout_enabled offline_discount_percent=offline_payment_discount_percent only %}
           {% if p.in_stock %}
             <a
               class="btn btn-primary btn-small product-buy-button"

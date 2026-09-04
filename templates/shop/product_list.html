@@ -150,7 +150,7 @@
       <div class="spacer"></div>
 
       <div class="row product-price-row">
-        {% include "partials/product_card_price.html" with product=p show_mp_price=mp_checkout_enabled only %}
+        {% include "partials/product_card_price.html" with product=p show_mp_price=mp_checkout_enabled offline_discount_percent=offline_payment_discount_percent only %}
         {% if p.in_stock %}
           <a
             class="btn btn-primary btn-small product-buy-button"

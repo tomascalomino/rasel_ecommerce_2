@@ -1,50 +1,52 @@
 {% load static %}
 {% load money %}
 <div class="product-price-block">
-  {% if product.compare_at_price_ars %}
-    <span class="promotion-badge price-campaign-label">{{ product.promotion_label }}</span>
-  {% endif %}
   <div class="price-hierarchy-panel product-card-price-panel">
     {% if product.compare_at_price_ars %}
-      <div class="price-comparison-row product-card-comparison-row">
-        <del class="product-card-compare-price" aria-label="Precio regular {{ product.compare_at_price_ars|ars }}">
-          {{ product.compare_at_price_ars|ars }}
-        </del>
+      <div class="price-promotion-header product-card-promotion-header">
+        <div class="price-list-row">
+          <span class="price-list-label">Precio de lista</span>
+          <del class="product-card-compare-price" aria-label="Precio de lista {{ product.compare_at_price_ars|ars }}">
+            {{ product.compare_at_price_ars|ars }}
+          </del>
+        </div>
+        <div class="price-campaign-label">{{ product.promotion_label }}</div>
       </div>
     {% endif %}
-    <div class="price-payment-row product-card-sale-price{% if not product.offline_price_ars %} is-primary{% endif %}">
-      <strong class="price sale-price-amount">
-        {% if product.min_price_ars %}{{ product.min_price_ars|ars }}{% else %}—{% endif %}
-      </strong>
-      <span class="price-payment-meta">
+
+    <div class="price-sale-section product-card-sale-price{% if not product.offline_price_ars %} is-primary{% endif %}">
+      <div class="price-amount-badge-row">
+        <strong class="price sale-price-amount">
+          {% if product.min_price_ars %}{{ product.min_price_ars|ars }}{% else %}—{% endif %}
+        </strong>
         {% if product.compare_at_price_ars %}
           <span
             class="promotion-discount-badge"
-            aria-label="{{ product.promotion_discount_label }} sobre el precio regular"
+            aria-label="{{ product.promotion_discount_label }} sobre el precio de lista"
           >{{ product.promotion_discount_label }}</span>
         {% endif %}
-        <span class="payment-method-copy">
+      </div>
+      <div class="payment-method-copy">
         {% if product.offline_price_ars and show_mp_price %}
+          <span>Pagando a través de</span>
           <img src="{% static 'img/mercado-pago-horizontal.svg' %}" alt="Mercado Pago">
         {% else %}
           <span>Precio de venta</span>
         {% endif %}
-        </span>
-      </span>
+      </div>
     </div>
+
     {% if product.offline_price_ars %}
       <div class="price-panel-divider" aria-hidden="true"></div>
-      <div class="price-payment-row product-card-offline-price">
-        <strong class="offline-price-amount">{{ product.offline_price_ars|ars }}</strong>
-        <span class="price-payment-meta">
-          {% if product.offline_promotion_discount_label %}
-            <span
-              class="promotion-discount-badge"
-              aria-label="{{ product.offline_promotion_discount_label }} total sobre el precio regular pagando por transferencia o efectivo"
-            >{{ product.offline_promotion_discount_label }}</span>
-          {% endif %}
-          <span class="offline-method-copy">Transferencia o efectivo</span>
-        </span>
+      <div class="price-offline-section product-card-offline-price">
+        <div class="price-amount-badge-row">
+          <strong class="offline-price-amount">{{ product.offline_price_ars|ars }}</strong>
+          <span
+            class="promotion-discount-badge additional-discount-badge"
+            aria-label="{{ offline_discount_percent }}% adicional pagando con efectivo o transferencia"
+          >{{ offline_discount_percent }}% ADICIONAL</span>
+        </div>
+        <span class="offline-method-copy">Efectivo o transferencia</span>
       </div>
     {% endif %}
   </div>

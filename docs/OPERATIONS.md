@@ -481,15 +481,18 @@ recuperación de Neon.
    checkout y Mercado Pago.
 3. Para comunicar una campaña, completar juntos **precio regular (ARS)** y
    **texto de promoción** en cada presentación. El precio debe ser una referencia
-   verdadera y mayor al precio de venta; el texto, de hasta 40 caracteres, se
-   muestra exactamente como se carga dentro de una burbuja (por ejemplo,
-   “Precio de lanzamiento” o “Black Friday”). El admin rechaza los campos
-   incompletos o un precio regular igual o menor al cobrado.
+   verdadera y mayor al precio de venta; el texto admite hasta 40 caracteres y
+   se presenta visualmente en mayúsculas debajo de **Precio de lista** (por
+   ejemplo, cargar “Lanzamiento web” o “Black Friday”). El admin conserva el
+   texto escrito y rechaza los campos incompletos o un precio regular igual o
+   menor al cobrado.
 4. Confirmar en inicio, tienda, recomendados, detalle y compra rápida que la
-   burbuja y el precio tachado corresponden a la misma presentación. Al terminar
-   la campaña, colocar el importe definitivo como precio de venta y vaciar juntos
-   el precio regular y el texto. No queda un historial ni hay cambio automático
-   por fecha.
+   leyenda, el precio tachado y el primer porcentaje corresponden a la misma
+   presentación. La burbuja **X% ADICIONAL** pertenece a la configuración
+   comercial global y permanece visible en productos sin campaña mientras el
+   descuento offline sea mayor a cero. Al terminar la campaña, colocar el
+   importe definitivo como precio de venta y vaciar juntos el precio regular y
+   el texto. No queda un historial ni hay cambio automático por fecha.
 5. Como staging y producción usan bases separadas, cargar, cambiar o retirar estos
    valores en cada admin después del despliegue correspondiente.
 6. Cargar o reemplazar imágenes; confirmar que la URL generada usa R2 y que la
@@ -509,7 +512,9 @@ recuperación de Neon.
    pago** y editar **Descuento por efectivo/transferencia (%)**. Admite enteros
    entre 0 y 50; el valor inicial es 10.
 2. Guardar y comprobar en una ficha de producto, compra rápida, checkout y
-   Términos que el importe y todos los textos muestran el nuevo porcentaje.
+   Términos que el importe y todos los textos muestran el nuevo porcentaje. En
+   las vidrieras aparece como **X% ADICIONAL**; el importe continúa redondeándose
+   hacia abajo al múltiplo de $50, por lo que el ahorro efectivo puede ser mayor.
    Staging y producción tienen bases separadas y deben configurarse por separado.
 3. Usar 0 para desactivar el beneficio: no se aplica el redondeo a $50 ni se
    muestran precios o leyendas de descuento. Transferencia y efectivo siguen

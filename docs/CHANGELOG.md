@@ -3,6 +3,24 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-04 — Jerarquía editorial del precio (1.7.0)
+
+- Vidrieras: inicio, tienda, recomendados, detalle y compra rápida presentan el
+  comparativo como **Precio de lista**, ubican la campaña administrable dentro
+  del panel y la muestran en mayúsculas sin modificar el texto guardado.
+- Mercado Pago: el precio de venta gana tamaño y conserva su OFF contra el
+  precio de lista; debajo vuelve la leyenda “Pagando a través de” junto al logo
+  horizontal transparente.
+- Efectivo y transferencia: el precio principal ocupa una sección con fondo
+  oliva suave y reemplaza el descuento total calculado por **X% ADICIONAL**,
+  usando exactamente la tasa global del admin incluso sin campaña de lista.
+- Consistencia: detalle y compra rápida actualizan juntos los datos propios de
+  cada variante. El badge adicional es global; con 0% se ocultan tanto el
+  precio offline como esa comunicación.
+- Alcance: no cambian el cálculo, el redondeo hacia abajo a múltiplos de $50,
+  carrito, checkout, Mercado Pago, órdenes, modelos ni variables de entorno.
+  Se actualizan `CURRENT_SYSTEM.md`, `OPERATIONS.md` y este historial.
+
 ## 2026-09-04 — Identificación visual de Mercado Pago (1.6.1)
 
 - Vidrieras: la fila del precio de venta conserva el logo horizontal de Mercado
