@@ -17,22 +17,28 @@
 
     var currentPrice = dialog.querySelector("[data-quick-add-current-price]");
     var promotionComparison = dialog.querySelector("[data-quick-add-promotion-comparison]");
+    var promotionLabelRow = dialog.querySelector("[data-quick-add-promotion-label-row]");
     var promotionLabel = dialog.querySelector("[data-quick-add-promotion-label]");
     var compareAtPrice = dialog.querySelector("[data-quick-add-compare-at-price]");
+    var promotionDiscount = dialog.querySelector("[data-quick-add-promotion-discount]");
     var offlinePrice = dialog.querySelector("[data-quick-add-offline-price]");
     var quantity = dialog.querySelector("[data-quick-add-qty-input]");
     var stock = parseInt(option.dataset.stock, 10) || 1;
     var currentValue = parseFloat(option.dataset.price) || 0;
     var compareValue = parseFloat(option.dataset.compareAtPrice);
     var label = (option.dataset.promotionLabel || "").trim();
-    var hasComparison = Number.isFinite(compareValue) && compareValue > currentValue && Boolean(label);
+    var discountLabel = (option.dataset.promotionDiscount || "").trim();
+    var hasComparison = Number.isFinite(compareValue) && compareValue > currentValue && Boolean(label) && Boolean(discountLabel);
 
     currentPrice.textContent = money(currentValue);
     promotionComparison.hidden = !hasComparison;
+    promotionLabelRow.hidden = !hasComparison;
     if (hasComparison) {
       promotionLabel.textContent = label;
       compareAtPrice.textContent = money(compareValue);
       compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
+      promotionDiscount.textContent = discountLabel;
+      promotionDiscount.setAttribute("aria-label", discountLabel + " sobre el precio regular");
     }
     if (offlinePrice) {
       offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);

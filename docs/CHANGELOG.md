@@ -3,6 +3,27 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-03 — Jerarquía de precios por medio de pago (1.5.0)
+
+- Vidrieras: inicio, tienda, recomendaciones, detalle y compra rápida muestran
+  primero el precio regular tachado con el porcentaje promocional calculado,
+  luego el precio de venta identificado con Mercado Pago y finalmente el precio
+  destacado por transferencia o efectivo.
+- Composición: los tres niveles se agrupan dentro de un panel delineado; cada
+  importe queda alineado con su forma de pago, Mercado Pago utiliza su logo
+  horizontal transparente y la opción offline suma un separador y la leyenda
+  discreta “Mejor precio”.
+- Promociones: la leyenda administrable se conserva y el nuevo porcentaje se
+  deriva de los dos precios de la misma variante, redondeado al entero más
+  cercano; diferencias menores a 0,5% se comunican como **<1% OFF**.
+- Claridad: se retira del detalle la segunda insignia del descuento offline para
+  no confundirla con el descuento del precio regular. El importe, checkout,
+  textos legales, órdenes y correos continúan usando el porcentaje administrable.
+- Contingencias: sin Mercado Pago el importe intermedio se presenta como precio
+  de venta; con descuento offline en 0% ese precio pasa a ser el principal.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+  Se actualizan `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-09-03 — Porcentaje de descuento sin “mínimo” (1.4.2)
 
 - Comunicación: producto, checkout, medios de pago, totales, instrucciones de

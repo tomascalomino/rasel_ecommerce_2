@@ -54,11 +54,12 @@ UptimeRobot → GET https://rasel.ar/healthz
   Ambos son opcionales pero deben cargarse o vaciarse juntos, y el precio
   regular debe superar al de venta. Inicio, tienda, recomendaciones, detalle y
   compra rápida muestran el texto exactamente como fue cargado dentro de una
-  burbuja, el precio regular tachado y el vigente destacado. En tarjetas, los
-  tres valores pertenecen a la misma variante activa más económica; en detalle
-  y compra rápida cambian juntos al elegir la presentación. El comparativo no
-  aparece en carrito, checkout, órdenes ni emails y nunca interviene en el
-  importe cobrado.
+  burbuja discreta. Debajo aparecen el precio regular tachado y otra burbuja
+  verde con el descuento porcentual derivado del precio regular y el de venta,
+  redondeado al entero más cercano. En tarjetas, todos los valores pertenecen a
+  la misma variante activa más económica; en detalle y compra rápida cambian
+  juntos al elegir la presentación. El comparativo no aparece en carrito,
+  checkout, órdenes ni emails y nunca interviene en el importe cobrado.
 - La sección **Nuestra selección** del inicio muestra hasta tres productos
   activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
   coloca primero las botellas y después los packs.
@@ -113,14 +114,19 @@ del servidor y nunca confía en el total enviado por el navegador.
   del precio de venta vigente. Mercado Pago conserva ese precio completo; el
   precio regular tachado es solo informativo. Cada variante puede acompañarlo
   con un texto de promoción administrable, mostrado dentro de una burbuja; ambos
-  campos se cargan o retiran juntos. El detalle de producto muestra el texto, el
-  comparativo y el precio promocional de la presentación elegida. Las tarjetas
-  del inicio, la tienda y las recomendaciones muestran debajo del precio
-  vigente el importe exacto por transferencia o efectivo de la misma variante
-  activa más económica. El resumen del checkout cambia en el acto al seleccionar
-  cada medio. La comunicación pública muestra el porcentaje configurado sin la
-  palabra “mínimo”. Con 0% no se aplica el redondeo ni descuento y se ocultan los
-  precios y textos promocionales, pero los medios offline continúan disponibles.
+  campos se cargan o retiran juntos. En las vidrieras, los importes forman un
+  panel delineado: arriba aparece el precio regular tachado con el porcentaje
+  promocional; el precio de venta ocupa un nivel intermedio identificado por el
+  texto y el logo horizontal transparente de Mercado Pago cuando ese checkout y
+  el descuento offline están activos; el importe exacto por transferencia o
+  efectivo aparece debajo como precio principal en verde oscuro, separado por
+  una línea y acompañado por “Mejor precio”. La insignia del porcentaje offline
+  no se repite en este bloque para no confundirla con el descuento calculado
+  entre precio regular y precio de venta. El resumen del
+  checkout cambia en el acto al seleccionar cada medio. La comunicación pública
+  restante muestra el porcentaje configurado sin la palabra “mínimo”. Con 0% no
+  se aplica el redondeo ni descuento, se oculta el importe offline y el precio de
+  venta vuelve a ser el principal; los medios offline continúan disponibles.
 - Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
   imagen, precio, precio offline, cantidad y las presentaciones activas que
   tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un
@@ -133,11 +139,12 @@ del servidor y nunca confía en el total enviado por el navegador.
   cuenta vendedora está configurada para liberar el dinero a los **18 días
   corridos**; las cuotas disponibles para el comprador tienen interés y RaSel
   no ofrece cuotas sin interés financiadas por el comercio. Cuando el checkout
-  está activo, la página de cada producto muestra el logo oficial de Mercado
-  Pago debajo del precio y el inicio incluye un aviso compacto encabezado
-  “Pagá como prefieras” sobre los medios disponibles. Ambos avisos se ocultan
-  con el mismo kill switch para no promocionar un medio temporalmente
-  deshabilitado.
+  está activo y existe un precio offline diferenciado, las vidrieras identifican
+  el precio de venta con el logo oficial horizontal de Mercado Pago, sin fondo.
+  El inicio incluye además un aviso compacto
+  encabezado “Pagá como prefieras” sobre los medios disponibles. Estos avisos se
+  ocultan con el mismo kill switch para no promocionar un medio temporalmente
+  deshabilitado; en ese caso el importe intermedio se rotula “Precio de venta”.
 
 Para transferencia o efectivo, el checkout valida todas las variantes y su
 stock dentro de una transacción, vuelve a calcular precios y el descuento del
