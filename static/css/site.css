@@ -1939,6 +1939,11 @@ textarea:focus {
   flex: none;
   margin-top: 8px;
   margin-left: auto;
+  background: #4f5d3b;
+}
+
+.product-buy-button:hover {
+  background: #455233;
 }
 
 .quick-add-dialog {

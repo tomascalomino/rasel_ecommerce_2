@@ -65,7 +65,9 @@ UptimeRobot → GET https://rasel.ar/healthz
   de $50 pueda mejorar el ahorro efectivo. Esa segunda burbuja también aparece
   sin campaña de lista; con 0% se oculta toda la sección offline. En tarjetas,
   todos los importes pertenecen a la misma variante activa más económica; en
-  detalle y compra rápida cambian juntos al elegir la presentación. Estos
+  detalle y compra rápida cambian juntos al elegir la presentación. El botón
+  **Comprar** de las tarjetas usa un oliva medio, ligeramente más claro que los
+  demás botones principales, manteniendo texto blanco y hover oscuro. Estos
   comparativos no aparecen en carrito, checkout, órdenes ni emails y nunca
   modifican por sí mismos el importe cobrado.
 - La sección **Nuestra selección** del inicio muestra hasta tres productos

@@ -3,6 +3,13 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-04 — Botón Comprar más claro (1.7.1)
+
+- Vidrieras: el botón **Comprar** de las tarjetas adopta un verde oliva medio,
+  ligeramente más claro, y conserva texto blanco y un estado hover más oscuro.
+- Alcance: no cambian precios, promociones, cálculos, checkout, admin, modelos
+  ni variables de entorno. Se actualizan `CURRENT_SYSTEM.md` y este historial.
+
 ## 2026-09-04 — Jerarquía editorial del precio (1.7.0)
 
 - Vidrieras: inicio, tienda, recomendados, detalle y compra rápida presentan el
