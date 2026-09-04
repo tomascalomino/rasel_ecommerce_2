@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -212,6 +213,32 @@ class Variant(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product.name} - {self.name}"
+
+    @property
+    def promotion_discount_percent(self):
+        """Porcentaje entero entre el precio regular y el precio de venta."""
+        regular_price = self.compare_at_price_ars
+        sale_price = self.price_ars
+        if (
+            regular_price is None
+            or sale_price is None
+            or regular_price <= sale_price
+            or regular_price <= 0
+        ):
+            return None
+
+        percentage = ((regular_price - sale_price) / regular_price) * Decimal("100")
+        return int(percentage.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+    @property
+    def promotion_discount_label(self):
+        """Texto breve para la insignia comercial derivada de los precios."""
+        percentage = self.promotion_discount_percent
+        if percentage is None:
+            return ""
+        if percentage == 0:
+            return "<1% OFF"
+        return f"{percentage}% OFF"
 
     @property
     def pack_savings_ars(self):

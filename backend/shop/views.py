@@ -31,6 +31,9 @@ def _attach_product_card_data(products, discount_percent):
             price_variant.compare_at_price_ars if price_variant else None
         )
         product.promotion_label = price_variant.promotion_label if price_variant else ""
+        product.promotion_discount_label = (
+            price_variant.promotion_discount_label if price_variant else ""
+        )
         product.offline_price_ars = discounted_amount(
             product.min_price_ars, discount_percent
         )

@@ -109,6 +109,49 @@ class VariantPromotionTests(TestCase):
 
 		self.assertEqual(variant.promotion_label, "Black Friday")
 
+	def test_promotion_discount_is_derived_and_rounded_to_the_nearest_integer(self):
+		for regular_price, sale_price, expected_percent, expected_label in (
+			(Decimal("9750.00"), Decimal("7800.00"), 20, "20% OFF"),
+			(Decimal("8750.00"), Decimal("7800.00"), 11, "11% OFF"),
+			(Decimal("100.00"), Decimal("87.50"), 13, "13% OFF"),
+		):
+			with self.subTest(regular_price=regular_price, sale_price=sale_price):
+				variant = Variant(
+					product=self.product,
+					name="Presentación promocional",
+					sku="PROMO-PERCENT",
+					price_ars=sale_price,
+					compare_at_price_ars=regular_price,
+					promotion_label="Precio de lanzamiento",
+				)
+
+				self.assertEqual(variant.promotion_discount_percent, expected_percent)
+				self.assertEqual(variant.promotion_discount_label, expected_label)
+
+	def test_promotion_discount_below_half_a_percent_is_shown_as_less_than_one(self):
+		variant = Variant(
+			product=self.product,
+			name="Diferencia mínima",
+			sku="PROMO-UNDER-ONE",
+			price_ars=Decimal("99.60"),
+			compare_at_price_ars=Decimal("100.00"),
+			promotion_label="Precio especial",
+		)
+
+		self.assertEqual(variant.promotion_discount_percent, 0)
+		self.assertEqual(variant.promotion_discount_label, "<1% OFF")
+
+	def test_variant_without_regular_price_has_no_promotion_discount(self):
+		variant = Variant(
+			product=self.product,
+			name="Sin promoción",
+			sku="NO-PROMO-PERCENT",
+			price_ars=Decimal("7800.00"),
+		)
+
+		self.assertIsNone(variant.promotion_discount_percent)
+		self.assertEqual(variant.promotion_discount_label, "")
+
 	def test_regular_price_must_be_greater_than_the_sale_price(self):
 		for regular_price in (Decimal("7400.00"), Decimal("7000.00")):
 			with self.subTest(regular_price=regular_price):
@@ -235,8 +278,9 @@ class ProductListViewTests(TestCase):
 		product_response = self.client.get(
 			reverse("shop:product_detail", args=[self.p1.slug])
 		)
-		self.assertContains(product_response, "10% OFF")
+		self.assertNotContains(product_response, "10% OFF")
 		self.assertNotContains(product_response, "MÍN.")
+		self.assertContains(product_response, "detail-offline-price")
 		self.assertContains(product_response, "transferencia o efectivo")
 		self.assertContains(product_response, "$ 100")
 		self.assertContains(product_response, 'data-offline-price="100.00"')
@@ -247,10 +291,12 @@ class ProductListViewTests(TestCase):
 			with self.subTest(url=url):
 				response = self.client.get(url)
 				self.assertContains(response, "mercado-pago-horizontal.svg")
-				self.assertContains(response, "Hasta 6 cuotas")
 				if url == reverse("home"):
+					self.assertContains(response, "Hasta 6 cuotas")
 					self.assertContains(response, "Pagá como prefieras")
 					self.assertNotContains(response, "Pagá como preferís")
+				else:
+					self.assertContains(response, "Pagando a través de")
 
 	@override_settings(MP_CHECKOUT_ENABLED=False)
 	def test_mp_brand_is_hidden_when_checkout_is_disabled(self):
@@ -405,8 +451,9 @@ class ProductCardPricingTests(TestCase):
 				)
 				self.assertFalse(products[self.out_of_stock.pk].in_stock)
 				self.assertIsNone(products[self.without_variants.pk].offline_price_ars)
-				self.assertContains(response, 'class="product-card-offline-price"', count=2)
+				self.assertContains(response, "product-card-offline-price", count=2)
 				self.assertContains(response, 'class="product-card-compare-price"', count=1)
+				self.assertContains(response, "26% OFF")
 				self.assertContains(response, "Precio de lanzamiento")
 				self.assertContains(response, "$ 10.000")
 				self.assertContains(response, "$ 6.650")
@@ -422,7 +469,7 @@ class ProductCardPricingTests(TestCase):
 		self.assertEqual(related[self.out_of_stock.pk].offline_price_ars, Decimal("1800.00"))
 		self.assertFalse(related[self.out_of_stock.pk].in_stock)
 		self.assertIsNone(related[self.without_variants.pk].offline_price_ars)
-		self.assertContains(response, 'class="product-card-offline-price"', count=1)
+		self.assertContains(response, "product-card-offline-price", count=1)
 		self.assertContains(response, "$ 1.800")
 
 	def test_quick_add_is_available_on_home_catalog_and_related_cards(self):
@@ -441,6 +488,9 @@ class ProductCardPricingTests(TestCase):
 				self.assertContains(response, 'data-promotion-label="Precio de lanzamiento"')
 				self.assertContains(response, 'data-promotion-label="Black Friday"')
 				self.assertContains(response, 'data-promotion-label=""')
+				self.assertContains(response, 'data-promotion-discount="26% OFF"')
+				self.assertContains(response, 'data-promotion-discount="5% OFF"')
+				self.assertContains(response, 'data-promotion-discount=""')
 				self.assertContains(response, 'data-offline-price="6650.00"')
 				self.assertContains(response, "Agregar al carrito")
 				self.assertNotContains(response, "Variante retirada")
@@ -466,6 +516,9 @@ class ProductCardPricingTests(TestCase):
 		self.assertContains(response, 'id="product-promotion-comparison"')
 		self.assertContains(response, 'id="product-promotion-label"')
 		self.assertContains(response, 'id="product-compare-at-price"')
+		self.assertContains(response, 'id="product-promotion-discount"')
+		self.assertContains(response, "26% OFF")
+		self.assertContains(response, "5% OFF")
 		self.assertContains(response, "$ 10.000")
 		self.assertContains(response, 'data-compare-at-price="10000.00"')
 		self.assertContains(response, 'data-compare-at-price="9500.00"')
@@ -473,6 +526,57 @@ class ProductCardPricingTests(TestCase):
 		self.assertContains(response, 'data-promotion-label="Precio de lanzamiento"')
 		self.assertContains(response, 'data-promotion-label="Black Friday"')
 		self.assertContains(response, 'data-promotion-label=""')
+		self.assertContains(response, 'data-promotion-discount="26% OFF"')
+		self.assertContains(response, 'data-promotion-discount="5% OFF"')
+		self.assertContains(response, 'data-promotion-discount=""')
+
+	@override_settings(MP_CHECKOUT_ENABLED=True)
+	def test_price_hierarchy_identifies_mercado_pago_and_prioritizes_offline_price(self):
+		for url in (
+			reverse("home"),
+			reverse("shop:product_list"),
+			reverse("shop:product_detail", args=[self.primary.slug]),
+		):
+			with self.subTest(url=url):
+				response = self.client.get(url)
+				self.assertContains(response, "Pagando a través de")
+				self.assertContains(response, "mercado-pago-horizontal.svg")
+				self.assertContains(response, "Mejor precio")
+				self.assertNotContains(response, 'class="discount-badge"')
+				self.assertNotContains(response, "10% OFF")
+
+		detail_response = self.client.get(
+			reverse("shop:product_detail", args=[self.primary.slug])
+		)
+		self.assertContains(detail_response, "detail-sale-price")
+		self.assertContains(detail_response, "detail-offline-price")
+
+	@override_settings(MP_CHECKOUT_ENABLED=False)
+	def test_price_hierarchy_falls_back_to_sale_copy_when_mp_is_disabled(self):
+		response = self.client.get(
+			reverse("shop:product_detail", args=[self.primary.slug])
+		)
+
+		self.assertContains(response, "Precio de venta")
+		self.assertNotContains(response, "Pagando a través de")
+		self.assertNotContains(response, "mercado-pago-horizontal.svg")
+		self.assertContains(response, "detail-offline-price")
+
+	@override_settings(MP_CHECKOUT_ENABLED=True)
+	def test_zero_offline_discount_promotes_sale_price_and_hides_mp_context(self):
+		CommercialSettings.objects.filter(pk=1).update(
+			offline_payment_discount_percent=0
+		)
+
+		response = self.client.get(
+			reverse("shop:product_detail", args=[self.primary.slug])
+		)
+
+		self.assertContains(response, "detail-sale-price is-primary")
+		self.assertContains(response, "Precio de venta")
+		self.assertNotContains(response, "Pagando a través de")
+		self.assertNotContains(response, "mercado-pago-horizontal.svg")
+		self.assertNotContains(response, "detail-offline-price")
 
 	def test_quick_add_hides_variant_selector_when_only_one_is_available(self):
 		product = Product.objects.create(name="Única presentación", is_active=True)
@@ -501,7 +605,7 @@ class ProductCardPricingTests(TestCase):
 		self.assertNotContains(response, "offline-home-banner")
 		self.assertNotContains(response, "Ahorrá pagando por transferencia o efectivo")
 
-	def test_admin_percentage_updates_prices_and_all_public_copy(self):
+	def test_admin_percentage_updates_offline_price_without_changing_promotion_percent(self):
 		CommercialSettings.objects.filter(pk=1).update(
 			offline_payment_discount_percent=15
 		)
@@ -511,7 +615,8 @@ class ProductCardPricingTests(TestCase):
 		)
 		terms_response = self.client.get(reverse("terms"))
 
-		self.assertContains(product_response, "15% OFF")
+		self.assertContains(product_response, "26% OFF")
+		self.assertNotContains(product_response, "15% OFF")
 		self.assertNotContains(product_response, "MÍN.")
 		self.assertContains(product_response, "$ 6.250")
 		self.assertContains(terms_response, "del 15% sobre los productos")
@@ -529,7 +634,9 @@ class ProductCardPricingTests(TestCase):
 			with self.subTest(url=url):
 				response = self.client.get(url)
 				self.assertNotContains(response, "product-card-offline-price")
-				self.assertNotContains(response, "offline-payment-note")
+				self.assertNotContains(response, "detail-offline-price")
+				self.assertNotContains(response, "quick-add-offline-price")
+				self.assertContains(response, "is-primary")
 				self.assertNotContains(response, "con transferencia o efectivo")
 
 		terms_response = self.client.get(reverse("terms"))
