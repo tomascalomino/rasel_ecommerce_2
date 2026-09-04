@@ -17,7 +17,6 @@
 
     var currentPrice = dialog.querySelector("[data-quick-add-current-price]");
     var promotionComparison = dialog.querySelector("[data-quick-add-promotion-comparison]");
-    var promotionLabelRow = dialog.querySelector("[data-quick-add-promotion-label-row]");
     var promotionLabel = dialog.querySelector("[data-quick-add-promotion-label]");
     var compareAtPrice = dialog.querySelector("[data-quick-add-compare-at-price]");
     var promotionDiscount = dialog.querySelector("[data-quick-add-promotion-discount]");
@@ -32,13 +31,13 @@
 
     currentPrice.textContent = money(currentValue);
     promotionComparison.hidden = !hasComparison;
-    promotionLabelRow.hidden = !hasComparison;
+    promotionDiscount.hidden = !hasComparison;
     if (hasComparison) {
       promotionLabel.textContent = label;
       compareAtPrice.textContent = money(compareValue);
-      compareAtPrice.setAttribute("aria-label", "Precio regular " + money(compareValue));
+      compareAtPrice.setAttribute("aria-label", "Precio de lista " + money(compareValue));
       promotionDiscount.textContent = discountLabel;
-      promotionDiscount.setAttribute("aria-label", discountLabel + " sobre el precio regular");
+      promotionDiscount.setAttribute("aria-label", discountLabel + " sobre el precio de lista");
     }
     if (offlinePrice) {
       offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);

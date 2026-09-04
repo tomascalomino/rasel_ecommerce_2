@@ -1,4 +1,4 @@
-from django.db.models import Min, Exists, OuterRef, Q, Prefetch
+from django.db.models import Prefetch
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -34,8 +34,8 @@ def _attach_product_card_data(products, discount_percent):
         product.promotion_discount_label = (
             price_variant.promotion_discount_label if price_variant else ""
         )
-        product.offline_price_ars = discounted_amount(
-            product.min_price_ars, discount_percent
+        product.offline_price_ars = (
+            price_variant.offline_price_ars if price_variant else None
         )
         product.in_stock = any(variant.stock_qty > 0 for variant in active_variants)
         product.card_variants = [

@@ -3,6 +3,70 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-04 — Botón Comprar más claro (1.7.1)
+
+- Vidrieras: el botón **Comprar** de las tarjetas adopta un verde oliva medio,
+  ligeramente más claro, y conserva texto blanco y un estado hover más oscuro.
+- Alcance: no cambian precios, promociones, cálculos, checkout, admin, modelos
+  ni variables de entorno. Se actualizan `CURRENT_SYSTEM.md` y este historial.
+
+## 2026-09-04 — Jerarquía editorial del precio (1.7.0)
+
+- Vidrieras: inicio, tienda, recomendados, detalle y compra rápida presentan el
+  comparativo como **Precio de lista**, ubican la campaña administrable dentro
+  del panel y la muestran en mayúsculas sin modificar el texto guardado.
+- Mercado Pago: el precio de venta gana tamaño y conserva su OFF contra el
+  precio de lista; debajo vuelve la leyenda “Pagando a través de” junto al logo
+  horizontal transparente.
+- Efectivo y transferencia: el precio principal ocupa una sección con fondo
+  oliva suave y reemplaza el descuento total calculado por **X% ADICIONAL**,
+  usando exactamente la tasa global del admin incluso sin campaña de lista.
+- Consistencia: detalle y compra rápida actualizan juntos los datos propios de
+  cada variante. El badge adicional es global; con 0% se ocultan tanto el
+  precio offline como esa comunicación.
+- Alcance: no cambian el cálculo, el redondeo hacia abajo a múltiplos de $50,
+  carrito, checkout, Mercado Pago, órdenes, modelos ni variables de entorno.
+  Se actualizan `CURRENT_SYSTEM.md`, `OPERATIONS.md` y este historial.
+
+## 2026-09-04 — Identificación visual de Mercado Pago (1.6.1)
+
+- Vidrieras: la fila del precio de venta conserva el logo horizontal de Mercado
+  Pago y retira la palabra “Con”, ya que la marca identifica por sí sola el
+  medio de pago y deja más aire al bloque responsive.
+- Alcance: no cambian precios, descuentos, admin, checkout, esquema ni variables
+  de entorno. Se actualizan `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
+## 2026-09-04 — Doble descuento por medio de pago (1.6.0)
+
+- Jerarquía: el precio regular permanece tachado; el OFF entre precio regular y
+  precio de venta pasa a la fila de Mercado Pago, y la fila principal de
+  transferencia o efectivo incorpora un segundo OFF total.
+- Cálculo: ambos porcentajes comparten una única regla de redondeo al entero más
+  cercano. El segundo utiliza el precio offline efectivo ya redondeado hacia
+  abajo al múltiplo de $50; diferencias menores a 0,5% muestran **<1% OFF**.
+- Responsive: los importes conservan una columna de ancho natural y los badges,
+  medios de pago y logo ocupan una columna lateral flexible. Las copias se
+  acortan al logo de Mercado Pago y “Transferencia o efectivo” para admitir
+  importes de cinco cifras en anchos de 320 px y 390 px sin superposición.
+- Consistencia: tarjeta, detalle y compra rápida obtienen los tres importes y
+  ambos porcentajes de una misma variante; detalle y modal los actualizan juntos
+  al cambiar la presentación. Sin precio regular se ocultan ambos OFF y con 0%
+  offline se oculta toda la fila inferior.
+- Alcance: no cambian admin, carrito, checkout, Mercado Pago, órdenes, esquema ni
+  variables de entorno. Se actualizan `docs/CURRENT_SYSTEM.md` y
+  `docs/CHANGELOG.md`.
+
+## 2026-09-04 — Precio más conveniente en selectores (1.5.2)
+
+- Producto y compra rápida: los selectores de presentación muestran el precio
+  por transferencia o efectivo en lugar del precio de Mercado Pago.
+- Contingencia: cuando el descuento offline está en 0%, los selectores vuelven
+  a mostrar el precio de venta vigente.
+- Alcance: el cambio es únicamente informativo; `price_ars` continúa siendo la
+  base de carrito, checkout, Mercado Pago y órdenes.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+  Se actualizan `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-09-04 — Corrección responsive de precios de cinco cifras (1.5.1)
 
 - Vidrieras: las filas de precio reservan el ancho real de cada importe y dejan

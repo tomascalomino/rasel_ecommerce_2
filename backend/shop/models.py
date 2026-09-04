@@ -1,10 +1,12 @@
 import re
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
+
+from config.pricing import price_discount_label, price_discount_percent
 
 
 class Category(models.Model):
@@ -217,28 +219,12 @@ class Variant(models.Model):
     @property
     def promotion_discount_percent(self):
         """Porcentaje entero entre el precio regular y el precio de venta."""
-        regular_price = self.compare_at_price_ars
-        sale_price = self.price_ars
-        if (
-            regular_price is None
-            or sale_price is None
-            or regular_price <= sale_price
-            or regular_price <= 0
-        ):
-            return None
-
-        percentage = ((regular_price - sale_price) / regular_price) * Decimal("100")
-        return int(percentage.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        return price_discount_percent(self.compare_at_price_ars, self.price_ars)
 
     @property
     def promotion_discount_label(self):
         """Texto breve para la insignia comercial derivada de los precios."""
-        percentage = self.promotion_discount_percent
-        if percentage is None:
-            return ""
-        if percentage == 0:
-            return "<1% OFF"
-        return f"{percentage}% OFF"
+        return price_discount_label(self.compare_at_price_ars, self.price_ars)
 
     @property
     def pack_savings_ars(self):

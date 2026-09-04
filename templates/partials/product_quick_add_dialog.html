@@ -30,48 +30,51 @@
       </div>
 
       <div class="quick-add-prices" aria-live="polite">
-        <div
-          class="quick-add-campaign-label"
-          data-quick-add-promotion-label-row
-          {% if not first_variant.compare_at_price_ars %}hidden{% endif %}
-        >
-          <span class="promotion-badge" data-quick-add-promotion-label>{{ first_variant.promotion_label }}</span>
-        </div>
         <div class="price-hierarchy-panel quick-add-price-panel">
           <div
-            class="price-comparison-row quick-add-promotion"
+            class="price-promotion-header quick-add-promotion"
             data-quick-add-promotion-comparison
             {% if not first_variant.compare_at_price_ars %}hidden{% endif %}
           >
-            <del
-              data-quick-add-compare-at-price
-              aria-label="Precio regular {{ first_variant.compare_at_price_ars|ars }}"
-            >{{ first_variant.compare_at_price_ars|ars }}</del>
-            <span
-              class="promotion-discount-badge"
-              data-quick-add-promotion-discount
-              aria-label="{{ first_variant.promotion_discount_label }} sobre el precio regular"
-            >{{ first_variant.promotion_discount_label }}</span>
+            <div class="price-list-row">
+              <span class="price-list-label">Precio de lista</span>
+              <del
+                data-quick-add-compare-at-price
+                aria-label="Precio de lista {{ first_variant.compare_at_price_ars|ars }}"
+              >{{ first_variant.compare_at_price_ars|ars }}</del>
+            </div>
+            <div class="price-campaign-label" data-quick-add-promotion-label>{{ first_variant.promotion_label }}</div>
           </div>
-          <div class="price-payment-row quick-add-sale-price{% if not first_variant.offline_price_ars %} is-primary{% endif %}">
-            <strong class="sale-price-amount" data-quick-add-current-price>{{ first_variant.price_ars|ars }}</strong>
-            <span class="payment-method-copy">
+          <div class="price-sale-section quick-add-sale-price{% if not first_variant.offline_price_ars %} is-primary{% endif %}">
+            <div class="price-amount-badge-row">
+              <strong class="sale-price-amount" data-quick-add-current-price>{{ first_variant.price_ars|ars }}</strong>
+              <span
+                class="promotion-discount-badge"
+                data-quick-add-promotion-discount
+                aria-label="{{ first_variant.promotion_discount_label }} sobre el precio de lista"
+                {% if not first_variant.compare_at_price_ars %}hidden{% endif %}
+              >{{ first_variant.promotion_discount_label }}</span>
+            </div>
+            <div class="payment-method-copy">
             {% if first_variant.offline_price_ars and mp_checkout_enabled %}
               <span>Pagando a través de</span>
               <img src="{% static 'img/mercado-pago-horizontal.svg' %}" alt="Mercado Pago">
             {% else %}
               <span>Precio de venta</span>
             {% endif %}
-            </span>
+            </div>
           </div>
           {% if first_variant.offline_price_ars %}
             <div class="price-panel-divider" aria-hidden="true"></div>
-            <div class="price-payment-row quick-add-offline-price">
-              <strong class="offline-price-amount" data-quick-add-offline-price>{{ first_variant.offline_price_ars|ars }}</strong>
-              <span class="offline-method-copy">
-                <span>Pagando con transferencia o efectivo</span>
-                <span class="best-price-badge"><span aria-hidden="true">✦</span> Mejor precio</span>
-              </span>
+            <div class="price-offline-section quick-add-offline-price">
+              <div class="price-amount-badge-row">
+                <strong class="offline-price-amount" data-quick-add-offline-price>{{ first_variant.offline_price_ars|ars }}</strong>
+                <span
+                  class="promotion-discount-badge additional-discount-badge"
+                  aria-label="{{ offline_payment_discount_percent }}% adicional pagando con efectivo o transferencia"
+                >{{ offline_payment_discount_percent }}% ADICIONAL</span>
+              </div>
+              <span class="offline-method-copy">Efectivo o transferencia</span>
             </div>
           {% endif %}
         </div>
@@ -94,7 +97,7 @@
                   data-promotion-discount="{{ variant.promotion_discount_label }}"
                   data-offline-price="{{ variant.offline_price_ars|unlocalize }}"
                   data-stock="{{ variant.stock_qty }}"
-                >{{ variant.name }} — {{ variant.price_ars|ars }}</option>
+                >{{ variant.name }} — {% if variant.offline_price_ars %}{{ variant.offline_price_ars|ars }}{% else %}{{ variant.price_ars|ars }}{% endif %}</option>
               {% endfor %}
             </select>
           </label>

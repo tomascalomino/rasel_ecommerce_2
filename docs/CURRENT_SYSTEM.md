@@ -53,13 +53,23 @@ UptimeRobot → GET https://rasel.ar/healthz
 - Cada variante puede tener un **precio regular** y un **texto de promoción**.
   Ambos son opcionales pero deben cargarse o vaciarse juntos, y el precio
   regular debe superar al de venta. Inicio, tienda, recomendaciones, detalle y
-  compra rápida muestran el texto exactamente como fue cargado dentro de una
-  burbuja discreta. Debajo aparecen el precio regular tachado y otra burbuja
-  verde con el descuento porcentual derivado del precio regular y el de venta,
-  redondeado al entero más cercano. En tarjetas, todos los valores pertenecen a
-  la misma variante activa más económica; en detalle y compra rápida cambian
-  juntos al elegir la presentación. El comparativo no aparece en carrito,
-  checkout, órdenes ni emails y nunca interviene en el importe cobrado.
+  compra rápida agrupan la oferta en un panel: **Precio de lista** acompaña el
+  importe regular tachado y debajo se muestra el texto administrable en
+  mayúsculas, sin alterar el valor guardado. El precio de venta se identifica
+  con “Pagando a través de” y el logo de Mercado Pago cuando ese checkout está
+  disponible; su burbuja verde calcula el ahorro contra el precio de lista,
+  redondeado al entero más cercano y con **<1% OFF** para diferencias menores a
+  0,5%. La sección principal de efectivo o transferencia usa un fondo oliva
+  suave y muestra **X% ADICIONAL**, donde X es exactamente el porcentaje global
+  configurado en admin, aunque el redondeo del importe hacia abajo al múltiplo
+  de $50 pueda mejorar el ahorro efectivo. Esa segunda burbuja también aparece
+  sin campaña de lista; con 0% se oculta toda la sección offline. En tarjetas,
+  todos los importes pertenecen a la misma variante activa más económica; en
+  detalle y compra rápida cambian juntos al elegir la presentación. El botón
+  **Comprar** de las tarjetas usa un oliva medio, ligeramente más claro que los
+  demás botones principales, manteniendo texto blanco y hover oscuro. Estos
+  comparativos no aparecen en carrito, checkout, órdenes ni emails y nunca
+  modifican por sí mismos el importe cobrado.
 - La sección **Nuestra selección** del inicio muestra hasta tres productos
   activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
   coloca primero las botellas y después los packs.
@@ -113,18 +123,16 @@ del servidor y nunca confía en el total enviado por el navegador.
   descuenta y el umbral de envío gratis continúa evaluándose sobre el subtotal
   del precio de venta vigente. Mercado Pago conserva ese precio completo; el
   precio regular tachado es solo informativo. Cada variante puede acompañarlo
-  con un texto de promoción administrable, mostrado dentro de una burbuja; ambos
-  campos se cargan o retiran juntos. En las vidrieras, los importes forman un
-  panel delineado: arriba aparece el precio regular tachado con el porcentaje
-  promocional; el precio de venta ocupa un nivel intermedio identificado por el
-  texto y el logo horizontal transparente de Mercado Pago cuando ese checkout y
-  el descuento offline están activos; el importe exacto por transferencia o
-  efectivo aparece debajo como precio principal en verde oscuro, separado por
-  una línea y acompañado por “Mejor precio”. La insignia del porcentaje offline
-  no se repite en este bloque para no confundirla con el descuento calculado
-  entre precio regular y precio de venta. En móvil, cada importe conserva el
-  ancho que necesita y la leyenda del medio de pago se adapta al espacio
-  restante, evitando que los precios de cinco cifras se superpongan al texto.
+  con un texto de promoción administrable; ambos campos se cargan o retiran
+  juntos. En las vidrieras, los importes forman un panel delineado: arriba
+  aparecen **Precio de lista**, el regular tachado y la campaña en mayúsculas.
+  El precio de venta ocupa el nivel intermedio, lleva el OFF calculado contra el
+  regular y se identifica con “Pagando a través de” y el logo horizontal
+  transparente de Mercado Pago cuando ese checkout y el descuento offline están
+  activos. El importe exacto por efectivo o transferencia aparece debajo como
+  precio principal en verde oscuro, sobre un fondo oliva suave, y lleva la tasa
+  global administrable como **X% ADICIONAL**. En móvil, importes, insignias y
+  medios de pago se ajustan o envuelven sin superponer precios de cinco cifras.
   El resumen del
   checkout cambia en el acto al seleccionar cada medio. La comunicación pública
   restante muestra el porcentaje configurado sin la palabra “mínimo”. Con 0% no
@@ -133,7 +141,11 @@ del servidor y nunca confía en el total enviado por el navegador.
 - Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
   imagen, precio, precio offline, cantidad y las presentaciones activas que
   tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un
-  selector. Al agregar, el cliente permanece en la página de origen, ve el
+  selector. Tanto allí como en el detalle, el selector de presentación muestra
+  el precio por transferencia o efectivo cuando existe; con descuento offline
+  en 0% muestra el precio de venta. Ese texto no cambia el importe base usado
+  por carrito, checkout o Mercado Pago. Al agregar, el cliente permanece en la
+  página de origen, ve el
   mensaje de confirmación y el contador del carrito se actualiza.
 - **Mercado Pago Checkout Pro:** el flujo está habilitado en producción con
   `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
