@@ -324,7 +324,7 @@ class ProductListViewTests(TestCase):
 					self.assertContains(response, "Pagá como prefieras")
 					self.assertNotContains(response, "Pagá como preferís")
 				else:
-					self.assertContains(response, ">Con<")
+					self.assertNotContains(response, ">Con<")
 
 	@override_settings(MP_CHECKOUT_ENABLED=False)
 	def test_mp_brand_is_hidden_when_checkout_is_disabled(self):
@@ -591,7 +591,7 @@ class ProductCardPricingTests(TestCase):
 		):
 			with self.subTest(url=url):
 				response = self.client.get(url)
-				self.assertContains(response, ">Con<")
+				self.assertNotContains(response, ">Con<")
 				self.assertContains(response, "mercado-pago-horizontal.svg")
 				self.assertContains(response, "34% OFF")
 				self.assertContains(response, "Transferencia o efectivo")

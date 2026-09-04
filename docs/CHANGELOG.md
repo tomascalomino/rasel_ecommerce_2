@@ -3,6 +3,14 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-04 — Identificación visual de Mercado Pago (1.6.1)
+
+- Vidrieras: la fila del precio de venta conserva el logo horizontal de Mercado
+  Pago y retira la palabra “Con”, ya que la marca identifica por sí sola el
+  medio de pago y deja más aire al bloque responsive.
+- Alcance: no cambian precios, descuentos, admin, checkout, esquema ni variables
+  de entorno. Se actualizan `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-09-04 — Doble descuento por medio de pago (1.6.0)
 
 - Jerarquía: el precio regular permanece tachado; el OFF entre precio regular y
@@ -13,8 +21,8 @@ documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
   abajo al múltiplo de $50; diferencias menores a 0,5% muestran **<1% OFF**.
 - Responsive: los importes conservan una columna de ancho natural y los badges,
   medios de pago y logo ocupan una columna lateral flexible. Las copias se
-  acortan a “Con” y “Transferencia o efectivo” para admitir importes de cinco
-  cifras en anchos de 320 px y 390 px sin superposición.
+  acortan al logo de Mercado Pago y “Transferencia o efectivo” para admitir
+  importes de cinco cifras en anchos de 320 px y 390 px sin superposición.
 - Consistencia: tarjeta, detalle y compra rápida obtienen los tres importes y
   ambos porcentajes de una misma variante; detalle y modal los actualizan juntos
   al cambiar la presentación. Sin precio regular se ocultan ambos OFF y con 0%

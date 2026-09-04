@@ -119,8 +119,8 @@ del servidor y nunca confía en el total enviado por el navegador.
   campos se cargan o retiran juntos. En las vidrieras, los importes forman un
   panel delineado: arriba aparece el precio regular tachado; el precio de venta
   ocupa un nivel intermedio, lleva el OFF calculado contra el regular y se
-  identifica con “Con” y el logo horizontal transparente de Mercado Pago cuando
-  ese checkout y el descuento offline están activos. El importe exacto por
+  identifica únicamente con el logo horizontal transparente de Mercado Pago
+  cuando ese checkout y el descuento offline están activos. El importe exacto por
   transferencia o efectivo aparece debajo como precio principal en verde oscuro,
   separado por una línea y acompañado por un segundo OFF calculado contra el
   mismo precio regular después de aplicar el redondeo offline a $50. La copia se
