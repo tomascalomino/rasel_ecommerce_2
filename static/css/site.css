@@ -1809,9 +1809,14 @@ textarea:focus {
 
 .price-payment-row {
   display: grid;
-  grid-template-columns: minmax(102px, .82fr) minmax(0, 1.18fr);
+  grid-template-columns: max-content minmax(0, 1fr);
   align-items: center;
   gap: 10px;
+}
+
+.price-payment-row > .sale-price-amount,
+.price-payment-row > .offline-price-amount {
+  white-space: nowrap;
 }
 
 .price-panel-divider {
@@ -1867,7 +1872,6 @@ textarea:focus {
 }
 
 .product-card-sale-price {
-  grid-template-columns: minmax(92px, .65fr) minmax(0, 1.35fr);
   gap: 8px;
   margin: 0;
 }
@@ -1892,7 +1896,6 @@ textarea:focus {
 }
 
 .product-card-offline-price {
-  grid-template-columns: minmax(92px, .65fr) minmax(0, 1.35fr);
   gap: 8px;
   margin: 0;
 }
@@ -2023,7 +2026,7 @@ textarea:focus {
 }
 
 .quick-add-sale-price {
-  grid-template-columns: minmax(135px, .8fr) minmax(0, 1.2fr);
+  grid-template-columns: max-content minmax(0, 1fr);
 }
 
 .quick-add-sale-price > strong {
@@ -2054,7 +2057,7 @@ textarea:focus {
 }
 
 .quick-add-offline-price {
-  grid-template-columns: minmax(135px, .8fr) minmax(0, 1.2fr);
+  grid-template-columns: max-content minmax(0, 1fr);
 }
 
 .quick-add-offline-price strong {
@@ -2168,12 +2171,10 @@ textarea:focus {
   }
 
   .quick-add-sale-price {
-    grid-template-columns: minmax(105px, .7fr) minmax(0, 1.3fr);
     gap: 8px;
   }
 
   .quick-add-offline-price {
-    grid-template-columns: minmax(125px, .8fr) minmax(0, 1.2fr);
     gap: 8px;
   }
 }
@@ -2334,7 +2335,7 @@ textarea:focus {
 }
 
 .detail-sale-price {
-  grid-template-columns: minmax(145px, .8fr) minmax(0, 1.2fr);
+  grid-template-columns: max-content minmax(0, 1fr);
 }
 
 .detail-sale-price > strong {
@@ -2365,7 +2366,7 @@ textarea:focus {
 }
 
 .detail-offline-price {
-  grid-template-columns: minmax(145px, .8fr) minmax(0, 1.2fr);
+  grid-template-columns: max-content minmax(0, 1fr);
 }
 
 .detail-offline-price > strong {
@@ -2426,12 +2427,10 @@ textarea:focus {
 
 @media (max-width: 520px) {
   .detail-sale-price {
-    grid-template-columns: minmax(100px, .7fr) minmax(0, 1.3fr);
     gap: 8px;
   }
 
   .detail-offline-price {
-    grid-template-columns: minmax(125px, .85fr) minmax(0, 1.15fr);
     gap: 8px;
   }
 

@@ -122,7 +122,10 @@ del servidor y nunca confía en el total enviado por el navegador.
   efectivo aparece debajo como precio principal en verde oscuro, separado por
   una línea y acompañado por “Mejor precio”. La insignia del porcentaje offline
   no se repite en este bloque para no confundirla con el descuento calculado
-  entre precio regular y precio de venta. El resumen del
+  entre precio regular y precio de venta. En móvil, cada importe conserva el
+  ancho que necesita y la leyenda del medio de pago se adapta al espacio
+  restante, evitando que los precios de cinco cifras se superpongan al texto.
+  El resumen del
   checkout cambia en el acto al seleccionar cada medio. La comunicación pública
   restante muestra el porcentaje configurado sin la palabra “mínimo”. Con 0% no
   se aplica el redondeo ni descuento, se oculta el importe offline y el precio de
