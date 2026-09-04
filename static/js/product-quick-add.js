@@ -22,17 +22,20 @@
     var compareAtPrice = dialog.querySelector("[data-quick-add-compare-at-price]");
     var promotionDiscount = dialog.querySelector("[data-quick-add-promotion-discount]");
     var offlinePrice = dialog.querySelector("[data-quick-add-offline-price]");
+    var offlinePromotionDiscount = dialog.querySelector("[data-quick-add-offline-promotion-discount]");
     var quantity = dialog.querySelector("[data-quick-add-qty-input]");
     var stock = parseInt(option.dataset.stock, 10) || 1;
     var currentValue = parseFloat(option.dataset.price) || 0;
     var compareValue = parseFloat(option.dataset.compareAtPrice);
     var label = (option.dataset.promotionLabel || "").trim();
     var discountLabel = (option.dataset.promotionDiscount || "").trim();
+    var offlineDiscountLabel = (option.dataset.offlinePromotionDiscount || "").trim();
     var hasComparison = Number.isFinite(compareValue) && compareValue > currentValue && Boolean(label) && Boolean(discountLabel);
 
     currentPrice.textContent = money(currentValue);
     promotionComparison.hidden = !hasComparison;
     promotionLabelRow.hidden = !hasComparison;
+    promotionDiscount.hidden = !hasComparison;
     if (hasComparison) {
       promotionLabel.textContent = label;
       compareAtPrice.textContent = money(compareValue);
@@ -42,6 +45,16 @@
     }
     if (offlinePrice) {
       offlinePrice.textContent = money(parseFloat(option.dataset.offlinePrice) || 0);
+    }
+    if (offlinePromotionDiscount) {
+      offlinePromotionDiscount.hidden = !hasComparison || !offlineDiscountLabel;
+      if (hasComparison && offlineDiscountLabel) {
+        offlinePromotionDiscount.textContent = offlineDiscountLabel;
+        offlinePromotionDiscount.setAttribute(
+          "aria-label",
+          offlineDiscountLabel + " total sobre el precio regular pagando por transferencia o efectivo"
+        );
+      }
     }
     quantity.max = stock;
     if ((parseInt(quantity.value, 10) || 1) > stock) quantity.value = stock;

@@ -1811,7 +1811,7 @@ textarea:focus {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  gap: 7px;
 }
 
 .price-payment-row > .sale-price-amount,
@@ -1819,10 +1819,22 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.promotion-discount-badge[hidden] {
+  display: none;
+}
+
 .price-panel-divider {
   height: 1px;
   margin: 8px 0;
   background: rgba(142, 145, 91, .42);
+}
+
+.price-payment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
 }
 
 .payment-method-copy {
@@ -1839,45 +1851,24 @@ textarea:focus {
 
 .payment-method-copy img {
   display: block;
-  width: 64px;
+  width: 56px;
   height: auto;
   flex: none;
   background: transparent;
 }
 
 .offline-method-copy {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
   min-width: 0;
   color: var(--text-2);
   font-size: 10px;
   font-weight: 600;
   line-height: 1.2;
-}
-
-.best-price-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 7px;
-  border: 1px solid rgba(142, 145, 91, .65);
-  border-radius: 999px;
-  color: var(--deep-olive);
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .product-card-sale-price {
   gap: 8px;
   margin: 0;
-}
-
-.product-card-sale-price .payment-method-copy {
-  flex-wrap: nowrap;
 }
 
 .product-card-sale-price .price {
@@ -2045,15 +2036,11 @@ textarea:focus {
 
 .quick-add-sale-price .payment-method-copy,
 .quick-add-offline-price .offline-method-copy {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .quick-add-sale-price .payment-method-copy img {
-  width: 74px;
-}
-
-.quick-add-sale-price .payment-method-copy {
-  flex-wrap: nowrap;
+  width: 64px;
 }
 
 .quick-add-offline-price {
@@ -2354,15 +2341,11 @@ textarea:focus {
 
 .detail-sale-price .payment-method-copy,
 .detail-offline-price .offline-method-copy {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .detail-sale-price .payment-method-copy img {
-  width: 76px;
-}
-
-.detail-sale-price .payment-method-copy {
-  flex-wrap: nowrap;
+  width: 64px;
 }
 
 .detail-offline-price {

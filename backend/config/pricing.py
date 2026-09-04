@@ -36,6 +36,30 @@ def money(value) -> Decimal:
     return Decimal(str(value or 0)).quantize(MONEY_QUANTUM, rounding=ROUND_HALF_UP)
 
 
+def price_discount_percent(reference_amount, final_amount) -> int | None:
+    """Porcentaje entero de ahorro entre un precio de referencia y uno final."""
+    if reference_amount is None or final_amount is None:
+        return None
+
+    reference = money(reference_amount)
+    final = money(final_amount)
+    if reference <= 0 or final >= reference:
+        return None
+
+    percentage = ((reference - final) / reference) * Decimal("100")
+    return int(percentage.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def price_discount_label(reference_amount, final_amount) -> str:
+    """Etiqueta comercial derivada, incluida la diferencia menor a 0,5%."""
+    percentage = price_discount_percent(reference_amount, final_amount)
+    if percentage is None:
+        return ""
+    if percentage == 0:
+        return "<1% OFF"
+    return f"{percentage}% OFF"
+
+
 def payment_discount(subtotal, payment_method: str, discount_percent: int) -> Decimal:
     """Devuelve el descuento de una unidad o importe aislado."""
     normalized = money(subtotal)

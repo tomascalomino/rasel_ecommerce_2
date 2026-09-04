@@ -54,12 +54,14 @@ UptimeRobot → GET https://rasel.ar/healthz
   Ambos son opcionales pero deben cargarse o vaciarse juntos, y el precio
   regular debe superar al de venta. Inicio, tienda, recomendaciones, detalle y
   compra rápida muestran el texto exactamente como fue cargado dentro de una
-  burbuja discreta. Debajo aparecen el precio regular tachado y otra burbuja
-  verde con el descuento porcentual derivado del precio regular y el de venta,
-  redondeado al entero más cercano. En tarjetas, todos los valores pertenecen a
-  la misma variante activa más económica; en detalle y compra rápida cambian
-  juntos al elegir la presentación. El comparativo no aparece en carrito,
-  checkout, órdenes ni emails y nunca interviene en el importe cobrado.
+  burbuja discreta. Debajo aparece el precio regular tachado. La fila del precio
+  de venta lleva una burbuja verde con el descuento contra ese precio regular y
+  la fila offline lleva otra con el descuento total contra el importe final
+  redondeado. Ambos porcentajes se redondean al entero más cercano y usan
+  **<1% OFF** para diferencias menores a 0,5%. En tarjetas, todos los valores
+  pertenecen a la misma variante activa más económica; en detalle y compra
+  rápida cambian juntos al elegir la presentación. El comparativo no aparece en
+  carrito, checkout, órdenes ni emails y nunca interviene en el importe cobrado.
 - La sección **Nuestra selección** del inicio muestra hasta tres productos
   activos ordenados alfabéticamente por nombre. Con el catálogo actual, esto
   coloca primero las botellas y después los packs.
@@ -115,16 +117,16 @@ del servidor y nunca confía en el total enviado por el navegador.
   precio regular tachado es solo informativo. Cada variante puede acompañarlo
   con un texto de promoción administrable, mostrado dentro de una burbuja; ambos
   campos se cargan o retiran juntos. En las vidrieras, los importes forman un
-  panel delineado: arriba aparece el precio regular tachado con el porcentaje
-  promocional; el precio de venta ocupa un nivel intermedio identificado por el
-  texto y el logo horizontal transparente de Mercado Pago cuando ese checkout y
-  el descuento offline están activos; el importe exacto por transferencia o
-  efectivo aparece debajo como precio principal en verde oscuro, separado por
-  una línea y acompañado por “Mejor precio”. La insignia del porcentaje offline
-  no se repite en este bloque para no confundirla con el descuento calculado
-  entre precio regular y precio de venta. En móvil, cada importe conserva el
-  ancho que necesita y la leyenda del medio de pago se adapta al espacio
-  restante, evitando que los precios de cinco cifras se superpongan al texto.
+  panel delineado: arriba aparece el precio regular tachado; el precio de venta
+  ocupa un nivel intermedio, lleva el OFF calculado contra el regular y se
+  identifica con “Con” y el logo horizontal transparente de Mercado Pago cuando
+  ese checkout y el descuento offline están activos. El importe exacto por
+  transferencia o efectivo aparece debajo como precio principal en verde oscuro,
+  separado por una línea y acompañado por un segundo OFF calculado contra el
+  mismo precio regular después de aplicar el redondeo offline a $50. La copia se
+  resume como “Transferencia o efectivo”. En móvil, cada importe conserva el
+  ancho que necesita y la columna lateral flexible adapta insignias y medios de
+  pago al espacio restante, evitando que precios de cinco cifras se superpongan.
   El resumen del
   checkout cambia en el acto al seleccionar cada medio. La comunicación pública
   restante muestra el porcentaje configurado sin la palabra “mínimo”. Con 0% no
