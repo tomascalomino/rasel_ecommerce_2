@@ -133,7 +133,11 @@ del servidor y nunca confía en el total enviado por el navegador.
 - Las tarjetas con stock ofrecen **Compra rápida**. El botón abre un modal con
   imagen, precio, precio offline, cantidad y las presentaciones activas que
   tengan stock. Si solo hay una disponible queda preseleccionada sin mostrar un
-  selector. Al agregar, el cliente permanece en la página de origen, ve el
+  selector. Tanto allí como en el detalle, el selector de presentación muestra
+  el precio por transferencia o efectivo cuando existe; con descuento offline
+  en 0% muestra el precio de venta. Ese texto no cambia el importe base usado
+  por carrito, checkout o Mercado Pago. Al agregar, el cliente permanece en la
+  página de origen, ve el
   mensaje de confirmación y el contador del carrito se actualiza.
 - **Mercado Pago Checkout Pro:** el flujo está habilitado en producción con
   `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado

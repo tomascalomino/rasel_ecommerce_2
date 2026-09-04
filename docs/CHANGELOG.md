@@ -3,6 +3,17 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-04 — Precio más conveniente en selectores (1.5.2)
+
+- Producto y compra rápida: los selectores de presentación muestran el precio
+  por transferencia o efectivo en lugar del precio de Mercado Pago.
+- Contingencia: cuando el descuento offline está en 0%, los selectores vuelven
+  a mostrar el precio de venta vigente.
+- Alcance: el cambio es únicamente informativo; `price_ars` continúa siendo la
+  base de carrito, checkout, Mercado Pago y órdenes.
+- Migraciones o variables: no se agregan migraciones ni variables de entorno.
+  Se actualizan `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-09-04 — Corrección responsive de precios de cinco cifras (1.5.1)
 
 - Vidrieras: las filas de precio reservan el ancho real de cada importe y dejan

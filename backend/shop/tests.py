@@ -529,6 +529,16 @@ class ProductCardPricingTests(TestCase):
 		self.assertContains(response, 'data-promotion-discount="26% OFF"')
 		self.assertContains(response, 'data-promotion-discount="5% OFF"')
 		self.assertContains(response, 'data-promotion-discount=""')
+		self.assertContains(response, "500 ml — $ 6.650")
+		self.assertContains(response, "750 ml — $ 8.100")
+		self.assertNotContains(response, "500 ml — $ 7.400")
+
+	def test_quick_add_variant_selector_shows_offline_price(self):
+		response = self.client.get(reverse("shop:product_list"))
+
+		self.assertContains(response, "500 ml — $ 6.650")
+		self.assertContains(response, "750 ml — $ 8.100")
+		self.assertNotContains(response, "500 ml — $ 7.400")
 
 	@override_settings(MP_CHECKOUT_ENABLED=True)
 	def test_price_hierarchy_identifies_mercado_pago_and_prioritizes_offline_price(self):
@@ -577,6 +587,7 @@ class ProductCardPricingTests(TestCase):
 		self.assertNotContains(response, "Pagando a través de")
 		self.assertNotContains(response, "mercado-pago-horizontal.svg")
 		self.assertNotContains(response, "detail-offline-price")
+		self.assertContains(response, "500 ml — $ 7.400")
 
 	def test_quick_add_hides_variant_selector_when_only_one_is_available(self):
 		product = Product.objects.create(name="Única presentación", is_active=True)

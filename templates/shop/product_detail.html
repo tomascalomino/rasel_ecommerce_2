@@ -112,8 +112,7 @@
                 data-offline-price="{{ v.offline_price_ars|unlocalize }}"
                 {% if v.stock_qty|default:0 <= 0 %}disabled{% endif %}
               >
-                {{ v.name }}
-                — {{ v.price_ars|ars }}
+                {{ v.name }} — {% if v.offline_price_ars %}{{ v.offline_price_ars|ars }}{% else %}{{ v.price_ars|ars }}{% endif %}
                 {% if v.stock_qty|default:0 <= 0 %}(Sin stock){% endif %}
               </option>
             {% empty %}
