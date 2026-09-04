@@ -3,6 +3,16 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-04 — Corrección responsive de precios de cinco cifras (1.5.1)
+
+- Vidrieras: las filas de precio reservan el ancho real de cada importe y dejan
+  que la leyenda del medio de pago use el espacio restante.
+- Responsive: importes de cinco cifras ya no se dibujan encima de “Pagando con”
+  en tarjetas, detalle ni compra rápida, incluso en pantallas móviles angostas.
+- Alcance: no cambian precios, cálculos, medios de pago, admin, migraciones ni
+  variables de entorno.
+- Documentación actualizada: `docs/CURRENT_SYSTEM.md` y `docs/CHANGELOG.md`.
+
 ## 2026-09-03 — Jerarquía de precios por medio de pago (1.5.0)
 
 - Vidrieras: inicio, tienda, recomendaciones, detalle y compra rápida muestran
