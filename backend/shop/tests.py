@@ -306,7 +306,7 @@ class ProductListViewTests(TestCase):
 		product_response = self.client.get(
 			reverse("shop:product_detail", args=[self.p1.slug])
 		)
-		self.assertContains(product_response, "10% ADICIONAL")
+		self.assertContains(product_response, "10% OFF ADICIONAL")
 		self.assertNotContains(product_response, "MÍN.")
 		self.assertContains(product_response, "detail-offline-price")
 		self.assertContains(product_response, "Efectivo o transferencia")
@@ -482,7 +482,7 @@ class ProductCardPricingTests(TestCase):
 				self.assertContains(response, "product-card-offline-price", count=2)
 				self.assertContains(response, 'class="product-card-compare-price"', count=1)
 				self.assertContains(response, "26% OFF")
-				self.assertContains(response, "10% ADICIONAL", count=3)
+				self.assertContains(response, "10% OFF ADICIONAL", count=3)
 				self.assertContains(response, "Precio de lanzamiento")
 				self.assertContains(response, "Precio de lista")
 				self.assertContains(response, "$ 10.000")
@@ -509,7 +509,7 @@ class ProductCardPricingTests(TestCase):
 		main_product = response.content.decode().split('<div class="related-head">', 1)[0]
 
 		self.assertIsNone(response.context["product"].compare_at_price_ars)
-		self.assertIn("10% ADICIONAL", main_product)
+		self.assertIn("10% OFF ADICIONAL", main_product)
 		self.assertIn("Efectivo o transferencia", main_product)
 
 	def test_quick_add_is_available_on_home_catalog_and_related_cards(self):
@@ -533,7 +533,7 @@ class ProductCardPricingTests(TestCase):
 				self.assertContains(response, 'data-promotion-discount=""')
 				self.assertContains(response, 'data-offline-price="6650.00"')
 				self.assertNotContains(response, "data-offline-promotion-discount")
-				self.assertContains(response, "10% ADICIONAL")
+				self.assertContains(response, "10% OFF ADICIONAL")
 				self.assertContains(response, "Agregar al carrito")
 				self.assertNotContains(response, "Variante retirada")
 				self.assertNotContains(
@@ -562,7 +562,7 @@ class ProductCardPricingTests(TestCase):
 		self.assertContains(response, 'id="product-offline-additional-discount"')
 		self.assertContains(response, "26% OFF")
 		self.assertContains(response, "5% OFF")
-		self.assertContains(response, "10% ADICIONAL")
+		self.assertContains(response, "10% OFF ADICIONAL")
 		self.assertContains(response, "$ 10.000")
 		self.assertContains(response, 'data-compare-at-price="10000.00"')
 		self.assertContains(response, 'data-compare-at-price="9500.00"')
@@ -596,12 +596,12 @@ class ProductCardPricingTests(TestCase):
 				response = self.client.get(url)
 				self.assertNotContains(response, ">Con<")
 				self.assertContains(response, "mercado-pago-horizontal.svg")
-				self.assertContains(response, "10% ADICIONAL")
+				self.assertContains(response, "10% OFF ADICIONAL")
 				self.assertContains(response, "Efectivo o transferencia")
 				self.assertContains(response, "Pagando a través de")
 				self.assertNotContains(response, "Mejor precio")
 				self.assertNotContains(response, 'class="discount-badge"')
-				self.assertNotContains(response, "10% OFF")
+				self.assertNotContains(response, ">10% OFF</span>")
 
 		detail_response = self.client.get(
 			reverse("shop:product_detail", args=[self.primary.slug])
@@ -675,7 +675,7 @@ class ProductCardPricingTests(TestCase):
 		terms_response = self.client.get(reverse("terms"))
 
 		self.assertContains(product_response, "26% OFF")
-		self.assertContains(product_response, "15% ADICIONAL")
+		self.assertContains(product_response, "15% OFF ADICIONAL")
 		self.assertNotContains(product_response, "38% OFF")
 		self.assertNotContains(product_response, "MÍN.")
 		self.assertContains(product_response, "$ 6.250")
@@ -698,7 +698,7 @@ class ProductCardPricingTests(TestCase):
 				self.assertNotContains(response, "quick-add-offline-price")
 				self.assertContains(response, "is-primary")
 				self.assertNotContains(response, "Efectivo o transferencia")
-				self.assertNotContains(response, "% ADICIONAL")
+				self.assertNotContains(response, "% OFF ADICIONAL")
 
 		terms_response = self.client.get(reverse("terms"))
 		self.assertNotContains(terms_response, "descuento mínimo")

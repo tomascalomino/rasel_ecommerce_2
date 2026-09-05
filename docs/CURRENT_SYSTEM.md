@@ -60,10 +60,10 @@ UptimeRobot → GET https://rasel.ar/healthz
   disponible; su burbuja verde calcula el ahorro contra el precio de lista,
   redondeado al entero más cercano y con **<1% OFF** para diferencias menores a
   0,5%. La sección principal de efectivo o transferencia usa un fondo oliva
-  suave y muestra **X% ADICIONAL**, donde X es exactamente el porcentaje global
-  configurado en admin, aunque el redondeo del importe hacia abajo al múltiplo
-  de $50 pueda mejorar el ahorro efectivo. Esa segunda burbuja también aparece
-  sin campaña de lista; con 0% se oculta toda la sección offline. En tarjetas,
+  suave y muestra **X% OFF ADICIONAL**, donde X es exactamente el porcentaje
+  global configurado en admin, aunque el redondeo del importe hacia abajo al
+  múltiplo de $50 pueda mejorar el ahorro efectivo. Esa segunda burbuja también
+  aparece sin campaña de lista; con 0% se oculta toda la sección offline. En tarjetas,
   todos los importes pertenecen a la misma variante activa más económica; en
   detalle y compra rápida cambian juntos al elegir la presentación. El botón
   **Comprar** de las tarjetas usa un oliva medio, ligeramente más claro que los
@@ -131,7 +131,7 @@ del servidor y nunca confía en el total enviado por el navegador.
   transparente de Mercado Pago cuando ese checkout y el descuento offline están
   activos. El importe exacto por efectivo o transferencia aparece debajo como
   precio principal en verde oscuro, sobre un fondo oliva suave, y lleva la tasa
-  global administrable como **X% ADICIONAL**. En móvil, importes, insignias y
+  global administrable como **X% OFF ADICIONAL**. En móvil, importes, insignias y
   medios de pago se ajustan o envuelven sin superponer precios de cinco cifras.
   El resumen del
   checkout cambia en el acto al seleccionar cada medio. La comunicación pública
