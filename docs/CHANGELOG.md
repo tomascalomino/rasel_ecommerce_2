@@ -3,6 +3,16 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-05 — Aclaración del descuento adicional (1.7.2)
+
+- Vidrieras: la burbuja del precio por efectivo o transferencia pasa de
+  **X% ADICIONAL** a **X% OFF ADICIONAL** en inicio, tienda, recomendados,
+  detalle y compra rápida.
+- Alcance: solo cambia la leyenda visible y accesible; no se modifican el
+  porcentaje administrable, los precios, el redondeo, el checkout, Mercado
+  Pago, modelos ni variables de entorno. Se actualizan `CURRENT_SYSTEM.md`,
+  `OPERATIONS.md` y este historial.
+
 ## 2026-09-04 — Botón Comprar más claro (1.7.1)
 
 - Vidrieras: el botón **Comprar** de las tarjetas adopta un verde oliva medio,

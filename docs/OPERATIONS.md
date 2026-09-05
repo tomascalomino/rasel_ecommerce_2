@@ -488,7 +488,7 @@ recuperación de Neon.
    menor al cobrado.
 4. Confirmar en inicio, tienda, recomendados, detalle y compra rápida que la
    leyenda, el precio tachado y el primer porcentaje corresponden a la misma
-   presentación. La burbuja **X% ADICIONAL** pertenece a la configuración
+   presentación. La burbuja **X% OFF ADICIONAL** pertenece a la configuración
    comercial global y permanece visible en productos sin campaña mientras el
    descuento offline sea mayor a cero. Al terminar la campaña, colocar el
    importe definitivo como precio de venta y vaciar juntos el precio regular y
@@ -513,7 +513,7 @@ recuperación de Neon.
    entre 0 y 50; el valor inicial es 10.
 2. Guardar y comprobar en una ficha de producto, compra rápida, checkout y
    Términos que el importe y todos los textos muestran el nuevo porcentaje. En
-   las vidrieras aparece como **X% ADICIONAL**; el importe continúa redondeándose
+   las vidrieras aparece como **X% OFF ADICIONAL**; el importe continúa redondeándose
    hacia abajo al múltiplo de $50, por lo que el ahorro efectivo puede ser mayor.
    Staging y producción tienen bases separadas y deben configurarse por separado.
 3. Usar 0 para desactivar el beneficio: no se aplica el redondeo a $50 ni se
