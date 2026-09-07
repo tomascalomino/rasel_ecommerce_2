@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
+from analytics.tracking import mark_stage
 from config.pricing import (
     get_offline_payment_discount_percent,
     payment_discount_for_lines,
@@ -229,6 +230,7 @@ def checkout(request):
                 ),
             )
             return _render_checkout(request, cart, form, discount_percent)
+        mark_stage(request, "checkout_submitted")
         cart.clear()
         send_order_confirmation(order.id)
         destination = (
@@ -271,6 +273,7 @@ def checkout(request):
         )
         return _render_checkout(request, cart, form, discount_percent)
 
+    mark_stage(request, "checkout_submitted")
     request.session["active_payment_draft"] = str(draft.token)
     request.session.modified = True
     try:

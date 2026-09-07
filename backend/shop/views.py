@@ -167,6 +167,7 @@ def product_detail(request, slug: str):
         is_active=True,
     )
 
+    request._analytics_product = (product.pk, product.name)
     _attach_product_card_data([product], discount_percent)
 
     # "También te puede gustar": otros productos activos con su precio mínimo.

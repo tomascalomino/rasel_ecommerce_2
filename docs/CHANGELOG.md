@@ -3,6 +3,29 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-07 — Exclusión de comprobaciones de Render (1.8.1)
+
+- La medición excluye también agentes HTTP automatizados con guion o guion
+  bajo en su nombre, incluido Go-http-client usado por las comprobaciones de
+  Render. Se agrega cobertura de regresión para evitar visitas de despliegue.
+
+## 2026-09-07 — Reportes de visitas y compras (1.8.0)
+
+- Admin: nueva sección Reportes para administrador, Operador y Solo lectura,
+  diseñada para celular, con filtros diarios y mensuales, visitas, páginas,
+  etapas de compra, fichas consultadas, procedencia, dispositivos y ventas netas.
+- Medición propia en Django: sesiones de 30 minutos, exclusión de staff y bots
+  reconocibles, etapas idempotentes y fallas aisladas del checkout. Sin scripts
+  externos, identificación entre dispositivos ni atribución de ventas a campañas.
+- Persistencia: migración aditiva de tablas de analítica, 90 días de detalle,
+  resúmenes de 12 meses y fuentes acotadas. Limpieza por lotes con bloqueo entre
+  workers, incluidas sesiones vencidas, y comando manual sin cron pago.
+- Operación: interruptor de medición, permiso específico de reportes y suite de
+  CI sobre PostgreSQL para comprobar concurrencia. Se documentan los criterios
+  de ventas y la limitación previa del reintento MP después de un error 503.
+- Documentación: sistema actual, operaciones y privacidad describen la medición
+  y su retención. No cambian reglas de precio, stock o aprobación de pagos.
+
 ## 2026-09-05 — Aclaración del descuento adicional (1.7.2)
 
 - Vidrieras: la burbuja del precio por efectivo o transferencia pasa de

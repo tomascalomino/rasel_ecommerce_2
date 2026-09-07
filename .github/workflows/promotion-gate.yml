@@ -11,6 +11,22 @@ permissions:
 jobs:
   promotion-gate:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: rasel_test
+          POSTGRES_USER: rasel_test
+          POSTGRES_PASSWORD: local_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rasel_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://rasel_test:local_ci_only@localhost:5432/rasel_test
     steps:
       - name: Require bundle_work as source
         env:
@@ -38,4 +54,4 @@ jobs:
       - name: Validate Django
         run: |
           python backend/manage.py check
-          python backend/manage.py test config shop cart orders payments shipping
+          python backend/manage.py test config shop cart orders payments shipping analytics

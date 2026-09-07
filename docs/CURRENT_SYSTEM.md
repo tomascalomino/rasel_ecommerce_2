@@ -44,6 +44,7 @@ UptimeRobot → GET https://rasel.ar/healthz
 | `shipping` | Zonas, reglas de código postal, puntos de retiro y cotización. |
 | `payments` | Checkout Pro, reservas temporales, webhooks firmados, conciliación, borradores y auditoría de Mercado Pago. |
 | `config` | Settings, URLs, administración RaSel, roles y contexto global. |
+| `analytics` | Visitas por sesión, etapas de compra, resúmenes diarios y reportes del admin. |
 
 ## Catálogo y carrito
 
@@ -254,6 +255,51 @@ retiro, órdenes y usuarios.
   cancelar una aprobación como si eso reintegrara dinero. Una orden despachada
   o completada no repone stock por reintegro hasta confirmar la devolución
   física.
+
+## Reportes de visitas y compras
+
+El admin incluye **Reportes** en `/admin/reportes/`, accesible desde su inicio
+para administradores y los roles Operador y Solo lectura mediante el permiso
+de consulta de reportes. Ofrece hoy, últimos 7, 30 y 90 días, y una evolución
+mensual del mes actual y los 11 anteriores, con fechas de Argentina.
+
+- Una visita agrupa la actividad de la misma sesión hasta 30 minutos de
+  inactividad. Usa un identificador aleatorio, no identifica personas únicas
+  ni une dispositivos. Las recargas suman páginas vistas; el detalle de
+  producto alimenta el ranking de fichas más vistas.
+- Se registran respuestas HTML exitosas de páginas públicas permitidas. Se
+  excluyen staff autenticado, admin, monitoreo, archivos, errores, webhooks,
+  páginas con identificadores de pedidos/pagos y bots reconocibles, incluidas
+  las comprobaciones de Render identificadas como Go-http-client. El
+  filtrado es aproximado y requiere que el navegador conserve la sesión.
+- Las etapas son visita, aumento válido de cantidad en carrito, apertura de
+  checkout con carrito y envío válido de checkout. Cada etapa suma una vez
+  por visita y se asigna a su fecha de inicio, aunque cruce medianoche. Las
+  páginas vistas se asignan al día en que se abren. Las etapas no exigen un
+  orden estricto: puede existir un carrito anterior.
+- Checkout enviado significa orden offline creada o borrador de Mercado Pago
+  reservado, incluso si luego falla la creación de la preferencia. Reintentar
+  el pago no suma otra etapa. La escritura analítica ocurre fuera de la
+  transacción comercial; sus errores se registran sin revertir compras.
+- Las ventas se calculan por fecha de creación de la orden y estado financiero
+  actual: aprobadas o parcialmente reintegradas, excluyendo entregas
+  canceladas, con envío incluido y reintegros descontados. Los datos de ventas
+  se muestran separados de las visitas, sin atribución individual o por campaña.
+- La procedencia usa primero etiquetas de fuente, medio y campaña; sin fuente
+  válida usa el dominio de referencia externo o **Directo / desconocido**.
+  Las etiquetas aceptan hasta 64 letras latinas sin acento, números, guiones o
+  guiones bajos, normalizados a minúsculas. Cada día admite 100 combinaciones
+  distintas más **Otros orígenes** para el excedente. Solo se conserva la clase
+  de dispositivo: celular, computadora, tablet o desconocido.
+- No se guardan IP, URLs completas, agente de usuario completo, datos de
+  formularios ni identificadores de pago en las tablas de analítica. El detalle
+  de visitas dura 90 días; los resúmenes, el mes actual y 11 meses anteriores.
+  La limpieza se hace por lotes al llegar actividad y también admite ejecución
+  manual. Sin actividad puede demorarse hasta la próxima ejecución.
+- La fecha inicial corresponde al primer registro exitoso. No hay visitas
+  retroactivas. Antes de esa fecha aparece **Sin registro**; los ceros posteriores
+  indican ausencia de actividad registrada, que también puede deberse a pausas
+  de medición. El panel informa cuando la medición está actualmente pausada.
 
 ## Estado operativo y límites conocidos
 

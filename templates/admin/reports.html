@@ -1,0 +1,58 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/reports.css' %}">{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Inicio</a> › Reportes</div>{% endblock %}
+{% block content %}
+<div class="reports">
+  <header class="reports-heading">
+    <div><p class="reports-eyebrow">EL MOVIMIENTO DE RASEL</p><h2>De la visita a la compra</h2>
+    <p class="reports-muted">{{ start|date:"d/m/Y" }} — {{ end|date:"d/m/Y" }} · Hora de Argentina</p></div>
+    <form method="get" class="reports-filter"><label for="report-period">Período</label>
+      <select id="report-period" name="period">{% for value,label in periods %}<option value="{{ value }}"{% if value == period %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <button type="submit">Ver reporte</button>
+    </form>
+  </header>
+  {% if not tracking_enabled %}<p class="reports-notice" role="status">La medición está pausada. Los datos guardados y las ventas siguen disponibles.</p>{% endif %}
+  {% if measurement %}<p class="reports-muted">Registro de visitas desde el {{ measurement.started_at|date:"d/m/Y H:i" }}. El primer día puede estar incompleto.</p>
+  {% else %}<p class="reports-notice" role="status">Todavía no hay visitas registradas. Los reportes se completarán cuando lleguen las primeras visitas a la tienda. Las ventas históricas ya están disponibles.</p>{% endif %}
+
+  <div class="reports-cards">
+    <section class="reports-card"><h3>Visitas</h3><strong>{% if measurement %}{{ counts.visits }}{% else %}—{% endif %}</strong><p>Sesiones de navegación, no personas únicas</p></section>
+    <section class="reports-card"><h3>Páginas vistas</h3><strong>{% if measurement %}{{ counts.pageviews }}{% else %}—{% endif %}</strong><p>Incluye recargas de páginas públicas</p></section>
+    <section class="reports-card"><h3>Pedidos cobrados</h3><strong>{{ sales.count }}</strong><p>Aprobados o con reintegro parcial</p></section>
+    <section class="reports-card reports-card-sales"><h3>Ventas netas</h3><strong>$ {{ sales.total|floatformat:"0g" }}</strong><p>Incluye envío y descuenta reintegros</p></section>
+  </div>
+
+  <section class="reports-panel">
+    <div class="reports-panel-heading"><h3>Evolución de visitas</h3><span class="reports-muted">{% if monthly %}Por mes{% else %}Por día{% endif %}</span></div>
+    {% if measurement %}
+    <svg class="reports-chart" viewBox="0 0 724 200" role="img" aria-labelledby="visits-chart-title visits-chart-desc">
+      <title id="visits-chart-title">Visitas {% if monthly %}mensuales{% else %}diarias{% endif %}</title><desc id="visits-chart-desc">La tabla desplegable debajo contiene los valores de cada período.</desc>
+      <line x1="0" y1="180" x2="724" y2="180" stroke="currentColor" opacity=".2"/>
+      {% for row in rows %}{% if row.available %}<rect x="{{ row.x }}" y="{{ row.y }}" width="{{ row.width }}" height="{{ row.height }}" rx="2"><title>{{ row.label }}: {{ row.visits }} visitas</title></rect>{% endif %}{% endfor %}
+    </svg>
+    <div class="reports-chart-labels"><span>{{ rows.0.label }}</span><span>{% with last_row=rows|last %}{{ last_row.label }}{% endwith %}</span></div>
+    <details class="reports-details"><summary>Ver datos de la evolución</summary><div class="reports-table-wrap"><table><caption>Visitas y páginas vistas por período</caption><thead><tr><th>Período</th><th>Visitas</th><th>Páginas</th></tr></thead><tbody>
+      {% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{% if row.available %}{{ row.visits }}{% else %}Sin registro{% endif %}</td><td>{% if row.available %}{{ row.pageviews }}{% else %}—{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div></details>
+    {% else %}<p class="reports-empty">El gráfico aparecerá con las primeras visitas.</p>{% endif %}
+  </section>
+
+  <section class="reports-panel">
+    <h3>Recorrido de compra</h3><p class="reports-muted">Visitas que alcanzaron cada etapa, sobre el total de visitas iniciadas en el período.</p>
+    <ol class="reports-funnel">{% for step in funnel %}<li><span>{{ step.label }}</span><strong>{% if measurement %}{{ step.count }}{% else %}—{% endif %}</strong><span class="reports-percent">{% if step.percent != None %}{{ step.percent|floatformat:1 }}%{% else %}—{% endif %}</span></li>{% endfor %}</ol>
+    <p class="reports-note">Cada etapa cuenta una vez por visita, aunque se repita. Puede haber visitas con un carrito previo. Enviar el checkout crea un pedido o un intento de pago; no confirma el cobro.</p>
+  </section>
+
+  <div class="reports-columns">
+    <section class="reports-panel"><h3>Fichas de producto más vistas</h3><p class="reports-muted">Aperturas de la página de cada producto</p><ol class="reports-ranking">{% for product in products %}<li><span>{{ product.label }}</span><strong>{{ product.count }}</strong></li>{% empty %}<li class="reports-empty">Sin fichas vistas en este período.</li>{% endfor %}</ol></section>
+    <section class="reports-panel"><h3>De dónde llegan</h3><p class="reports-muted">Origen al comenzar la visita</p><ol class="reports-ranking">{% for source in sources %}<li><span>{{ source.label }}{% if source.medium or source.campaign %}<small>{{ source.medium }}{% if source.campaign %} · {{ source.campaign }}{% endif %}</small>{% endif %}</span><strong>{{ source.count }}</strong></li>{% empty %}<li class="reports-empty">Sin orígenes registrados en este período.</li>{% endfor %}</ol></section>
+    <section class="reports-panel"><h3>Dispositivos</h3><p class="reports-muted">Tipo de dispositivo por visita</p><ul class="reports-ranking">{% for device in devices %}<li><span>{{ device.label }}</span><strong>{% if measurement %}{{ device.count }}{% else %}—{% endif %}</strong></li>{% endfor %}</ul></section>
+  </div>
+  <footer class="reports-note">
+    <p>Una visita termina tras 30 minutos sin actividad. Las mediciones son aproximadas: excluyen administración, monitoreo y bots reconocibles. Los ceros indican ausencia de actividad registrada; las pausas de medición también pueden dejar períodos sin datos.</p>
+    <p>Las ventas se agrupan por fecha de creación del pedido y su estado financiero actual, excluyendo entregas canceladas. No son una tasa de conversión ni una atribución a campañas. Pueden cambiar cuando se confirma un pago o un reintegro.</p>
+    <p>Se conservan 90 días de detalle y resúmenes del mes actual y los 11 anteriores. No se identifican personas entre dispositivos.</p>
+  </footer>
+</div>
+{% endblock %}
