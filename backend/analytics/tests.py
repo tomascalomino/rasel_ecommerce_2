@@ -188,6 +188,7 @@ class TrackingTests(TestCase):
             "facebookexternalhit",
             "WhatsApp",
             "curl/8.0",
+            "Go-http-client/2.0",
         ):
             client.get("/", HTTP_USER_AGENT=ua)
         self.assertFalse(Visit.objects.exists())

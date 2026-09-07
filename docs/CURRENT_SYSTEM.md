@@ -269,7 +269,8 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
   producto alimenta el ranking de fichas más vistas.
 - Se registran respuestas HTML exitosas de páginas públicas permitidas. Se
   excluyen staff autenticado, admin, monitoreo, archivos, errores, webhooks,
-  páginas con identificadores de pedidos/pagos y bots reconocibles. El
+  páginas con identificadores de pedidos/pagos y bots reconocibles, incluidas
+  las comprobaciones de Render identificadas como Go-http-client. El
   filtrado es aproximado y requiere que el navegador conserve la sesión.
 - Las etapas son visita, aumento válido de cantidad en carrito, apertura de
   checkout con carrito y envío válido de checkout. Cada etapa suma una vez

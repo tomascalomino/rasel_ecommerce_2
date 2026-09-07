@@ -3,6 +3,12 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-07 — Exclusión de comprobaciones de Render (1.8.1)
+
+- La medición excluye también agentes HTTP automatizados con guion o guion
+  bajo en su nombre, incluido Go-http-client usado por las comprobaciones de
+  Render. Se agrega cobertura de regresión para evitar visitas de despliegue.
+
 ## 2026-09-07 — Reportes de visitas y compras (1.8.0)
 
 - Admin: nueva sección Reportes para administrador, Operador y Solo lectura,

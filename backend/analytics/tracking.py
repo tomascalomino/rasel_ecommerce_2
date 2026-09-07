@@ -28,7 +28,7 @@ SESSION_KEY = "rasel_analytics_visit"
 STAGES = {"cart_added", "checkout_opened", "checkout_submitted"}
 BOT = re.compile(
     r"bot|crawler|spider|slurp|headless|uptimerobot|monitor|preview|facebookexternalhit|"
-    r"whatsapp|curl|wget|python|httpclient|lighthouse|pagespeed|pingdom|selenium",
+    r"whatsapp|curl|wget|python|http[-_]?client|lighthouse|pagespeed|pingdom|selenium",
     re.I,
 )
 PAGES = {
