@@ -11,7 +11,10 @@ from datetime import timedelta
 
 from django.apps import apps as global_apps
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, F, Q, Sum
+from django.template.response import TemplateResponse
+from django.urls import path
 from django.utils import timezone
 
 from .version import APP_VERSION
@@ -49,7 +52,7 @@ def sync_roles(sender=None, **kwargs):
     from django.contrib.auth.management import create_permissions
     from django.contrib.auth.models import Group, Permission
 
-    for app_label in ("shop", "orders", "shipping"):
+    for app_label in ("shop", "orders", "shipping", "analytics"):
         create_permissions(global_apps.get_app_config(app_label), verbosity=0)
 
     for name, matrix in (
@@ -66,6 +69,11 @@ def sync_roles(sender=None, **kwargs):
                     codename__in=[f"{action}_{model_name}" for action in actions],
                 )
             )
+        perms.extend(
+            Permission.objects.filter(
+                content_type__app_label="analytics", codename="view_reports"
+            )
+        )
         group.permissions.set(perms)
 
 
@@ -85,7 +93,26 @@ class RaselAdminSite(admin.AdminSite):
     def each_context(self, request):
         context = super().each_context(request)
         context["app_version"] = APP_VERSION
+        context["can_view_reports"] = request.user.has_perm("analytics.view_reports")
         return context
+
+    def get_urls(self):
+        return [
+            path("reportes/", self.admin_view(self.reports), name="reports")
+        ] + super().get_urls()
+
+    def reports(self, request):
+        if not request.user.has_perm("analytics.view_reports"):
+            raise PermissionDenied
+        from analytics.reports import report_context
+
+        context = {
+            **self.each_context(request),
+            **report_context(request.GET.get("period", "30")),
+            "title": "Reportes",
+            "subtitle": None,
+        }
+        return TemplateResponse(request, "admin/reports.html", context)
 
     def get_app_list(self, request, app_label=None):
         app_list = super().get_app_list(request, app_label)

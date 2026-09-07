@@ -70,6 +70,7 @@ if _site_url.startswith("https"):
 
 # Kill switch de nuevos checkouts. Webhooks y conciliación no dependen de esta bandera.
 MP_CHECKOUT_ENABLED = os.getenv("MP_CHECKOUT_ENABLED", "0") == "1"
+ANALYTICS_ENABLED = os.getenv("ANALYTICS_ENABLED", "1") == "1"
 MP_ENVIRONMENT = os.getenv("MP_ENVIRONMENT", "").strip().lower()
 MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "").strip()
 MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "").strip()
@@ -142,6 +143,7 @@ INSTALLED_APPS = [
     "orders",
     "payments",
     "shipping",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -151,6 +153,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "analytics.tracking.AnalyticsMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

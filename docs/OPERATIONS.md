@@ -17,7 +17,7 @@ ignorado por Git y nunca debe compartirse. Para pruebas y verificaciones usar:
 
 ```powershell
 python backend/manage.py check
-python backend/manage.py test shop cart orders payments shipping
+python backend/manage.py test config shop cart orders payments shipping analytics
 python backend/manage.py ops_kpis --days 7
 ```
 
@@ -472,6 +472,61 @@ anterior. No revertir migraciones ni borrar datos sin preparar primero una
 recuperación de Neon.
 
 ## Operación diaria desde admin
+
+### Reportes y medición de visitas
+
+Abrir **Ver reportes de visitas y compras** desde el inicio del admin. Los
+roles Operador y Solo lectura tienen permiso de consulta, sin edición ni
+acceso a registros individuales de analítica. Las migraciones sincronizan ese
+permiso. El panel separa visitas/etapas de las ventas cobradas y explica sus
+fechas y límites.
+
+La medición está activa por defecto. El interruptor de entorno
+`ANALYTICS_ENABLED=0` pausa nuevos registros; el panel y las ventas siguen
+disponibles. Usar `1` para reanudar. Configurar cada entorno por separado;
+staging y producción conservan sus propias bases. No se requieren servicios,
+credenciales externas, Redis, workers ni Cron Jobs nuevos.
+
+Para identificar campañas, compartir enlaces como
+`https://rasel.ar/?utm_source=instagram&utm_medium=social&utm_campaign=septiembre`.
+Usar solo etiquetas de campaña sin datos personales; las etiquetas admiten
+letras latinas sin acento, números, guiones y guiones bajos, hasta 64 caracteres.
+WhatsApp puede no enviar referencia: etiquetar sus enlaces para distinguirlo
+del tráfico directo. La fuente se fija al inicio de cada visita.
+
+La limpieza automática intenta un lote como máximo por minuto al llegar
+actividad medible, con exclusión mutua en la base entre workers. Elimina hasta
+100 filas por tabla: visitas iniciadas hace más de 90 días, sesiones Django ya
+vencidas y resúmenes anteriores al mes actual y sus 11 meses previos. Nunca
+elimina pedidos ni sesiones vigentes. Sin tráfico, la limpieza espera a la
+próxima visita; con acumulación se completa en lotes sucesivos.
+
+Para adelantar el mantenimiento o ejecutarlo con la medición pausada:
+
+```powershell
+python backend/manage.py cleanup_analytics --batch-size 100 --max-batches 10
+```
+
+Los límites admiten de 1 a 1000. Repetir el comando si informa eliminaciones
+y todavía existe acumulación. Registrar solo cantidades y tiempos, nunca
+contenido de sesiones ni identificadores. Las advertencias de los loggers de
+analítica indican fallas del registro sin incluir payloads ni datos del cliente.
+Revisar errores, consumo de Neon y latencia después de publicar una campaña;
+el almacenamiento está acotado por retención y por combinaciones de fuentes,
+pero no hay un cupo garantizado de tráfico gratuito.
+
+El check `promotion-gate` ejecuta la suite, incluida analítica, contra un
+PostgreSQL efímero de CI para validar concurrencia real. Las pruebas locales
+con SQLite omiten los casos que requieren bloqueos de fila. Antes de promover,
+validar filtros y recorrido primero en mobile, luego escritorio, y comparar la
+latencia de visitas iniciales y repetidas con la medición pausada en una base
+aislada; no usar el tráfico de staff, que se excluye automáticamente.
+
+Limitación previa del checkout MP: ante un primer error HTTP 503 al crear la
+preferencia, Django no persiste las modificaciones de sesión de esa respuesta.
+El borrador queda reservado, pero el reintento puede responder 403 si la sesión
+no conservó ese borrador. No interpretar ese checkout enviado como pago; aplicar
+la conciliación habitual a la reserva. El módulo de reportes no cambia ese flujo.
 
 ### Catálogo y stock
 

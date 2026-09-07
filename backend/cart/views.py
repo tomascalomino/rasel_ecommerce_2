@@ -4,6 +4,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from .cart import Cart
+from analytics.tracking import mark_cart_increase
 
 
 def cart_detail(request):
@@ -17,6 +18,7 @@ def cart_add(request):
     variant_id = int(request.POST.get("variant_id"))
     qty = int(request.POST.get("qty", 1))
     cart.add(variant_id=variant_id, qty=qty, override=False)
+    mark_cart_increase(request, variant_id, 0, qty)
     messages.success(request, "Producto agregado al carrito.")
     next_url = (request.POST.get("next") or "").strip()
     if next_url and url_has_allowed_host_and_scheme(
@@ -33,7 +35,10 @@ def cart_update(request):
     cart = Cart(request.session)
     variant_id = int(request.POST.get("variant_id"))
     qty = int(request.POST.get("qty", 1))
+    previous_qty = cart._cart.get(str(variant_id), {}).get("qty", 0)
     cart.set_qty(variant_id=variant_id, qty=qty)
+    if previous_qty > 0:
+        mark_cart_increase(request, variant_id, previous_qty, qty)
     if qty <= 0:
         messages.info(request, "Producto eliminado del carrito.")
     else:
