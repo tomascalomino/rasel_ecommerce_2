@@ -3,6 +3,23 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-16 — Calidad del tráfico y atribución de compras (1.9.0)
+
+- Filtros compartidos para visitas, actividad y atribución: clientes automatizados,
+  monitoreo, precargas y staff. Descartes diarios por motivo solo para páginas
+  públicas; health check continúa sin escrituras analíticas.
+- Reportes con visitas filtradas y con actividad, porcentaje sobre la nueva
+  metodología, ambas series de evolución y cobertura histórica explícita.
+  Señales propias con CSRF y token por página, idempotentes y sin extender visitas.
+- Último origen externo de 30 días en cookie firmada; snapshots opcionales en
+  pedidos y borradores que sobreviven a pagos asincrónicos. Tabla de compras por
+  origen según estado financiero actual, con totales reconciliados y sin atribuir
+  pedidos históricos ni prometer identificación de personas.
+- Migraciones aditivas y limpieza por lotes de atribución técnica a doce meses;
+  se mantienen los pedidos y el detalle de visitas a 90 días. Privacidad y
+  documentación operativa actualizadas. Verificación de monitores pendiente de
+  acceso autenticado a sus paneles.
+
 ## 2026-09-07 — Exclusión de comprobaciones de Render (1.8.1)
 
 - La medición excluye también agentes HTTP automatizados con guion o guion

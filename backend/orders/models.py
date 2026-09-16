@@ -3,6 +3,9 @@ from django.utils import timezone
 
 
 class Order(models.Model):
+    analytics_attribution = models.JSONField(default=dict, blank=True, editable=False)
+    analytics_attributed_at = models.DateTimeField(null=True, blank=True, db_index=True, editable=False)
+
     FULFILLMENT_STATUS_CHOICES = [
         ("pending", "Pendiente"),
         ("shipped", "Despachada"),

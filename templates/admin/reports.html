@@ -17,11 +17,22 @@
   {% else %}<p class="reports-notice" role="status">Todavía no hay visitas registradas. Los reportes se completarán cuando lleguen las primeras visitas a la tienda. Las ventas históricas ya están disponibles.</p>{% endif %}
 
   <div class="reports-cards">
-    <section class="reports-card"><h3>Visitas</h3><strong>{% if measurement %}{{ counts.visits }}{% else %}—{% endif %}</strong><p>Sesiones de navegación, no personas únicas</p></section>
+    <section class="reports-card"><h3>Visitas filtradas</h3><strong>{% if measurement %}{{ counts.visits }}{% else %}—{% endif %}</strong><p>Sesiones de navegación, no personas únicas</p></section>
+    <section class="reports-card"><h3>Visitas con actividad</h3><strong>{% if quality %}{{ counts.active_visits }}{% else %}—{% endif %}</strong><p>Con interacción o diez segundos visibles</p></section>
+    <section class="reports-card"><h3>Porcentaje con actividad</h3><strong>{% if activity_percent != None %}{{ activity_percent|floatformat:1 }}%{% else %}—{% endif %}</strong><p>Sobre {{ counts.quality_visits }} visitas con la nueva medición</p></section>
     <section class="reports-card"><h3>Páginas vistas</h3><strong>{% if measurement %}{{ counts.pageviews }}{% else %}—{% endif %}</strong><p>Incluye recargas de páginas públicas</p></section>
     <section class="reports-card"><h3>Pedidos cobrados</h3><strong>{{ sales.count }}</strong><p>Aprobados o con reintegro parcial</p></section>
     <section class="reports-card reports-card-sales"><h3>Ventas netas</h3><strong>$ {{ sales.total|floatformat:"0g" }}</strong><p>Incluye envío y descuenta reintegros</p></section>
   </div>
+
+  <section class="reports-panel">
+    <h3>Calidad del tráfico</h3>
+    {% if quality %}<p class="reports-muted">Nueva medición desde el {{ quality.started_at|date:"d/m/Y H:i" }}. Los períodos anteriores no tienen registro de actividad ni descartes; los históricos no se recalcularon. El primer día es parcial.</p>
+    {% else %}<p class="reports-notice">Sin registro de la nueva medición. Se iniciará con las próximas solicitudes medibles.</p>{% endif %}
+    <ul class="reports-ranking">{% for reason in exclusions %}<li><span>{{ reason.label }}</span><strong>{% if quality %}{{ reason.count }}{% else %}—{% endif %}</strong></li>{% endfor %}</ul>
+    <p class="reports-note">Estos valores cuentan solicitudes descartadas de páginas públicas, no visitas ni personas. Health check, administración, archivos y errores quedan fuera de estos contadores.</p>
+    <p class="reports-note">{{ unknown_devices }} visitas con dispositivo desconocido en el período. No se consideran bots automáticamente. Las señales de actividad aumentan la confianza, pero no certifican humanidad; sin JavaScript también puede haber visitas reales.</p>
+  </section>
 
   <section class="reports-panel">
     <div class="reports-panel-heading"><h3>Evolución de visitas</h3><span class="reports-muted">{% if monthly %}Por mes{% else %}Por día{% endif %}</span></div>
@@ -29,13 +40,25 @@
     <svg class="reports-chart" viewBox="0 0 724 200" role="img" aria-labelledby="visits-chart-title visits-chart-desc">
       <title id="visits-chart-title">Visitas {% if monthly %}mensuales{% else %}diarias{% endif %}</title><desc id="visits-chart-desc">La tabla desplegable debajo contiene los valores de cada período.</desc>
       <line x1="0" y1="180" x2="724" y2="180" stroke="currentColor" opacity=".2"/>
-      {% for row in rows %}{% if row.available %}<rect x="{{ row.x }}" y="{{ row.y }}" width="{{ row.width }}" height="{{ row.height }}" rx="2"><title>{{ row.label }}: {{ row.visits }} visitas</title></rect>{% endif %}{% endfor %}
+      {% for row in rows %}{% if row.available %}<rect x="{{ row.x }}" y="{{ row.y }}" width="{{ row.width }}" height="{{ row.height }}" rx="2"><title>{{ row.label }}: {{ row.visits }} visitas filtradas</title></rect>{% endif %}{% if row.quality_available %}<rect class="reports-active-bar" x="{{ row.x }}" y="{{ row.active_y }}" width="{{ row.width }}" height="{{ row.active_height }}" rx="2"><title>{{ row.label }}: {{ row.active_visits }} con actividad</title></rect>{% endif %}{% endfor %}
     </svg>
     <div class="reports-chart-labels"><span>{{ rows.0.label }}</span><span>{% with last_row=rows|last %}{{ last_row.label }}{% endwith %}</span></div>
-    <details class="reports-details"><summary>Ver datos de la evolución</summary><div class="reports-table-wrap"><table><caption>Visitas y páginas vistas por período</caption><thead><tr><th>Período</th><th>Visitas</th><th>Páginas</th></tr></thead><tbody>
-      {% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{% if row.available %}{{ row.visits }}{% else %}Sin registro{% endif %}</td><td>{% if row.available %}{{ row.pageviews }}{% else %}—{% endif %}</td></tr>{% endfor %}
+    <p class="reports-legend"><span>■ Filtradas</span><span class="reports-active-label">● Con actividad</span></p>
+    <details class="reports-details"><summary>Ver datos de la evolución</summary><div class="reports-table-wrap" tabindex="0" role="region" aria-label="Evolución por período"><table><caption>Visitas y páginas vistas por período</caption><thead><tr><th>Período</th><th>Filtradas</th><th>Con actividad</th><th>Páginas</th></tr></thead><tbody>
+      {% for row in rows %}<tr><th scope="row">{{ row.label }}</th><td>{% if row.available %}{{ row.visits }}{% else %}Sin registro{% endif %}</td><td>{% if row.quality_available %}{{ row.active_visits }}{% else %}Sin registro{% endif %}</td><td>{% if row.available %}{{ row.pageviews }}{% else %}—{% endif %}</td></tr>{% endfor %}
     </tbody></table></div></details>
     {% else %}<p class="reports-empty">El gráfico aparecerá con las primeras visitas.</p>{% endif %}
+  </section>
+
+  <section class="reports-panel">
+    <h3>Compras por origen atribuido</h3>
+    <p class="reports-muted">Última campaña u origen externo de los 30 días anteriores al checkout, en el mismo navegador. Volver directamente no reemplaza ese origen.</p>
+    <div class="reports-table-wrap" tabindex="0" role="region" aria-label="Compras por origen"><table class="reports-attribution"><caption>Pedidos cobrados por fecha de creación y estado financiero actual. Incluye envío y descuenta reintegros.</caption>
+      <thead><tr><th>Origen / campaña</th><th>Pedidos</th><th>Ingresos netos</th></tr></thead>
+      <tbody>{% for row in attribution_rows %}<tr><th scope="row">{{ row.label }}{% if row.medium or row.campaign %}<small>{{ row.medium }}{% if row.campaign %} · {{ row.campaign }}{% endif %}</small>{% endif %}</th><td>{{ row.count }}</td><td>$ {{ row.total|floatformat:"0g" }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><th>Total</th><td>{{ sales.count }}</td><td>$ {{ sales.total|floatformat:"0g" }}</td></tr></tfoot>
+    </table></div>
+    <p class="reports-note">Sin atribución incluye pedidos anteriores a esta función o sin medición disponible; no significa tráfico directo. No hay atribución retroactiva. Estos valores no son una tasa de conversión de las visitas del período.</p>
   </section>
 
   <section class="reports-panel">
@@ -51,7 +74,7 @@
   </div>
   <footer class="reports-note">
     <p>Una visita termina tras 30 minutos sin actividad. Las mediciones son aproximadas: excluyen administración, monitoreo y bots reconocibles. Los ceros indican ausencia de actividad registrada; las pausas de medición también pueden dejar períodos sin datos.</p>
-    <p>Las ventas se agrupan por fecha de creación del pedido y su estado financiero actual, excluyendo entregas canceladas. No son una tasa de conversión ni una atribución a campañas. Pueden cambiar cuando se confirma un pago o un reintegro.</p>
+    <p>Las ventas se agrupan por fecha de creación del pedido y su estado financiero actual, excluyendo entregas canceladas. Pueden cambiar cuando se confirma un pago o un reintegro. El origen de entrada de una visita puede diferir del origen atribuido a una compra.</p>
     <p>Se conservan 90 días de detalle y resúmenes del mes actual y los 11 anteriores. No se identifican personas entre dispositivos.</p>
   </footer>
 </div>

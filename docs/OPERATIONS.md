@@ -494,10 +494,37 @@ letras latinas sin acento, números, guiones y guiones bajos, hasta 64 caractere
 WhatsApp puede no enviar referencia: etiquetar sus enlaces para distinguirlo
 del tráfico directo. La fuente se fija al inicio de cada visita.
 
+La atribución de compras es independiente del origen de entrada: conserva el
+último contacto externo durante 30 días mediante una cookie propia firmada.
+Volver directamente no renueva el plazo. El checkout guarda un snapshot opcional
+que acompaña al borrador de Mercado Pago y a la orden; los pagos tardíos y
+reintentos conservan la procedencia original. La tabla atribuye únicamente pedidos
+cobrados según el estado financiero actual y reconcilia con las tarjetas de ventas.
+**Sin atribución** no equivale a tráfico directo. No completar manualmente
+atribuciones de pedidos viejos ni inferir conversión dividiendo ventas por visitas.
+
+El bloque de calidad informa la fecha inicial de la nueva metodología y separa
+visitas filtradas, visitas con actividad y solicitudes descartadas por motivo.
+No borrar ni descontar el histórico previo. Los dispositivos desconocidos no
+son automáticamente bots. Los contadores de descartes solo cubren páginas
+públicas exitosas: `/healthz`, administración, archivos y errores están fuera.
+El endpoint `/analytics/activity/` es POST con CSRF y token firmado por página;
+ignora señales de visitas vencidas y no prolonga sesiones. Su falla no debe
+impedir navegar o comprar. El interruptor de medición también pausa señales,
+descartes y nuevas atribuciones, conservando snapshots existentes para pagos pendientes.
+
+Antes de publicar, verificar en Render y UptimeRobot que el monitoreo apunte a
+`/healthz`. La revisión del 16/09/2026 no pudo verificar sus paneles por falta
+de sesión autenticada; el código excluye esa ruta y los agentes reconocibles,
+pero esto no certifica la configuración operativa. Mantener esta comprobación
+pendiente hasta acceder a los paneles; no afirmar que los contadores son personas.
+
 La limpieza automática intenta un lote como máximo por minuto al llegar
 actividad medible, con exclusión mutua en la base entre workers. Elimina hasta
 100 filas por tabla: visitas iniciadas hace más de 90 días, sesiones Django ya
-vencidas y resúmenes anteriores al mes actual y sus 11 meses previos. Nunca
+vencidas y resúmenes (incluidos descartes) anteriores al mes actual y sus 11 meses previos.
+También vacía por lotes los metadatos de atribución vencidos en órdenes y
+borradores, sin alterar sus datos comerciales. Nunca
 elimina pedidos ni sesiones vigentes. Sin tráfico, la limpieza espera a la
 próxima visita; con acumulación se completa en lotes sucesivos.
 

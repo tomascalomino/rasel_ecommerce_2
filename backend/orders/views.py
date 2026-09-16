@@ -8,6 +8,7 @@ from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart
 from analytics.tracking import mark_stage
+from analytics.attribution import checkout_snapshot
 from config.pricing import (
     get_offline_payment_discount_percent,
     payment_discount_for_lines,
@@ -99,7 +100,7 @@ def _customer_from_form(form):
 
 
 def _create_offline_order(
-    customer, delivery, cart_rows, payment_method, discount_percent
+    customer, delivery, cart_rows, payment_method, discount_percent, analytics_attribution=None
 ):
     with transaction.atomic():
         validated = []
@@ -134,6 +135,8 @@ def _create_offline_order(
 
         order = Order.objects.create(
             **customer,
+            analytics_attribution=analytics_attribution or {},
+            analytics_attributed_at=(analytics_attribution or {}).get("captured_at"),
             delivery_method=delivery["delivery_method"],
             pickup_point=delivery["pickup_point"],
             pickup_point_label=delivery["pickup_point_label"],
@@ -219,6 +222,7 @@ def checkout(request):
                 cart_rows,
                 payment_method,
                 discount_percent,
+                analytics_attribution=checkout_snapshot(request),
             )
         except (ValueError, Variant.DoesNotExist) as exc:
             messages.error(
@@ -261,6 +265,7 @@ def checkout(request):
             delivery=draft_delivery,
             cart_rows=cart_rows,
             total_amount=delivery["grand_total"],
+            analytics_attribution=checkout_snapshot(request),
         )
     except (PaymentValidationError, Variant.DoesNotExist) as exc:
         messages.error(

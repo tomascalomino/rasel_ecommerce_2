@@ -25,6 +25,8 @@ class Visit(models.Model):
     cart_added = models.BooleanField(default=False)
     checkout_opened = models.BooleanField(default=False)
     checkout_submitted = models.BooleanField(default=False)
+    quality_version = models.PositiveSmallIntegerField(default=1)
+    active = models.BooleanField(default=False)
 
     class Meta:
         default_permissions = ()
@@ -37,9 +39,33 @@ class DailyTotal(models.Model):
     cart_added = models.PositiveIntegerField(default=0)
     checkout_opened = models.PositiveIntegerField(default=0)
     checkout_submitted = models.PositiveIntegerField(default=0)
+    quality_visits = models.PositiveIntegerField(default=0)
+    active_visits = models.PositiveIntegerField(default=0)
 
     class Meta:
         default_permissions = ()
+
+
+class QualityMeasurement(models.Model):
+    started_at = models.DateTimeField(default=timezone.now)
+    cleanup_after = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        default_permissions = ()
+
+
+class DailyExclusion(models.Model):
+    day = models.DateField(db_index=True)
+    reason = models.CharField(max_length=20)
+    requests = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        default_permissions = ()
+        constraints = [
+            models.UniqueConstraint(
+                fields=("day", "reason"), name="analytics_exclusion_day"
+            )
+        ]
 
 
 class DailySource(models.Model):

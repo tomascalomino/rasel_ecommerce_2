@@ -40,7 +40,7 @@ def _decimal(value) -> Decimal:
 
 
 def reserve_payment_draft(
-    *, customer, delivery, cart_rows, total_amount
+    *, customer, delivery, cart_rows, total_amount, analytics_attribution=None
 ) -> PaymentDraft:
     now = timezone.now()
     expires_at = now + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
@@ -94,6 +94,8 @@ def reserve_payment_draft(
         return PaymentDraft.objects.create(
             **customer,
             **delivery,
+            analytics_attribution=analytics_attribution or {},
+            analytics_attributed_at=(analytics_attribution or {}).get("captured_at"),
             total_amount=expected_total,
             items=snapshots,
             state="reserved",
@@ -320,6 +322,8 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         )
     }
     order = Order.objects.create(
+        analytics_attribution=draft.analytics_attribution,
+        analytics_attributed_at=draft.analytics_attributed_at,
         full_name=draft.full_name,
         email=draft.email,
         phone=draft.phone,

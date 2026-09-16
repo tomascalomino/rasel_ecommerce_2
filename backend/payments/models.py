@@ -39,6 +39,9 @@ class PaymentEvent(models.Model):
 
 
 class PaymentDraft(models.Model):
+    analytics_attribution = models.JSONField(default=dict, blank=True, editable=False)
+    analytics_attributed_at = models.DateTimeField(null=True, blank=True, db_index=True, editable=False)
+
     STATE_CHOICES = [
         ("created", "Creado"),
         ("reserved", "Stock reservado"),

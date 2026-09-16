@@ -459,7 +459,8 @@ class ReportTests(TestCase):
         Measurement.objects.create(pk=1)
         with CaptureQueriesContext(connection) as queries:
             report_context("90")
-        self.assertLessEqual(len(queries), 8)
+        # Quality state, exclusions and attributed sales are bounded extra queries.
+        self.assertLessEqual(len(queries), 12)
 
 
 class MaintenanceTests(TestCase):

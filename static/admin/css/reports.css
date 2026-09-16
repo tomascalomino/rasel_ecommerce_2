@@ -37,9 +37,17 @@
 .reports-empty { color: var(--body-quiet-color); padding: 24px 0; }
 .reports-notice { border-left: 4px solid #8a7844; padding: 14px 16px; background: var(--darkened-bg); line-height: 1.6; }
 .reports-columns { display: grid; grid-template-columns: minmax(0, 1fr); }
+.reports-active-bar { fill: #284d57; }
+.reports-legend { display: flex; flex-wrap: wrap; gap: 16px; color: #7d8b51; font-size: 13px; }
+.reports-active-label { color: #284d57; }
+.reports-attribution { table-layout: fixed; }
+.reports-attribution th:first-child { width: 46%; overflow-wrap: anywhere; }
+.reports-attribution td { overflow-wrap: anywhere; }
+.reports-attribution small { display: block; font-weight: normal; margin-top: 6px; color: var(--body-quiet-color); }
+.reports-table-wrap:focus-visible { outline: 3px solid var(--link-fg); }
 @media (min-width: 768px) {
   .reports-heading { flex-direction: row; justify-content: space-between; align-items: center; }
-  .reports-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .reports-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .reports-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
   .reports-card, .reports-panel { padding: 22px; }
 }

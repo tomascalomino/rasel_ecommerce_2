@@ -14,6 +14,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from .maintenance import cleanup_batch
+from .classification import BOT, PAGES, eligible, exclusion_reason
 from .models import (
     DailyDevice,
     DailyProduct,
@@ -21,40 +22,30 @@ from .models import (
     DailyTotal,
     Measurement,
     Visit,
+    DailyExclusion,
+    QualityMeasurement,
 )
 
 logger = logging.getLogger(__name__)
 SESSION_KEY = "rasel_analytics_visit"
 STAGES = {"cart_added", "checkout_opened", "checkout_submitted"}
-BOT = re.compile(
-    r"bot|crawler|spider|slurp|headless|uptimerobot|monitor|preview|facebookexternalhit|"
-    r"whatsapp|curl|wget|python|http[-_]?client|lighthouse|pagespeed|pingdom|selenium",
-    re.I,
-)
-PAGES = {
-    "home",
-    "about",
-    "virgen_extra",
-    "conservacion",
-    "contact",
-    "shipping_info",
-    "terms",
-    "privacy",
-    "returns",
-    "regret",
-    "shop:product_list",
-    "shop:product_detail",
-    "cart:detail",
-    "orders:checkout",
-}
 
 
-def eligible(request):
-    return (
-        settings.ANALYTICS_ENABLED
-        and not getattr(request.user, "is_staff", False)
-        and bool(request.META.get("HTTP_USER_AGENT", ""))
-        and not BOT.search(request.META.get("HTTP_USER_AGENT", ""))
+def prepare_visit(request):
+    now = timezone.now()
+    try:
+        visit_id = uuid.UUID(str(request.session.get(SESSION_KEY, "")))
+    except (ValueError, TypeError, AttributeError):
+        visit_id = None
+    visit = (
+        Visit.objects.filter(
+            pk=visit_id, last_seen_at__gt=now - timedelta(minutes=30)
+        ).first()
+        if visit_id
+        else None
+    )
+    request._analytics_candidate = visit or Visit(
+        started_at=now, last_seen_at=now, day=timezone.localdate(now), quality_version=2
     )
 
 
@@ -150,13 +141,32 @@ def record(request, *, pageview=False, stages=(), product=None):
         )
         new_visit = visit is None
         if new_visit:
-            visit = Visit.objects.create(started_at=now, last_seen_at=now, day=today)
+            candidate = getattr(request, "_analytics_candidate", None)
+            visit = Visit.objects.create(
+                **(
+                    {"id": candidate.id}
+                    if candidate is not None and candidate._state.adding
+                    else {}
+                ),
+                started_at=now,
+                last_seen_at=now,
+                day=today,
+                quality_version=2,
+            )
             Measurement.objects.get_or_create(pk=1, defaults={"started_at": now})
+            QualityMeasurement.objects.get_or_create(pk=1, defaults={"started_at": now})
         new_stages = {stage for stage in stages if not getattr(visit, stage)}
         visit.last_seen_at = now
         for stage in new_stages:
             setattr(visit, stage, True)
-        visit.save(update_fields=["last_seen_at", *sorted(new_stages)])
+        became_active = (
+            visit.quality_version == 2
+            and not visit.active
+            and bool(set(stages) & {"cart_added", "checkout_submitted"})
+        )
+        if became_active:
+            visit.active = True
+        visit.save(update_fields=["last_seen_at", "active", *sorted(new_stages)])
 
         # Lock days in the same order, including visits spanning midnight.
         for day in sorted({today, visit.day}):
@@ -167,6 +177,9 @@ def record(request, *, pageview=False, stages=(), product=None):
         increments = {stage: F(stage) + 1 for stage in new_stages}
         if new_visit:
             increments["visits"] = F("visits") + 1
+            increments["quality_visits"] = F("quality_visits") + 1
+        if became_active:
+            increments["active_visits"] = F("active_visits") + 1
         if increments:
             DailyTotal.objects.filter(day=visit.day).update(**increments)
         if new_visit:
@@ -197,10 +210,24 @@ class AnalyticsMiddleware:
         self.get_response = get_response
         self.next_cleanup_check = 0
 
+    def maybe_cleanup(self):
+        if time.monotonic() >= self.next_cleanup_check:
+            self.next_cleanup_check = time.monotonic() + 60
+            cleanup_batch()
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        name = getattr(request.resolver_match, "view_name", "")
+        if name in PAGES | {"cart:add", "cart:update"}:
+            try:
+                if eligible(request):
+                    prepare_visit(request)
+            except Exception:
+                logger.warning("No se pudo preparar la medición de visitas.")
+
     def __call__(self, request):
         response = self.get_response(request)
         try:
-            if not eligible(request):
+            if not settings.ANALYTICS_ENABLED:
                 return response
             name = getattr(request.resolver_match, "view_name", "")
             pageview = (
@@ -209,6 +236,18 @@ class AnalyticsMiddleware:
                 and response.get("Content-Type", "").startswith("text/html")
                 and name in PAGES
             )
+            reason = exclusion_reason(request)
+            if reason:
+                if pageview:
+                    with transaction.atomic():
+                        QualityMeasurement.objects.get_or_create(pk=1)
+                        _increment(
+                            DailyExclusion,
+                            dict(day=timezone.localdate(), reason=reason),
+                            "requests",
+                        )
+                    self.maybe_cleanup()
+                return response
             stages = set(getattr(request, "_analytics_stages", ()))
             if pageview and name == "orders:checkout":
                 stages.add("checkout_opened")
@@ -220,10 +259,12 @@ class AnalyticsMiddleware:
                 stages=stages,
                 product=getattr(request, "_analytics_product", None),
             )
+            if pageview:
+                from .attribution import update_cookie
+
+                update_cookie(request, response)
             # Local throttle avoids querying the lease on every public request.
-            if time.monotonic() >= self.next_cleanup_check:
-                self.next_cleanup_check = time.monotonic() + 60
-                cleanup_batch()
+            self.maybe_cleanup()
         except Exception:
             # Avoid logging request data, URLs, SQL parameters or identifiers.
             logger.warning("No se pudo actualizar la medición de visitas.")
