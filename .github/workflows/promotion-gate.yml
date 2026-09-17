@@ -55,3 +55,6 @@ jobs:
         run: |
           python backend/manage.py check
           python backend/manage.py test config shop cart orders payments shipping analytics
+
+      - name: Validate browser activity logic
+        run: node scripts/test_analytics_activity.cjs

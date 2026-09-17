@@ -317,6 +317,19 @@ class MercadoPagoIntegrationTests(TestCase):
         self.variant.refresh_from_db()
         self.assertEqual(self.variant.stock_qty, 1)
 
+    def test_attribution_survives_late_payment_and_duplicate_webhooks(self):
+        captured = timezone.now() - timedelta(days=31)
+        snapshot = {"source": "instagram", "medium": "paid", "campaign": "launch", "captured_at": captured.isoformat()}
+        self.draft.analytics_attribution = snapshot
+        self.draft.analytics_attributed_at = captured
+        self.draft.save()
+        self.post_webhook(self.payment(), notification_id="attribution-first")
+        self.post_webhook(self.payment(), notification_id="attribution-repeat")
+        self.assertEqual(Order.objects.count(), 1)
+        order = Order.objects.get()
+        self.assertEqual(order.analytics_attribution, snapshot)
+        self.assertEqual(order.analytics_attributed_at, captured)
+
     def test_rejected_payment_releases_stock_exactly_once(self):
         payment = self.payment(status="rejected", payment_id="PAY-REJECT")
         self.post_webhook(payment, notification_id="evt-reject")

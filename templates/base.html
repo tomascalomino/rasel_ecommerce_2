@@ -29,6 +29,10 @@
 
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <script src="{% static 'js/product-quick-add.js' %}" defer></script>
+  {% if analytics_activity_token %}
+  <meta name="rasel-activity" content="{{ analytics_activity_token }}" data-endpoint="{% url 'analytics_activity' %}" data-csrf="{{ csrf_token }}">
+  <script src="{% static 'js/analytics-activity.js' %}" defer></script>
+  {% endif %}
   <link rel="icon" href="{% static 'favicon.ico' %}">
 </head>
 <body>

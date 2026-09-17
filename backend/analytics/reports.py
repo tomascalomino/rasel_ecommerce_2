@@ -8,7 +8,16 @@ from django.utils import timezone
 from orders.models import Order
 
 from .maintenance import first_retained_day
-from .models import DailyDevice, DailyProduct, DailySource, DailyTotal, Measurement
+from .models import (
+    DailyDevice,
+    DailyProduct,
+    DailySource,
+    DailyTotal,
+    Measurement,
+    QualityMeasurement,
+    DailyExclusion,
+)
+from .classification import REASONS
 
 PERIODS = [
     ("today", "Hoy"),
@@ -23,6 +32,8 @@ COUNTERS = (
     "cart_added",
     "checkout_opened",
     "checkout_submitted",
+    "quality_visits",
+    "active_visits",
 )
 DEVICE_LABELS = {
     "mobile": "Celular",
@@ -43,6 +54,8 @@ def report_context(period):
         else today - timedelta(days=(1 if period == "today" else int(period)) - 1)
     )
     state = Measurement.objects.filter(pk=1).first()
+    quality = QualityMeasurement.objects.filter(pk=1).first()
+    quality_from = timezone.localdate(quality.started_at) if quality else None
     measured_from = timezone.localdate(state.started_at) if state else None
     totals = DailyTotal.objects.filter(day__gte=start, day__lte=today)
     counts = totals.aggregate(**{key: Sum(key) for key in COUNTERS})
@@ -76,6 +89,7 @@ def report_context(period):
             day=day,
             label=day.strftime("%m/%Y" if monthly else "%d/%m"),
             available=available,
+            quality_available=bool(quality_from and end > quality_from),
         )
         rows.append(row)
     peak = max([row["visits"] for row in rows] + [1])
@@ -87,18 +101,76 @@ def report_context(period):
             height=round(row["visits"] / peak * 170),
         )
         row["y"] = 180 - row["height"]
-    sales = (
-        Order.objects.filter(
-            created_at__gte=timezone.make_aware(datetime.combine(start, time.min)),
-            created_at__lt=timezone.make_aware(
-                datetime.combine(today + timedelta(days=1), time.min)
-            ),
-            payment_status__in=("approved", "partially_refunded"),
+        row["active_height"] = round(row["active_visits"] / peak * 170)
+        row["active_y"] = 180 - row["active_height"]
+    sales_query = Order.objects.filter(
+        created_at__gte=timezone.make_aware(datetime.combine(start, time.min)),
+        created_at__lt=timezone.make_aware(
+            datetime.combine(today + timedelta(days=1), time.min)
+        ),
+        payment_status__in=("approved", "partially_refunded"),
+    ).exclude(fulfillment_status="cancelled")
+    sales = sales_query.aggregate(
+        total=Sum(F("total_amount") - F("mp_refunded_amount")), count=Count("pk")
+    )
+    retained_at = timezone.make_aware(
+        datetime.combine(first_retained_day(today), time.min)
+    )
+    attributed = sales_query.filter(analytics_attributed_at__gte=retained_at)
+    attributed_total = attributed.aggregate(
+        total=Sum(F("total_amount") - F("mp_refunded_amount")), count=Count("pk")
+    )
+    attribution_rows = []
+    for item in (
+        attributed.values(
+            "analytics_attribution__source",
+            "analytics_attribution__medium",
+            "analytics_attribution__campaign",
         )
-        .exclude(fulfillment_status="cancelled")
-        .aggregate(
+        .annotate(
             total=Sum(F("total_amount") - F("mp_refunded_amount")), count=Count("pk")
         )
+        .order_by(
+            "-total",
+            "analytics_attribution__source",
+            "analytics_attribution__medium",
+            "analytics_attribution__campaign",
+        )[:8]
+    ):
+        source = item["analytics_attribution__source"]
+        attribution_rows.append(
+            dict(
+                label="Directo / desconocido" if source == "directo" else source,
+                medium=item["analytics_attribution__medium"],
+                campaign=item["analytics_attribution__campaign"],
+                count=item["count"],
+                total=item["total"],
+            )
+        )
+    rest_count = attributed_total["count"] - sum(
+        row["count"] for row in attribution_rows
+    )
+    if rest_count:
+        attribution_rows.append(
+            dict(
+                label="Orígenes restantes",
+                count=rest_count,
+                total=(attributed_total["total"] or 0)
+                - sum(row["total"] for row in attribution_rows),
+            )
+        )
+    attribution_rows.append(
+        dict(
+            label="Sin atribución",
+            count=sales["count"] - attributed_total["count"],
+            total=(sales["total"] or 0) - (attributed_total["total"] or 0),
+        )
+    )
+    excluded = dict(
+        DailyExclusion.objects.filter(day__gte=start, day__lte=today)
+        .values("reason")
+        .annotate(count=Sum("requests"))
+        .values_list("reason", "count")
     )
     funnel = []
     for key, label in (
@@ -129,6 +201,9 @@ def report_context(period):
             "directo": "Directo / desconocido",
             "otros": "Otros orígenes",
         }.get(source["source"], source["source"])
+    source_rest = counts["visits"] - sum(source["count"] for source in sources)
+    if source_rest > 0:
+        sources.append(dict(label="Orígenes restantes", count=source_rest))
     devices = dict(
         DailyDevice.objects.filter(day__gte=start, day__lte=today)
         .values("device")
@@ -158,6 +233,18 @@ def report_context(period):
         end=today,
         monthly=monthly,
         measurement=state,
+        quality=quality,
+        activity_percent=(
+            round(counts["active_visits"] / counts["quality_visits"] * 100, 1)
+            if counts["quality_visits"]
+            else None
+        ),
+        exclusions=[
+            dict(label=label, count=excluded.get(key, 0))
+            for key, label in REASONS.items()
+        ],
+        attribution_rows=attribution_rows,
+        unknown_devices=devices.get("unknown", 0),
         tracking_enabled=settings.ANALYTICS_ENABLED,
         counts=counts,
         rows=rows,

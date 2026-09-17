@@ -271,7 +271,22 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
   excluyen staff autenticado, admin, monitoreo, archivos, errores, webhooks,
   páginas con identificadores de pedidos/pagos y bots reconocibles, incluidas
   las comprobaciones de Render identificadas como Go-http-client. El
-  filtrado es aproximado y requiere que el navegador conserve la sesión.
+  filtrado es aproximado y requiere que el navegador conserve la sesión. También
+  descarta clientes como okhttp/axios y precargas identificadas por encabezados.
+- **Visitas filtradas** conserva el total histórico. **Visitas con actividad**
+  cuenta una vez por visita nueva una interacción del navegador, diez segundos
+  acumulados con la página visible, un aumento válido de carrito o un checkout
+  enviado. No certifica humanidad. Un endpoint POST propio protegido por CSRF
+  valida un token firmado por página contra la visita de la sesión; no crea
+  visitas ni prolonga su duración. Pestañas de visitas anteriores no activan la
+  visita actual. Sin JavaScript o ante errores, la compra sigue funcionando.
+- El porcentaje con actividad usa solamente visitas iniciadas con la nueva
+  metodología. La evolución muestra **Sin registro** antes de su primera
+  medición y avisa que el día inicial es parcial. No se recalculan históricos.
+  Calidad del tráfico separa solicitudes descartadas por staff, monitoreo
+  reconocido, bots/clientes automatizados, precargas y agente ausente. Los motivos
+  son excluyentes. Solo cuenta respuestas HTML públicas medibles; `/healthz`,
+  admin, archivos y errores quedan fuera. Dispositivo desconocido no implica bot.
 - Las etapas son visita, aumento válido de cantidad en carrito, apertura de
   checkout con carrito y envío válido de checkout. Cada etapa suma una vez
   por visita y se asigna a su fecha de inicio, aunque cruce medianoche. Las
@@ -284,7 +299,22 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
 - Las ventas se calculan por fecha de creación de la orden y estado financiero
   actual: aprobadas o parcialmente reintegradas, excluyendo entregas
   canceladas, con envío incluido y reintegros descontados. Los datos de ventas
-  se muestran separados de las visitas, sin atribución individual o por campaña.
+  se muestran separados de las visitas. La tabla **Compras por origen atribuido**
+  usa los mismos pedidos, fechas e importes y reconcilia con las tarjetas de ventas.
+  Muestra ocho orígenes principales, el resto agrupado y **Sin atribución**; no
+  calcula una tasa de conversión dividiendo ventas por visitas de entrada.
+- Una cookie propia firmada conserva el último origen externo o campaña durante
+  30 días en el mismo navegador, independientemente de la sesión del carrito.
+  Un nuevo contacto externo lo reemplaza; una vuelta directa no lo reemplaza ni
+  renueva. Se ignoran referencias internas y retornos de Mercado Pago. La cookie
+  es HttpOnly, SameSite=Lax y Secure en producción; no contiene datos del cliente.
+  El checkout captura un snapshot opcional con procedencia, fechas e identificador
+  técnico de visita en el pedido offline o borrador de Mercado Pago. El pago copia
+  ese snapshot a la orden aunque se confirme sin retorno del navegador. Los
+  snapshots son metadatos opcionales; no dependen de escrituras analíticas dentro
+  de las transacciones comerciales. Webhooks repetidos no duplican ingresos.
+  **Sin atribución** incluye pedidos anteriores o sin medición; es distinto de
+  **Directo / desconocido**. No hay reconstrucción retroactiva.
 - La procedencia usa primero etiquetas de fuente, medio y campaña; sin fuente
   válida usa el dominio de referencia externo o **Directo / desconocido**.
   Las etiquetas aceptan hasta 64 letras latinas sin acento, números, guiones o
@@ -294,6 +324,8 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
 - No se guardan IP, URLs completas, agente de usuario completo, datos de
   formularios ni identificadores de pago en las tablas de analítica. El detalle
   de visitas dura 90 días; los resúmenes, el mes actual y 11 meses anteriores.
+  Los snapshots técnicos de atribución en órdenes y borradores conservan el mes
+  actual y los once anteriores, sin modificar el resto de sus datos comerciales.
   La limpieza se hace por lotes al llegar actividad y también admite ejecución
   manual. Sin actividad puede demorarse hasta la próxima ejecución.
 - La fecha inicial corresponde al primer registro exitoso. No hay visitas

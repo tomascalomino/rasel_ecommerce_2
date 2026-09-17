@@ -23,8 +23,10 @@ from django.conf.urls.static import static
 from django.views.static import serve
 from shop.views import robots_txt, sitemap_xml, healthz, home
 from shipping.views import shipping_info
+from analytics.activity import activity
 
 urlpatterns = [
+    path("analytics/activity/", activity, name="analytics_activity"),
     path("healthz", healthz),
     path("robots.txt", robots_txt),
     path("sitemap.xml", sitemap_xml),
