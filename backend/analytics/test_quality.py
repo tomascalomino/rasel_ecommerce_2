@@ -303,8 +303,9 @@ class CheckoutAttributionTests(TransactionTestCase):
 class QualityReportRetentionTests(TestCase):
     def test_no_retroactive_quality_and_bounded_sales_reconcile(self):
         now = timezone.now()
-        Measurement.objects.create(started_at=now - timedelta(days=20))
-        QualityMeasurement.objects.create(started_at=now)
+        # Runtime always uses pk=1; PostgreSQL sequences survive test rollbacks.
+        Measurement.objects.create(pk=1, started_at=now - timedelta(days=20))
+        QualityMeasurement.objects.create(pk=1, started_at=now)
         DailyTotal.objects.create(
             day=timezone.localdate() - timedelta(days=10), visits=500
         )
@@ -341,7 +342,7 @@ class QualityReportRetentionTests(TestCase):
 
     def test_cleanup_erases_only_expired_metadata_and_exclusions(self):
         now = timezone.now()
-        QualityMeasurement.objects.create()
+        QualityMeasurement.objects.create(pk=1)
         old = timezone.make_aware(
             timezone.datetime.combine(
                 first_retained_day(timezone.localdate()), timezone.datetime.min.time()

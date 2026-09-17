@@ -3,6 +3,13 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-09-17 — Fixtures de analítica en PostgreSQL (1.9.1)
+
+- Las pruebas de cobertura histórica y retención crean explícitamente los
+  registros únicos de medición con el mismo identificador que utiliza la
+  aplicación. Evita depender de secuencias que PostgreSQL no reinicia al
+  deshacer cada prueba. No cambia el comportamiento de los reportes.
+
 ## 2026-09-16 — Calidad del tráfico y atribución de compras (1.9.0)
 
 - Filtros compartidos para visitas, actividad y atribución: clientes automatizados,
