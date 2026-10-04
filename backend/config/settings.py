@@ -71,6 +71,12 @@ if _site_url.startswith("https"):
 # Kill switch de nuevos checkouts. Webhooks y conciliación no dependen de esta bandera.
 MP_CHECKOUT_ENABLED = os.getenv("MP_CHECKOUT_ENABLED", "0") == "1"
 ANALYTICS_ENABLED = os.getenv("ANALYTICS_ENABLED", "1") == "1"
+META_PIXEL_ID = os.getenv("META_PIXEL_ID", "1400536168898337").strip()
+META_PIXEL_ENABLED = os.getenv("META_PIXEL_ENABLED", "0") == "1"
+META_CAPI_ENABLED = os.getenv("META_CAPI_ENABLED", "0") == "1"
+META_CAPI_ACCESS_TOKEN = os.getenv("META_CAPI_ACCESS_TOKEN", "").strip()
+META_GRAPH_API_VERSION = os.getenv("META_GRAPH_API_VERSION", "v26.0").strip()
+META_TEST_EVENT_CODE = os.getenv("META_TEST_EVENT_CODE", "").strip()
 MP_ENVIRONMENT = os.getenv("MP_ENVIRONMENT", "").strip().lower()
 MP_ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN", "").strip()
 MP_WEBHOOK_SECRET = os.getenv("MP_WEBHOOK_SECRET", "").strip()
@@ -144,6 +150,7 @@ INSTALLED_APPS = [
     "payments",
     "shipping",
     "analytics",
+    "marketing",
 ]
 
 MIDDLEWARE = [
@@ -155,6 +162,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "analytics.tracking.AnalyticsMiddleware",
+    "marketing.middleware.MarketingPrivacyMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -170,6 +178,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "analytics.activity.context",
+                "marketing.tracking.context",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",

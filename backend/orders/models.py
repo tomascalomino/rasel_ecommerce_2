@@ -1,9 +1,13 @@
 from django.db import models
 from django.utils import timezone
 from shipping.models import ShippingPromotionSnapshot
+from marketing.models import MarketingSnapshot
 
 
-class Order(ShippingPromotionSnapshot):
+class Order(ShippingPromotionSnapshot, MarketingSnapshot):
+    paid_at = models.DateTimeField(
+        "primera confirmación de pago", null=True, blank=True, editable=False
+    )
     analytics_attribution = models.JSONField(default=dict, blank=True, editable=False)
     analytics_attributed_at = models.DateTimeField(
         null=True, blank=True, db_index=True, editable=False
@@ -221,6 +225,9 @@ class Order(ShippingPromotionSnapshot):
 
 
 class OrderItem(models.Model):
+    variant_id_snapshot = models.PositiveBigIntegerField(
+        null=True, blank=True, editable=False
+    )
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     variant = models.ForeignKey(
         "shop.Variant",

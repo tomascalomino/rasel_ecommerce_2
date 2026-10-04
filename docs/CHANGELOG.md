@@ -3,6 +3,33 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Meta Pixel y Purchase por CAPI, apagados por defecto (1.11.0)
+
+- Candidato preparado para publicación en `bundle_work`, validación en staging
+  y promoción protegida. La versión se incrementó a 1.11.0. La activación depende
+  de la configuración de cada entorno; no se enviaron pedidos históricos ni
+  se validó todavía recepción productiva en el conjunto real.
+- Aviso opcional mobile-first con **OK, aceptar**, **Rechazar** y preferencias;
+  aceptación firmada por 180 días, retiro, cancelación de pendientes y privacidad
+  actualizada. Comprar y la analítica propia no dependen de aceptar Meta.
+- Código oficial del píxel y eventos públicos con IDs de variantes, ARS y
+  acciones confirmadas. Admin, staff, endpoints y páginas privadas excluidos;
+  reclamos únicos para carrito/checkout sin repeticiones por recarga.
+- Contexto consentido y snapshots en checkout/MP, primera fecha de cobro y cola
+  transaccional con Purchase único común a MP y cobros offline. No hay eventos
+  históricos ni Purchase de navegador; IP omitida por confianza de proxies
+  aún no verificada. Valores finales incluyen descuentos y envío cobrado.
+- CAPI v26.0 mediante comando manual, apagada sin token. Reclamos recuperables,
+  reintentos temporales limitados, modo de prueba congelado, diagnóstico sin
+  secretos, revisión de fallos y retención de contexto/payloads/auditoría.
+- Migraciones aditivas, pruebas Django/JavaScript y cobertura de marketing
+  incorporada al promotion-gate; guía de activación y Probar eventos.
+- Verificación local: 248 pruebas Django pasan, con ocho omitidas por requerir
+  bloqueos de PostgreSQL; tres suites JavaScript, checks y migraciones sin
+  diferencias. Recorrido mobile a 390 y 360 px y aviso en escritorio con SDK
+  simulado. La concurrencia real queda para el PostgreSQL del promotion-gate;
+  la recepción real en Meta requiere la prueba controlada documentada.
+
 ## 2026-10-04 — Campañas programadas de envío gratis en CABA (1.10.0)
 
 - Admin de campañas con fechas argentinas, publicación e historial permanentes,

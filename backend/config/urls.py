@@ -26,6 +26,7 @@ from shipping.views import shipping_info, promotion_detail
 from analytics.activity import activity
 
 urlpatterns = [
+    path("marketing/", include("marketing.urls")),
     path("analytics/activity/", activity, name="analytics_activity"),
     path("healthz", healthz),
     path("robots.txt", robots_txt),

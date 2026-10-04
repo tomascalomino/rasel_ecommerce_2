@@ -14,6 +14,7 @@ from orders.emails import send_order_confirmation, send_payment_alert
 from orders.models import Order, OrderItem
 from shop.models import Variant
 from shipping.promotions import SNAPSHOT_FIELDS, revalidate_delivery
+from marketing.purchases import record_purchase
 
 from .mercadopago import MercadoPagoError, create_preference
 from .models import PaymentDraft
@@ -47,6 +48,7 @@ def reserve_payment_draft(
     cart_rows,
     total_amount,
     analytics_attribution=None,
+    marketing=None,
     shipping_quote_token=None,
 ) -> PaymentDraft:
     with transaction.atomic():
@@ -104,6 +106,7 @@ def reserve_payment_draft(
 
         return PaymentDraft.objects.create(
             created_at=now,
+            **(marketing or {}),
             **customer,
             **delivery,
             analytics_attribution=analytics_attribution or {},
@@ -307,6 +310,7 @@ def _create_order_items(order, draft, variants):
         OrderItem.objects.create(
             order=order,
             variant=variant,
+            variant_id_snapshot=int(row["variant_id"]),
             product_name=str(row["product_name"]),
             variant_name=str(row["variant_name"]),
             unit_price=_decimal(row["unit_price"]),
@@ -334,6 +338,10 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         )
     }
     order = Order.objects.create(
+        web_checkout_id=draft.web_checkout_id,
+        marketing_consent=draft.marketing_consent,
+        marketing_context=draft.marketing_context,
+        marketing_captured_at=draft.marketing_captured_at,
         analytics_attribution=draft.analytics_attribution,
         analytics_attributed_at=draft.analytics_attributed_at,
         full_name=draft.full_name,
@@ -396,9 +404,12 @@ def _approve(draft_id, payment):
             if order.payment_status == "review" and not resolving_live_mode_review:
                 return order
             if order.payment_status not in {"refunded", "charged_back"}:
+                first_approval = order.payment_status != "approved"
                 order.payment_status = "approved"
                 order.mp_status = "approved"
                 order.save(update_fields=["payment_status", "mp_status"])
+                if first_approval:
+                    record_purchase(order, payment.get("date_approved"))
             draft.state = "approved"
             draft.processing_error = ""
             draft.save(update_fields=["state", "processing_error"])
@@ -457,6 +468,7 @@ def _approve(draft_id, payment):
             stock_deducted = True
 
         order = _create_order(draft, payment, stock_deducted=stock_deducted)
+        record_purchase(order, payment.get("date_approved"))
         draft.state = "approved"
         draft.processing_error = ""
         draft.save(update_fields=["state", "processing_error"])

@@ -54,9 +54,10 @@ jobs:
       - name: Validate Django
         run: |
           python backend/manage.py check
-          python backend/manage.py test config shop cart orders payments shipping analytics
+          python backend/manage.py test config shop cart orders payments shipping analytics marketing
 
       - name: Validate browser activity logic
         run: |
           node scripts/test_analytics_activity.cjs
           node scripts/test_shipping_checkout.cjs
+          node scripts/test_meta_marketing.cjs

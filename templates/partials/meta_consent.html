@@ -1,0 +1,18 @@
+{% load static %}
+<section class="meta-consent" data-meta-banner aria-label="Medición publicitaria" {% if meta_config.state != 'unknown' %}hidden{% endif %}>
+  <div class="meta-consent-inner">
+    <p>Usamos cookies y compartimos datos de navegación y compra con Meta para medir y mejorar nuestros anuncios. Podés seguir comprando sin aceptar. <a href="{% url 'privacy' %}#medicion-meta">Más información</a>.</p>
+    <div class="meta-consent-actions">
+      <button type="button" class="btn btn-primary" data-meta-choice="accept">OK, aceptar</button>
+      <button type="button" class="btn btn-outline" data-meta-choice="reject">Rechazar</button>
+      <button type="button" class="meta-preferences" data-meta-close hidden>Cerrar</button>
+    </div>
+    <p class="meta-consent-status" data-meta-status role="status" aria-live="polite"></p>
+  </div>
+</section>
+{{ meta_config|json_script:'rasel-meta-config' }}
+<script src="{% static 'js/meta-marketing.js' %}" defer></script>
+{% if meta_noscript %}
+<!-- Meta Pixel Code: fallback only after a recorded acceptance. -->
+<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id={{ meta_pixel_id }}&amp;ev=PageView&amp;noscript=1"></noscript>
+{% endif %}

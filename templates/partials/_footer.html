@@ -8,6 +8,7 @@
           <a href="{% url 'shipping_info' %}">Envíos</a>
           <a href="{% url 'terms' %}">Términos y Condiciones</a>
           <a href="{% url 'privacy' %}">Privacidad</a>
+          {% if meta_public %}<button type="button" class="meta-preferences" data-meta-preferences>Preferencias de privacidad</button>{% endif %}
           <a href="{% url 'returns' %}">Cambios y Devoluciones</a>
           <a href="{% url 'regret' %}">Botón de Arrepentimiento</a>
         </nav>

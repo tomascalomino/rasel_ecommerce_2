@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 from cart.cart import Cart
 from analytics.tracking import mark_stage
 from analytics.attribution import checkout_snapshot
+from marketing.tracking import checkout_snapshot as marketing_snapshot
 from config.pricing import (
     get_offline_payment_discount_percent,
     payment_discount_for_lines,
@@ -133,6 +134,7 @@ def _create_offline_order(
     payment_method,
     discount_percent,
     analytics_attribution=None,
+    marketing=None,
     shipping_quote_token=None,
 ):
     with transaction.atomic():
@@ -174,6 +176,7 @@ def _create_offline_order(
 
         order = Order.objects.create(
             created_at=now,
+            **(marketing or {}),
             **customer,
             analytics_attribution=analytics_attribution or {},
             analytics_attributed_at=(analytics_attribution or {}).get("captured_at"),
@@ -198,6 +201,7 @@ def _create_offline_order(
             OrderItem.objects.create(
                 order=order,
                 variant=variant,
+                variant_id_snapshot=variant.pk,
                 product_name=variant.product.name,
                 variant_name=variant.name,
                 unit_price=unit_price,
@@ -264,6 +268,7 @@ def checkout(request):
                 payment_method,
                 discount_percent,
                 analytics_attribution=checkout_snapshot(request),
+                marketing=marketing_snapshot(request),
                 shipping_quote_token=form.cleaned_data["shipping_quote_token"],
             )
         except ShippingQuoteChanged as exc:
@@ -310,6 +315,7 @@ def checkout(request):
             cart_rows=cart_rows,
             total_amount=delivery["grand_total"],
             analytics_attribution=checkout_snapshot(request),
+            marketing=marketing_snapshot(request),
             shipping_quote_token=form.cleaned_data["shipping_quote_token"],
         )
     except ShippingQuoteChanged as exc:
