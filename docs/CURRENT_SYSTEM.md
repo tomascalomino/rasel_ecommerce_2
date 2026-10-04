@@ -45,6 +45,7 @@ UptimeRobot → GET https://rasel.ar/healthz
 | `payments` | Checkout Pro, reservas temporales, webhooks firmados, conciliación, borradores y auditoría de Mercado Pago. |
 | `config` | Settings, URLs, administración RaSel, roles y contexto global. |
 | `analytics` | Visitas por sesión, etapas de compra, resúmenes diarios y reportes del admin. |
+| `marketing` | Consentimiento publicitario opcional, Meta Pixel y cola persistente de Purchase por Conversions API. |
 
 ## Catálogo y carrito
 
@@ -374,6 +375,72 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
   retroactivas. Antes de esa fecha aparece **Sin registro**; los ceros posteriores
   indican ausencia de actividad registrada, que también puede deberse a pausas
   de medición. El panel informa cuando la medición está actualmente pausada.
+
+## Medición publicitaria opcional con Meta
+
+La integración está disponible en el código y permanece **apagada por defecto**.
+Su activación y recepción en el conjunto **RaSel - Tienda online** requieren
+configuración y validación operativa; no se verificó ni activó en producción en
+este cambio. El ID del conjunto/píxel es `1400536168898337`.
+
+- Una franja debajo del header ofrece **OK, aceptar**, **Rechazar** y privacidad.
+  No bloquea navegación ni compra. No responder no habilita Meta. La elección
+  firmada se conserva durante 180 días por navegador y dominio; se puede cambiar
+  desde el footer. La analítica propia funciona independientemente de Meta.
+- El script oficial se carga e inicializa únicamente después de aceptación
+  vigente. Se desactivan los eventos automáticos del píxel. PageView se emite una
+  vez por navegación pública, también al restaurar una página desde el historial
+  del navegador. ViewContent usa la variante inicial de la ficha; cambiar la
+  presentación no lo repite. Admin, staff, webhooks, endpoints técnicos y páginas
+  privadas de pedidos no cargan el píxel ni su fallback sin JavaScript.
+- AddToCart utiliza el incremento validado por el servidor, transportado tras
+  la redirección mediante un mensaje de sesión de un solo uso. Los aumentos
+  desde el carrito también cuentan; quitar o reducir no cuenta. Variantes
+  inválidas/inactivas y cantidades inválidas no generan acciones exitosas.
+  InitiateCheckout usa un identificador del ciclo del carrito y se reclama una
+  vez en el servidor, sin repetir por recargas o errores del formulario. No se
+  reclama para carritos con variantes inactivas o cantidades sin stock suficiente.
+- Los eventos de navegador usan IDs de variantes, cantidades, precios de venta
+  vigentes y ARS. El valor de InitiateCheckout es el subtotal de productos antes
+  de elegir/confirmar descuento y envío; no promete el importe final cobrado.
+- El checkout asigna un UUID web y captura, solo con aceptación, las cookies
+  reales disponibles, User-Agent, URL pública saneada, UTMs y revisión de la
+  elección. Conserva la procedencia durante 30 días después de aceptar, ignorando
+  enlaces internos y retornos de MP. El borrador MP copia el contexto a la orden.
+  No fabrica `_fbp`/`_fbc`, no usa datos de red del webhook/admin y omite IP hasta
+  verificar la cadena confiable de Cloudflare/Render. La IP que Meta recibe
+  directamente del navegador no depende de esa captura del servidor.
+- Una primera aprobación válida de MP —webhook, retorno verificado o
+  conciliación— y los cobros offline autorizados usan la misma función de
+  registro. Pago y evento pendiente se guardan en una transacción. La fecha
+  proviene de la aprobación válida de MP o de la primera confirmación offline;
+  sin fecha válida del proveedor se conserva la primera verificación local.
+  La orden en revisión no genera Purchase.
+- Purchase usa `purchase_<UUID_DEL_CHECKOUT>`, IDs de variantes conservados en
+  los ítems, cantidades, precios unitarios históricos antes del descuento por
+  medio de pago y `total_amount`: productos después de descuentos más
+  envío cobrado por RaSel. Excluye transporte pagado directamente a terceros.
+  Solo se envía desde el servidor. Se hashea una vez el email normalizado y el
+  teléfono cuando tiene prefijo internacional explícito; cookies y User-Agent
+  no se hashean. No se envían nombres ni direcciones completas.
+- La cola preserva payload, fecha, valor, destino y modo de prueba en reintentos.
+  No hay llamadas a Meta dentro del checkout ni de la confirmación de pago.
+  No se reconstruyen históricos ni pedidos del admin; las migraciones no crean
+  consentimiento ni eventos retroactivos. La primera confirmación permanece
+  registrada incluso después de limpiar la auditoría, evitando reconstrucciones.
+- `send_meta_events` diagnostica sin enviar ni limpiar por defecto. Con `--send`
+  limpia y despacha lotes mediante reclamos persistentes recuperables. No hay
+  cron/worker: envío y reintentos requieren ejecutar el comando. Timeouts y
+  errores temporales tienen espera creciente, con límite de 24 horas desde la
+  creación del evento. Eventos con aprobación anterior a siete días no se
+  envían ni se redatan. Errores permanentes se detienen para revisión.
+- Rechazar o revocar detiene nuevos envíos y cancela pendientes de esa elección;
+  volver a aceptar no resucita compras anteriores. No se pueden retirar
+  solicitudes ya enviadas o en curso. Contexto y payloads se limpian después
+  de 90 días; la auditoría mínima dura doce meses, mediante el comando manual.
+- El admin muestra fecha de pago y estado resumido de Purchase sin exponer
+  payloads ni secretos. La política pública distingue analítica propia de
+  publicidad Meta y explica hashes, cookies, conservación y revocación.
 
 ## Estado operativo y límites conocidos
 

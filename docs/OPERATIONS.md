@@ -17,7 +17,7 @@ ignorado por Git y nunca debe compartirse. Para pruebas y verificaciones usar:
 
 ```powershell
 python backend/manage.py check
-python backend/manage.py test config shop cart orders payments shipping analytics
+python backend/manage.py test config shop cart orders payments shipping analytics marketing
 python backend/manage.py ops_kpis --days 7
 ```
 
@@ -161,6 +161,12 @@ coincidencia cierra la promoción y deja staging listo para el siguiente cambio.
 | Django | `SITE_URL` | URL pública para callbacks y CSRF. | Sí |
 | Django | `DJANGO_SETTINGS_MODULE` | Módulo de settings de Django. | Sí |
 | Django | `LOG_LEVEL` | Nivel de logs de consola. | Sí |
+| Meta | `META_PIXEL_ID` | ID público del conjunto/píxel. | Sí, si se activa Meta |
+| Meta | `META_PIXEL_ENABLED` | Habilita píxel tras consentimiento; por defecto `0`. | No |
+| Meta | `META_CAPI_ENABLED` | Habilita despacho manual de Purchase; por defecto `0`. | No |
+| Meta | `META_CAPI_ACCESS_TOKEN` | Credencial privada exclusivamente del backend. | Sí, si se activa CAPI |
+| Meta | `META_GRAPH_API_VERSION` | Versión fijada de Graph API; valor inicial `v26.0`. | Sí, si se activa CAPI |
+| Meta | `META_TEST_EVENT_CODE` | Código temporal para Probar eventos; vacío en producción. | No |
 | Django | `SECURE_HSTS_SECONDS` | Tiempo HSTS; tiene valor seguro por defecto. | No |
 | Base de datos | `DATABASE_URL` | Conexión PostgreSQL de Neon. | Sí |
 | R2 | `R2_BUCKET_NAME` | Activa almacenamiento de media en R2. | Sí |
@@ -433,6 +439,124 @@ Referencias operativas: [crear aplicación](https://www.mercadopago.com.ar/devel
 [compras de prueba](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/integration-test/test-purchases),
 [salida a producción](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/go-to-production)
 y [Cron Jobs de Render](https://render.com/docs/cronjobs).
+
+## Meta Pixel y Conversions API
+
+El código está preparado pero apagado por defecto. La recepción en Meta y la
+asociación con CP_Rasel requieren verificación del responsable con acceso al
+Administrador de eventos; no fueron activadas ni verificadas en producción como
+parte de la implementación. El ID es `1400536168898337`. Se incluyó `.env.example`
+con placeholders solo para Meta: integrar sus variables sin reemplazar ni
+publicar el `.env` existente. Nunca poner el token en templates, JS o comandos
+que impriman credenciales.
+
+### Activación y prueba controlada
+
+1. Publicar código y migraciones solamente cuando se autorice, siguiendo el
+   flujo de ramas. Mantener las dos banderas en `0` inicialmente. Las migraciones
+   son aditivas y no generan eventos históricos.
+2. En staging, configurar `META_PIXEL_ENABLED=1` y el ID del conjunto. El
+   píxel funciona sin token CAPI. Revisar primero en móvil el aviso con aceptar,
+   rechazar y preferencias, navegación y recorrido de compra. No responder
+   mantiene Meta apagado; rechazar no impide comprar.
+3. En Meta, abrir **Administrador de eventos → RaSel - Tienda online → Probar
+   eventos**. Confirmar acceso del operador y asociación con CP_Rasel. Abrir la
+   URL de staging desde la herramienta de pruebas, aceptar en un navegador sin
+   bloqueadores y recorrer inicio, ficha, agregado al carrito y checkout.
+   Verificar PageView, ViewContent, AddToCart e InitiateCheckout de navegador.
+   Recargar carrito/checkout no debe repetir sus acciones. No agregar reglas de
+   eventos automáticos para estos mismos disparadores en Meta.
+4. Para Purchase, generar en Meta un token válido para ese conjunto y cargarlo
+   exclusivamente en el backend de staging. Configurar `META_CAPI_ENABLED=1`,
+   versión `v26.0` y el código mostrado en **Probar eventos**. Crear un pedido
+   nuevo de prueba con aceptación; los pedidos históricos no sirven para esta
+   verificación. Confirmar el cobro offline desde el admin o usar el pago MP de
+   prueba y su verificación habitual. No realizar compras reales como prueba
+   sin informar y acordar esa operación.
+5. Consultar primero la cola, sin enviar:
+
+   ```powershell
+   python backend/manage.py send_meta_events
+   ```
+
+6. Enviar únicamente la orden nueva controlada:
+
+   ```powershell
+   python backend/manage.py send_meta_events --send --order <ID>
+   ```
+
+   Verificar un único Purchase de servidor con ARS y total del pedido después
+   de descuentos, incluido solo el envío cobrado por RaSel. `contents.item_price`
+   conserva el precio unitario histórico antes del descuento por medio de pago;
+   `value` conserva el total efectivamente cobrado. El admin informa
+   estado e intentos; **Recibido por Meta** significa recepción confirmada por
+   la API, no garantiza atribución a un anuncio. No hay Purchase de navegador.
+7. Quitar `META_TEST_EVENT_CODE` antes de activar producción. Los eventos guardan
+   el código y destino original: el comando no transforma pruebas pendientes
+   en conversiones productivas ni envía al cambiar el ID. El diagnóstico
+   `destination_or_test_mode_mismatch` identifica este bloqueo. Pruebas locales
+   automatizadas simulan el proveedor; no cargan ni envían al conjunto real.
+8. Validar la recepción antes de autorizar promoción y deploy productivos. No
+   habilitar flags ni completar secretos en producción desde un agente como
+   parte de un cambio no desplegado. Mantener la aprobación humana del SHA.
+
+La Graph API se consulta mediante HTTPS con `requests`, sin instalar SDK. La
+versión inicial fue contrastada con la
+[configuración oficial de Meta](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/apiconfig.py).
+Referencias de contrato:
+[eventos de servidor](https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/server-event/),
+[datos de cliente](https://developers.facebook.com/docs/marketing-api/conversions-api/parameters/customer-information-parameters/)
+y [solicitud/código de prueba en el SDK oficial](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/serverside/event_request.py).
+Revisar soporte de la versión durante el mantenimiento de la integración.
+
+### Rutina manual, incidentes y conservación
+
+- No existe cron ni worker Meta. Ejecutar el envío después de confirmar cobros
+  offline y revisar la cola al menos cada hora durante la operación comercial:
+
+  ```powershell
+  python backend/manage.py send_meta_events --send --limit 100
+  ```
+
+- `--send` autoriza envío y limpieza. Sin esa opción el comando no escribe ni
+  envía. Incluso con envío desactivado, `--send` ejecuta la limpieza. Si falta
+  token o la configuración no es válida, lo informa y conserva pendientes.
+  Sin ejecutar el comando no hay envío ni reintentos automáticos.
+- Timeouts, HTTP 429/5xx y errores transitorios vuelven a pendientes con espera
+  de 1, 2, 4, 8 minutos y hasta una hora. Cada nueva ejecución respeta esa fecha.
+  Los reclamos vencen a los cinco minutos para recuperar procesos interrumpidos.
+  Todos los intentos conservan ID, fecha, importe y payload. Meta puede recibir
+  nuevamente el mismo ID si una respuesta se pierde; no se promete exactamente
+  una solicitud HTTP, sino una compra lógica con el mismo identificador.
+- El plazo es 24 horas desde la creación del evento, con fecha de aprobación de
+  máximo siete días para el envío. Al vencer no se cambia la fecha ni se crea
+  otra compra. Credenciales/payloads rechazados quedan en **Revisar**. Corregir
+  la causa y, mientras siga dentro del plazo y con consentimiento vigente,
+  reintentar explícitamente una orden:
+
+  ```powershell
+  python backend/manage.py send_meta_events --send --retry-failed --order <ID>
+  ```
+
+- Los diagnósticos no guardan mensajes arbitrarios de Meta ni datos personales.
+  El admin permite leer estado, intentos, diagnóstico y primera fecha de pago;
+  no permite editar eventos. Pago, stock y notificaciones comerciales no
+  dependen de la respuesta de Meta.
+- Rechazar cancela pendientes, reclamos y errores asociados a la elección;
+  reaceptar no los reactiva. Una solicitud que ya estaba en curso no puede
+  retirarse. El consentimiento también se comprueba antes de cada envío.
+- Contextos de órdenes/borradores y payloads duran 90 días; recibos de acciones
+  de navegador, 90 días; auditoría mínima, doce meses. El comando limpia por
+  fecha y puede demorarse hasta su próxima ejecución. La primera fecha de pago
+  y UUID web permanecen en la orden; no se reconstruyen compras al limpiar.
+- La integración omite IP del servidor hasta verificar la cadena real de
+  Cloudflare/Render. No habilitar lectura directa de `X-Forwarded-For` o
+  `CF-Connecting-IP`; obtener IP exige verificar también el acceso directo al
+  origen y los proxies que sobrescriben encabezados.
+- Para pausar Meta poner las banderas en `0`. No afecta Mercado Pago ni la
+  analítica propia. Para pausar solo CAPI usar `META_CAPI_ENABLED=0`; no borrar
+  eventos ni redatar compras al reactivarla. El píxel y los envíos de servidor
+  comparten la misma elección de consentimiento.
 
 ## Despliegue y rollback
 

@@ -37,6 +37,7 @@
 </head>
 <body>
   {% include "partials/_header.html" %}
+  {% if meta_public %}{% include "partials/meta_consent.html" %}{% endif %}
   {% if show_shipping_banner %}{% include "partials/shipping_promotion_banner.html" %}{% endif %}
   {{ shipping_promotion_config|json_script:'shipping-promotion-config' }}
   <script src="{% static 'js/shipping-promotion.js' %}" defer></script>

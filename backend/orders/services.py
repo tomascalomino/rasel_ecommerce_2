@@ -5,6 +5,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from shop.models import Variant
+from marketing.purchases import record_purchase
 
 from .emails import (
     send_order_completed,
@@ -59,6 +60,7 @@ def confirm_payment(order_id: int) -> TransitionResult:
         elif order.payment_status == "pending":
             order.payment_status = "approved"
             order.save(update_fields=["payment_status"])
+            record_purchase(order)
             changed = True
         else:
             raise OrderTransitionError(
@@ -147,6 +149,8 @@ def collect_and_complete(order_id: int) -> TransitionResult:
             )
         if update_fields:
             order.save(update_fields=list(dict.fromkeys(update_fields)))
+        if payment_changed:
+            record_purchase(order)
     send_order_completed(order_id)
     return TransitionResult(changed=changed, order_id=order_id)
 

@@ -3143,3 +3143,21 @@ textarea:focus {
   .promotion-facts > div { grid-template-columns: minmax(0,1fr); gap: 4px; }
   .promotion-conditions .card-inner { padding: 20px; }
 }
+/* Optional advertising choice. Mobile-first, in document flow: never covers checkout. */
+.meta-consent { background: #f4f1e7; border-top: 1px solid #d8dccb; padding: 20px 16px; }
+.meta-consent[hidden] { display: none; }
+.meta-consent-inner { max-width: 1120px; margin: 0 auto; }
+.meta-consent p { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: #30382b; }
+.meta-consent a { text-decoration: underline; text-underline-offset: 3px; }
+.meta-consent-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.meta-consent-actions .btn { min-height: 44px; flex: 1 1 130px; }
+.meta-preferences { font: inherit; color: inherit; padding: 0; min-height: 44px; display: inline-flex; align-items: center; background: none; border: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.meta-preferences:focus-visible { outline: 2px solid #526443; outline-offset: 4px; }
+.meta-consent .meta-consent-status { margin: 12px 0 0; }
+.meta-consent-status:empty { display: none; }
+@media (min-width: 768px) {
+  .meta-consent-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+  .meta-consent-inner > p:first-child { flex: 1 1 450px; margin: 0; }
+  .meta-consent-actions .btn { flex: none; }
+  .meta-consent .meta-consent-status { flex-basis: 100%; margin: 0; }
+}

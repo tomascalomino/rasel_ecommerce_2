@@ -4,6 +4,8 @@ from django.contrib import admin, messages
 from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.html import format_html
+from marketing.models import MetaPurchase
+from marketing.delivery import configuration_problem
 
 from .models import Order, OrderItem
 from .services import (
@@ -130,6 +132,21 @@ class SituationFilter(admin.SimpleListFilter):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    @admin.display(description="Purchase en Meta")
+    def meta_purchase_status(self, obj):
+        if not obj or not obj.pk:
+            return "Sin pedido"
+        event = MetaPurchase.objects.filter(order=obj).first()
+        if not event:
+            return "Sin evento (histórico/admin, sin consentimiento o pago no aprobado)"
+        details = f"{event.get_status_display()} · intentos: {event.attempts}"
+        if event.diagnostic:
+            details += f" · {event.diagnostic}"
+        problem = configuration_problem()
+        if problem and event.status in {"pending", "sending"}:
+            details += f" · {problem}"
+        return details
+
     @admin.display(description="Ahorro adicional de envío")
     def shipping_promotion_savings(self, obj):
         return obj.shipping_promotion_savings
@@ -167,6 +184,8 @@ class OrderAdmin(admin.ModelAdmin):
         "pickup_point_label",
     )
     readonly_fields = (
+        "paid_at",
+        "meta_purchase_status",
         "shipping_promotion",
         "shipping_promotion_label",
         "shipping_promotion_applied_at",
@@ -248,6 +267,8 @@ class OrderAdmin(admin.ModelAdmin):
                 "classes": ("collapse",),
                 "fields": (
                     "stock_deducted",
+                    "paid_at",
+                    "meta_purchase_status",
                     "stock_restored",
                     "confirmation_email_sent",
                     "paid_email_sent",
