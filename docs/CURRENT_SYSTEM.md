@@ -378,10 +378,17 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
 
 ## Medición publicitaria opcional con Meta
 
-La integración está disponible en el código y permanece **apagada por defecto**.
-Su activación y recepción en el conjunto **RaSel - Tienda online** requieren
-configuración y validación operativa; no se verificó ni activó en producción en
-este cambio. El ID del conjunto/píxel es `1400536168898337`.
+La integración permanece **apagada por defecto** en el código. El 04/10/2026 se
+habilitó el píxel en staging y en `https://rasel.ar/`, con la versión productiva
+1.11.0 del commit aprobado `8fef46a` (PR #18). Se verificaron las migraciones,
+HTTP 200 y la configuración pública con `pixelEnabled=true`, elección inicial
+desconocida y `Cache-Control: private, no-store`. El conjunto/píxel es
+**RaSel - Tienda online**, ID `1400536168898337`.
+
+CAPI permanece desactivada en ambos entornos porque todavía falta el token.
+La recepción real en el Administrador de eventos y la asociación con CP_Rasel
+requieren validación del responsable con acceso a Meta. No se enviaron pedidos
+ni eventos reales como parte de las pruebas del agente.
 
 - Una franja debajo del header ofrece **OK, aceptar**, **Rechazar** y privacidad.
   No bloquea navegación ni compra. No responder no habilita Meta. La elección

@@ -3,12 +3,22 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Estado operativo de Meta Pixel y CAPI (1.11.1)
+
+- Documentación actualizada con el despliegue aprobado del PR #18: píxel
+  habilitado en staging y producción 1.11.0, migraciones aplicadas, HTTP 200 y
+  consentimiento inicial sin aceptación. Auto-Deploy productivo continúa apagado.
+- Las 248 pruebas pasaron en PostgreSQL sin omisiones; las tres suites
+  JavaScript también pasaron. CAPI continúa desactivada por falta de token;
+  la recepción real en Meta requiere validación del responsable.
+- Cambio documental compatible; preserva el comportamiento de la integración.
+
 ## 2026-10-04 — Meta Pixel y Purchase por CAPI, apagados por defecto (1.11.0)
 
-- Candidato preparado para publicación en `bundle_work`, validación en staging
-  y promoción protegida. La versión se incrementó a 1.11.0. La activación depende
-  de la configuración de cada entorno; no se enviaron pedidos históricos ni
-  se validó todavía recepción productiva en el conjunto real.
+- Publicado mediante PR #18 con aprobación personal y checks verdes, seguido
+  de deploy manual productivo del commit `8fef46a`. El píxel se habilitó mediante
+  configuración de cada entorno; CAPI sigue apagada. No se enviaron pedidos
+  históricos ni se validó todavía recepción productiva en el conjunto real.
 - Aviso opcional mobile-first con **OK, aceptar**, **Rechazar** y preferencias;
   aceptación firmada por 180 días, retiro, cancelación de pendientes y privacidad
   actualizada. Comprar y la analítica propia no dependen de aceptar Meta.
@@ -27,8 +37,8 @@ documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 - Verificación local: 248 pruebas Django pasan, con ocho omitidas por requerir
   bloqueos de PostgreSQL; tres suites JavaScript, checks y migraciones sin
   diferencias. Recorrido mobile a 390 y 360 px y aviso en escritorio con SDK
-  simulado. La concurrencia real queda para el PostgreSQL del promotion-gate;
-  la recepción real en Meta requiere la prueba controlada documentada.
+  simulado. El promotion-gate completó las 248 pruebas en PostgreSQL sin
+  omisiones; la recepción real en Meta requiere la prueba controlada documentada.
 
 ## 2026-10-04 — Campañas programadas de envío gratis en CABA (1.10.0)
 
