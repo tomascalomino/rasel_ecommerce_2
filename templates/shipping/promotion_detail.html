@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ promotion_detail.title }} — RaSel{% endblock %}
+{% block meta_description %}Condiciones de la campaña de envío gratis en CABA de RaSel. Consultá vigencia, cobertura y medios de pago.{% endblock %}
+{% block og_title %}{{ promotion_detail.title }} — RaSel{% endblock %}
+{% block og_description %}Envío gratis a domicilio en CABA, sin mínimo de compra. Consultá fechas y condiciones de esta campaña.{% endblock %}
+{% block content %}
+<section class="page-header promotion-page-header">
+  <div class="page-header-inner">
+    <div class="kicker"><span class="dot"></span><span>Del olivar a tu mesa</span></div>
+    <h1 class="h1">{{ promotion_detail.title }}</h1>
+    <p class="promotion-state" data-promotion-detail-state="{{ promotion_detail.state }}">
+      {% if promotion_detail.state == 'active' %}Promoción vigente{% elif promotion_detail.state == 'scheduled' %}Promoción programada{% elif promotion_detail.state == 'suspended' %}Promoción suspendida{% else %}Promoción finalizada{% endif %}
+    </p>
+    {% if promotion_detail.introduction %}<p class="p page-subtitle">{{ promotion_detail.introduction|linebreaksbr }}</p>{% endif %}
+  </div>
+</section>
+<section class="content-section card promotion-conditions">
+  <div class="card-inner">
+    <h2 class="h2">Envío gratis en CABA, sin mínimo</h2>
+    <p class="p">Beneficio para compras realizadas en la tienda online RaSel con entrega a domicilio en la Ciudad Autónoma de Buenos Aires.</p>
+    <dl class="promotion-facts">
+      <div><dt>Inicio</dt><dd>{{ promotion_detail.starts_at|date:'d/m/Y H:i:s' }} (incluido).</dd></div>
+      <div><dt>Finalización</dt><dd>{{ promotion_detail.ends_at|date:'d/m/Y H:i:s' }} (exclusivo).</dd></div>
+      <div><dt>Horario</dt><dd>Argentina (Buenos Aires, UTC−3).</dd></div>
+      <div><dt>Cobertura</dt><dd>Solo direcciones de CABA, con código postal válido confirmado en checkout. Moreno, GBA y las demás zonas mantienen sus condiciones habituales.</dd></div>
+      <div><dt>Productos y mínimo</dt><dd>Todos los productos y packs disponibles con stock, sin monto mínimo ni cupo adicional de envíos.</dd></div>
+      <div><dt>Medios de pago</dt><dd>Transferencia, efectivo y Mercado Pago cuando esté habilitado. Se acumula con los descuentos y ofertas vigentes.</dd></div>
+      <div><dt>Cómo se obtiene</dt><dd>El pedido o la reserva de Mercado Pago debe quedar registrado durante la vigencia. Agregar productos al carrito o consultar el envío no reserva el beneficio. El checkout confirma el costo antes de continuar.</dd></div>
+      <div><dt>Pago posterior</dt><dd>El pedido aceptado conserva el envío gratis aunque se pague después, dentro de los plazos normales del medio elegido. Una reserva vencida no traslada el beneficio a una nueva compra.</dd></div>
+      <div><dt>Entrega</dt><dd>Coordinamos la entrega por los canales habituales. Puede realizarse después del cierre de la campaña. El retiro mantiene su condición habitual sin cargo.</dd></div>
+    </dl>
+    <p class="muted">Esta página conserva las condiciones de esta campaña. Si figura como finalizada o suspendida, el beneficio ya no se aplica a pedidos nuevos. Los pedidos que lo obtuvieron conservan el costo guardado.</p>
+    <p class="p">Responsable de la comunicación: RaSel. Para consultas, <a class="promotion-text-link" href="{% url 'contact' %}">contactanos</a>. Consultá también <a class="promotion-text-link" href="{% url 'shipping_info' %}">Envíos</a> y <a class="promotion-text-link" href="{% url 'terms' %}">Términos y Condiciones</a>.</p>
+    <div class="cta-row"><a class="btn btn-primary" href="{% url 'shop:product_list' %}">Ver tienda</a><a class="btn" href="{% url 'contact' %}">Contacto</a></div>
+  </div>
+</section>
+{% endblock %}

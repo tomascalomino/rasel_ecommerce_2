@@ -1,10 +1,13 @@
 from django.db import models
 from django.utils import timezone
+from shipping.models import ShippingPromotionSnapshot
 
 
-class Order(models.Model):
+class Order(ShippingPromotionSnapshot):
     analytics_attribution = models.JSONField(default=dict, blank=True, editable=False)
-    analytics_attributed_at = models.DateTimeField(null=True, blank=True, db_index=True, editable=False)
+    analytics_attributed_at = models.DateTimeField(
+        null=True, blank=True, db_index=True, editable=False
+    )
 
     FULFILLMENT_STATUS_CHOICES = [
         ("pending", "Pendiente"),

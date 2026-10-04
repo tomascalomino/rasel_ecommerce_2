@@ -4,9 +4,11 @@ from django.conf import settings
 from config.pricing import get_offline_payment_discount_percent
 from shipping.models import PickupPoint
 from shipping.services import normalize_cp
+from shipping.promotions import contradictory_cp
 
 
 class CheckoutForm(forms.Form):
+    shipping_quote_token = forms.CharField(required=False, widget=forms.HiddenInput)
     DELIVERY_CHOICES = [
         ("ship", "Envío a domicilio"),
         ("pickup", "Retiro sin cargo en punto de retiro"),
@@ -90,9 +92,12 @@ class CheckoutForm(forms.Form):
                     self.add_error(
                         field, "Este campo es obligatorio para envío a domicilio."
                     )
-            if cleaned.get("postal_code") and normalize_cp(cleaned["postal_code"]) is None:
+            if cleaned.get("postal_code") and (
+                normalize_cp(cleaned["postal_code"]) is None
+                or contradictory_cp(cleaned["postal_code"])
+            ):
                 self.add_error(
                     "postal_code",
-                    "Ingresá un código postal válido (ej. 1744 o C1744).",
+                    "Ingresá un código postal válido y coherente con su provincia (ej. 1744 o C1425ABC).",
                 )
         return cleaned

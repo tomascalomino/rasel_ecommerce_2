@@ -195,6 +195,48 @@ al cumplir 48 horas y libera stock solamente tras consultar al proveedor.
 Actualmente no existe un Cron Job productivo: hasta incorporarlo, esta
 conciliación requiere la rutina manual definida en `OPERATIONS.md`.
 
+## Campañas de envío gratis en CABA
+
+- **Envíos → Promociones de envío** permite preparar campañas deshabilitadas,
+  con título, introducción, inicio y fin en horario argentino. La duración
+  sugerida es siete días; el inicio se incluye y el fin es exclusivo. Habilitar
+  publica una URL permanente y bloquea fechas y contenido. Se conservan los
+  estados borrador, programada, vigente, suspendida y finalizada; no se borran
+  campañas desde admin. Activaciones concurrentes se serializan mediante el
+  registro único de configuración comercial y rechazan períodos superpuestos.
+- La excepción temporal beneficia solo códigos numéricos o CPA válidos de
+  CABA con entrega a domicilio por reparto propio, sin depender del nombre de
+  la zona compartida con Moreno. No requiere mínimo, admite todos los productos
+  con stock y medios habilitados y se acumula con las ofertas existentes. No
+  cambia tarifas ni umbrales habituales; Moreno, GBA, correo y retiro conservan
+  sus reglas. Los prefijos CPA contradictorios se rechazan en checkout.
+- La cotización pública agrega metadata opcional de campaña y una constancia
+  firmada ligada al CP, subtotal y condiciones de envío. El POST vuelve a
+  comprobarla después de validar stock dentro de la transacción. Si falta o
+  cambió, muestra el resumen actualizado, conserva los datos y requiere otra
+  confirmación antes de crear el pedido, reservar stock o generar un pago.
+  También funciona sin JavaScript. Cotizar o dejar abierto el carrito no
+  reserva el beneficio.
+- Pedido y borrador conservan campaña, título histórico, instante de aplicación
+  y costo habitual del envío. Mercado Pago copia esos snapshots a la orden al
+  aprobar. Pagar, conciliar o entregar después del cierre no recalcula importes;
+  una reserva vencida no transfiere el beneficio a una compra nueva. Los campos
+  de pedidos anteriores quedan vacíos. Admin permite filtrar por campaña y
+  consultar ahorro adicional, que es cero si el envío ya era gratuito.
+- La franja crema y oliva aparece debajo del header, fuera de su área fija, en
+  inicio, catálogo, productos y carrito; checkout comunica el beneficio al
+  cotizar. La página `/promociones/<slug>/` conserva fechas y condiciones al
+  finalizar. Suspender sustituye el aviso hasta el fin previsto y respeta
+  pedidos aceptados. Envíos diferencia la promoción de las tarifas habituales;
+  confirmaciones y emails usan snapshots. La página integra la analítica
+  existente, sin UTM en enlaces internos.
+- Fechas y estados se evalúan por consulta, sin cron ni servicios nuevos.
+  `/shipping/promotion-status/` permite refrescar avisos al cruzar fechas y
+  volver a una pestaña. Cotización, estado y HTML comercial indican que no se
+  cacheen. Las campañas se configuran por separado en staging y producción y
+  ninguna migración habilita una promoción. No se agregan datos fiscales; sigue
+  vigente la limitación previa del reintento MP ante el primer error 503.
+
 ## Órdenes, stock y notificaciones
 
 Pago y entrega son estados independientes. El estado financiero puede ser

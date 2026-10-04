@@ -11,6 +11,7 @@ PAGES = {
     "conservacion",
     "contact",
     "shipping_info",
+    "shipping_promotion",
     "terms",
     "privacy",
     "returns",

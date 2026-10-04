@@ -3,7 +3,7 @@
 {% load money %}
 
 {% block title %}Envíos — RaSel{% endblock %}
-{% block meta_description %}Conocé nuestras zonas de envío: CABA y Moreno sin cargo, GBA y resto del país por encomienda de correo.{% endblock %}
+{% block meta_description %}Consultá cobertura, tarifas y mínimos de envío de RaSel. Las promociones vigentes de CABA se informan por separado.{% endblock %}
 
 {% block content %}
 
@@ -24,9 +24,15 @@
 
 <div class="spacer"></div>
 
+<section id="shipping-promotion-info" class="card promotion-shipping-note" {% if not shipping_campaign %}hidden{% endif %}><div class="card-inner">
+  <h2 class="h2" data-promotion-heading>{% if shipping_campaign.state == 'active' %}Promoción: envío gratis en CABA{% else %}Promoción de CABA suspendida{% endif %}</h2>
+  <p class="p" data-promotion-copy>{% if shipping_campaign.state == 'active' %}Durante la vigencia, las compras con entrega a domicilio en CABA tienen envío gratis, sin mínimo. Moreno y las demás zonas mantienen las condiciones habituales que figuran abajo.{% else %}Consultá el estado de la campaña y las condiciones habituales de envío.{% endif %}</p>
+  <a class="btn" href="{{ shipping_campaign.url }}">Ver fechas y condiciones</a>
+</div></section>
+
 <!-- ── ZONAS ── -->
 <section class="content-section">
-    <h2 class="h2">Nuestras zonas</h2>
+    <h2 class="h2">Condiciones habituales por zona</h2>
     <div class="spacer"></div>
 
     <div class="feature-grid">

@@ -6,4 +6,5 @@ app_name = "shipping"
 
 urlpatterns = [
     path("quote/", views.quote, name="quote"),
+    path("promotion-status/", views.promotion_status, name="promotion_status"),
 ]

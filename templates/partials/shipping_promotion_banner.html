@@ -1,0 +1,10 @@
+<aside id="shipping-promotion-banner" class="shipping-promotion-banner" aria-label="Promoción de envío" {% if not shipping_campaign %}hidden{% endif %}>
+  <a class="shipping-promotion-link container" href="{{ shipping_campaign.url|default:'#' }}">
+    <span class="shipping-promotion-icon" aria-hidden="true">{% include 'partials/icons/leaf.svg' %}</span>
+    <span class="shipping-promotion-copy">
+      <strong data-promotion-heading>{% if shipping_campaign.state == 'suspended' %}Promoción suspendida{% else %}Envío gratis en CABA{% endif %}</strong>
+      <span data-promotion-copy>{% if shipping_campaign.state == 'suspended' %}Consultá las condiciones de la campaña.{% else %}Sin mínimo de compra · {{ shipping_campaign.dates }}{% endif %}</span>
+    </span>
+    <span class="shipping-promotion-cta">Ver condiciones <span aria-hidden="true">→</span></span>
+  </a>
+</aside>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load money l10n %}
+{% load money l10n static %}
 
 {% block title %}Checkout · RaSel{% endblock %}
 
@@ -30,6 +30,9 @@
       <div class="spacer"></div>
       <form method="post">
         {% csrf_token %}
+        {{ form.shipping_quote_token }}
+        <noscript><style>#ship-fields[hidden], #pickup-fields[hidden] { display: block; }</style></noscript>
+        {% if form.non_field_errors %}<div class="checkout-review" role="alert">{{ form.non_field_errors }}</div>{% endif %}
         <div class="field-wrap">
           {{ form.full_name.label_tag }}
           {{ form.full_name }}
@@ -62,7 +65,7 @@
 
         <div class="spacer"></div>
 
-        <div id="ship-fields">
+        <div id="ship-fields" {% if form.delivery_method.value == 'pickup' %}hidden{% endif %}>
           <div class="field-wrap">
             {{ form.address_line.label_tag }}
             {{ form.address_line }}
@@ -90,7 +93,7 @@
           </div>
         </div>
 
-        <div id="pickup-fields" hidden>
+        <div id="pickup-fields" {% if form.delivery_method.value != 'pickup' %}hidden{% endif %}>
           <span class="label-sm">Elegí el punto de retiro</span>
           <div class="pay-methods">
             {% for p in pickup_points %}
@@ -135,9 +138,13 @@
         </div>
 
         <div class="spacer"></div>
+        <div class="checkout-submit-summary" aria-live="polite">
+          <div><span id="submit-total-label">{% if review_quote or form.delivery_method.value == 'pickup' %}Total{% else %}Total estimado{% endif %}</span><strong id="submit-total">{{ review_total|ars }}</strong></div>
+          <p>Envío: <span id="submit-shipping">{% if review_quote %}{{ review_quote.cost_display }}{% if review_quote.promotion %} · promoción CABA{% endif %}{% elif form.delivery_method.value == 'pickup' %}Retiro sin cargo{% else %}A confirmar con tu CP{% endif %}</span></p>
+        </div>
         <div class="stack-row">
           <a class="btn" href="{% url 'cart:detail' %}">← Volver al carrito</a>
-          <button class="btn btn-gold" type="submit">Continuar a pago →</button>
+          <button class="btn btn-gold" type="submit">{% if review_quote %}Confirmar total y continuar →{% else %}Continuar a pago →{% endif %}</button>
         </div>
       </form>
     </div>
@@ -172,263 +179,24 @@
           <span class="label-sm">Subtotal</span>
           <span id="sum-subtotal">{{ cart.total|ars }}</span>
         </div>
-        <div class="row payment-discount-row" id="payment-discount-row" hidden>
+        <div class="row payment-discount-row" id="payment-discount-row" {% if not review_discount %}hidden{% endif %}>
           <span class="label-sm">Descuento por transferencia/efectivo</span>
           <strong id="sum-payment-discount">− {{ offline_discount_amount|ars }}</strong>
         </div>
         <div class="row">
           <span class="label-sm">Envío</span>
-          <span id="sum-shipping" class="muted">Ingresá tu CP</span>
+          <span id="sum-shipping" class="muted" aria-live="polite">{% if review_quote %}{{ review_quote.cost_display }}{% if review_quote.promotion %} · promoción CABA{% endif %}{% elif form.delivery_method.value == 'pickup' %}Retiro sin cargo{% else %}Ingresá tu CP{% endif %}</span>
         </div>
       </div>
 
       <div class="cart-footer">
-        <span class="label-sm" id="sum-total-label">Total</span>
-        <span class="summary-total" id="sum-total">{{ cart.total|ars }}</span>
+        <span class="label-sm" id="sum-total-label">{% if review_quote or form.delivery_method.value == 'pickup' %}Total{% else %}Total estimado{% endif %}</span>
+        <span class="summary-total" id="sum-total">{{ review_total|ars }}</span>
       </div>
     </div>
   </div>
 
 </div>
 
-<script>
-(function () {
-  var cpInput = document.getElementById("id_postal_code");
-  var summary = document.querySelector(".ship-summary");
-  if (!cpInput || !summary) return;
-
-  var confirmEl = document.getElementById("ship-confirm");
-  var sumSubtotal = document.getElementById("sum-subtotal");
-  var sumShipping = document.getElementById("sum-shipping");
-  var discountRow = document.getElementById("payment-discount-row");
-  var sumDiscount = document.getElementById("sum-payment-discount");
-  var sumTotal = document.getElementById("sum-total");
-  var sumTotalLabel = document.getElementById("sum-total-label");
-  var quoteUrl = summary.getAttribute("data-quote-url");
-  var shopUrl = summary.getAttribute("data-shop-url");
-  var subtotal = parseFloat(summary.getAttribute("data-subtotal")) || 0;
-  var offlineDiscount = parseFloat(summary.getAttribute("data-offline-discount")) || 0;
-  var discountPercent = summary.getAttribute("data-discount-percent") || "0";
-  var discountEnabled = offlineDiscount > 0 && parseFloat(discountPercent) > 0;
-  var currentShippingCost = 0;
-  var timer;
-
-  var codRadio = document.querySelector('input[name="payment_method"][value="cod"]');
-  var paymentRadios = document.querySelectorAll('input[name="payment_method"]');
-  var codHint = document.getElementById("cod-hint");
-  var COD_HINT_DEFAULT = discountEnabled
-    ? discountPercent + "% de descuento. Disponible para retiro o entrega en persona en CABA y GBA."
-    : "Disponible para retiro o entrega en persona en CABA y GBA.";
-
-  function codPaymentMessage(moment) {
-    var message = "Pagás en efectivo al " + moment + ".";
-    return discountEnabled
-      ? message.slice(0, -1) + " con " + discountPercent + "% de descuento."
-      : message;
-  }
-
-  var deliveryRadios = document.querySelectorAll('input[name="delivery_method"]');
-  var shipFields = document.getElementById("ship-fields");
-  var pickupFields = document.getElementById("pickup-fields");
-
-  function deliveryMode() {
-    var checked = document.querySelector('input[name="delivery_method"]:checked');
-    return checked ? checked.value : "ship";
-  }
-
-  function money(n) {
-    var rounded = Math.round((n + Number.EPSILON) * 100) / 100;
-    return "$ " + new Intl.NumberFormat("es-AR", {
-      minimumFractionDigits: Number.isInteger(rounded) ? 0 : 2,
-      maximumFractionDigits: 2
-    }).format(rounded);
-  }
-
-  function selectedPaymentMethod() {
-    var checked = document.querySelector('input[name="payment_method"]:checked');
-    return checked ? checked.value : "transfer";
-  }
-
-  function refreshTotals() {
-    var method = selectedPaymentMethod();
-    var hasDiscount = discountEnabled && (method === "transfer" || method === "cod");
-    var discount = hasDiscount ? offlineDiscount : 0;
-    discountRow.hidden = !hasDiscount;
-    sumDiscount.textContent = "− " + money(discount);
-    sumTotalLabel.textContent = hasDiscount
-      ? "Total con precio especial"
-      : "Total";
-    sumTotal.textContent = money(subtotal - discount + currentShippingCost);
-  }
-
-  // Habilita/deshabilita contraentrega según la zona del CP. Si estaba
-  // seleccionada y deja de estar disponible, cae al primer método habilitado.
-  // El servidor re-valida igual en el POST.
-  function setCod(enabled, msg) {
-    if (!codRadio) return;
-    codRadio.disabled = !enabled;
-    var label = codRadio.closest("label");
-    if (label) label.classList.toggle("is-disabled", !enabled);
-    if (!enabled && codRadio.checked) {
-      codRadio.checked = false;
-      var fallback = document.querySelector('input[name="payment_method"]:not([disabled])');
-      if (fallback) fallback.checked = true;
-      msg = "Contraentrega no disponible para tu código postal. Cambiamos el método de pago.";
-    }
-    if (codHint) codHint.textContent = msg || COD_HINT_DEFAULT;
-  }
-
-  // Alterna entre envío a domicilio (cotización por CP) y retiro sin cargo.
-  function applyDelivery(mode) {
-    if (mode === "pickup") {
-      shipFields.hidden = true;
-      pickupFields.hidden = false;
-      confirmEl.hidden = true;
-      sumShipping.textContent = "Retiro sin cargo";
-      sumShipping.className = "ship-free";
-      currentShippingCost = 0;
-      setCod(true, codPaymentMessage("retirar"));
-      refreshTotals();
-    } else {
-      shipFields.hidden = false;
-      pickupFields.hidden = true;
-      reset();
-      if (cpInput.value.trim().replace(/\D/g, "").length >= 4) fetchQuote();
-    }
-  }
-
-  deliveryRadios.forEach(function (radio) {
-    radio.addEventListener("change", function () {
-      applyDelivery(deliveryMode());
-    });
-  });
-
-  paymentRadios.forEach(function (radio) {
-    radio.addEventListener("change", refreshTotals);
-  });
-
-  // Subtotal con formato consistente desde el primer render.
-  sumSubtotal.textContent = money(subtotal);
-
-  function reset(msg) {
-    confirmEl.hidden = true;
-    confirmEl.className = "ship-confirm";
-    sumShipping.textContent = msg || "Ingresá tu CP";
-    sumShipping.className = "muted";
-    currentShippingCost = 0;
-    setCod(false, COD_HINT_DEFAULT);
-    refreshTotals();
-  }
-
-  function render(data) {
-    // Una respuesta en vuelo no debe pisar el resumen en modo retiro.
-    if (deliveryMode() === "pickup") return;
-    if (!data || !data.ok) {
-      reset();
-      return;
-    }
-    var cost = parseFloat(data.cost) || 0;
-    var loc = data.location_label || ("CP " + data.cp);
-
-    // Envío a cargo del comprador (resto del país): costo 0 pero no es "gratis".
-    if (data.carrier_arranged) {
-      setCod(false, "No disponible para envíos por correo (resto del país).");
-      confirmEl.hidden = false;
-      confirmEl.className = "ship-confirm";
-      confirmEl.innerHTML =
-        '<span class="ship-pin">📍</span> <strong>' + loc +
-        "</strong> — <strong>Envío a coordinar</strong>" +
-        '<div class="ship-legend">' + (data.note || "") + "</div>";
-      sumShipping.textContent = "A coordinar";
-      sumShipping.className = "muted";
-      currentShippingCost = 0;
-      refreshTotals();
-      return;
-    }
-
-    setCod(
-      !!data.cod_allowed,
-      data.cod_allowed
-        ? codPaymentMessage("recibir")
-        : "No disponible para tu zona."
-    );
-
-    var label = data.free ? "Envío gratis" : money(cost);
-
-    // Nudge: cuánto falta para alcanzar el envío gratis en esta zona.
-    var remaining = parseFloat(data.remaining_for_free);
-    var nudge = "";
-    if (!data.free && remaining > 0) {
-      nudge = '<div class="ship-nudge">🎁 Agregá <strong>' + money(remaining) +
-        "</strong> para envío gratis" +
-        '<a class="ship-nudge-link" href="' + shopUrl + '">Agregar más productos →</a></div>';
-    }
-
-    confirmEl.hidden = false;
-    confirmEl.className = "ship-confirm" + (data.free ? " is-free" : "");
-    confirmEl.innerHTML =
-      '<span class="ship-pin">📍</span> <strong>' + loc + "</strong> — <strong>" +
-      label + "</strong>" +
-      '<div class="muted tiny">' + data.zone_name + "</div>" + nudge;
-
-    sumShipping.textContent = data.free ? "Gratis" : money(cost);
-    sumShipping.className = data.free ? "ship-free" : "";
-    currentShippingCost = cost;
-    refreshTotals();
-  }
-
-  function fetchQuote() {
-    if (deliveryMode() === "pickup") return;
-    var cp = cpInput.value.trim();
-    if (cp.replace(/\D/g, "").length < 4) {
-      reset();
-      return;
-    }
-    fetch(
-      quoteUrl + "?postal_code=" + encodeURIComponent(cp) +
-        "&subtotal=" + encodeURIComponent(subtotal),
-      { headers: { "X-Requested-With": "XMLHttpRequest" } }
-    )
-      .then(function (r) { return r.json(); })
-      .then(render)
-      .catch(function () { /* silencioso: no rompe el checkout */ });
-  }
-
-  cpInput.addEventListener("input", function () {
-    clearTimeout(timer);
-    timer = setTimeout(fetchQuote, 400);
-  });
-
-  // Persistencia liviana del form (sessionStorage): el link "Agregar más
-  // productos" del nudge saca al cliente del checkout; al volver, los campos
-  // se restauran para no castigarlo con re-tipeo. Solo se llenan campos
-  // vacíos (un POST con errores re-renderiza valores del server y esos ganan).
-  // try/catch silencioso: la persistencia nunca rompe el checkout.
-  var PERSIST_KEY = "rasel_checkout_form";
-  var PERSIST_FIELDS = [
-    "full_name", "email", "phone",
-    "address_line", "address_extra", "city", "postal_code"
-  ];
-  try {
-    var saved = JSON.parse(sessionStorage.getItem(PERSIST_KEY) || "{}");
-    PERSIST_FIELDS.forEach(function (name) {
-      var input = document.getElementById("id_" + name);
-      if (!input) return;
-      if (!input.value && saved[name]) input.value = saved[name];
-      input.addEventListener("input", function () {
-        try {
-          var data = JSON.parse(sessionStorage.getItem(PERSIST_KEY) || "{}");
-          data[name] = input.value;
-          sessionStorage.setItem(PERSIST_KEY, JSON.stringify(data));
-        } catch (e) { /* silencioso */ }
-      });
-    });
-  } catch (e) { /* silencioso */ }
-
-  // Estado inicial según el radio marcado (importa en re-renders con errores):
-  // en envío re-cotiza si el CP ya viene cargado; en retiro aplica el modo.
-  // Corre después de la restauración para que un CP restaurado re-cotice solo.
-  applyDelivery(deliveryMode());
-})();
-</script>
+<script src="{% static 'js/checkout.js' %}" defer></script>
 {% endblock %}

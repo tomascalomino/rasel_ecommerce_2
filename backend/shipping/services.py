@@ -7,17 +7,21 @@ depende de lo que mande el cliente. Es determinístico y no llama a servicios
 externos: si el dataset de localidades no tiene el CP, igual resolvemos la zona
 y el precio por rango (degradación elegante).
 """
+
 from __future__ import annotations
 
 import functools
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from django.utils import timezone
 
-from .models import PostalCodeRule, ShippingZone
+from .models import PostalCodeRule, ShippingPromotion, ShippingZone
+from .promotions import active_promotion, is_caba_cp
 
 _DATA_FILE = Path(__file__).resolve().parent / "data" / "postal_codes.json"
 
@@ -42,6 +46,18 @@ class ShippingQuote:
     note: str = ""
     # La zona admite pago en efectivo a contraentrega (reparto en persona).
     cod_allowed: bool = False
+    promotion: Optional[ShippingPromotion] = None
+    promotion_applied_at: Optional[datetime] = None
+    cost_before_promotion: Optional[Decimal] = None
+
+    @property
+    def promotion_snapshot(self):
+        return {
+            "shipping_promotion": self.promotion,
+            "shipping_promotion_label": self.promotion.title if self.promotion else "",
+            "shipping_promotion_applied_at": self.promotion_applied_at,
+            "shipping_cost_before_promotion": self.cost_before_promotion,
+        }
 
     @property
     def cost_display(self) -> str:
@@ -110,7 +126,7 @@ def _zone_for_cp(cp: Optional[int]) -> Optional[ShippingZone]:
     )
 
 
-def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
+def resolve_shipping(raw_cp, subtotal=None, *, now=None) -> ShippingQuote:
     """
     Resuelve la zona y el costo de envío para un CP.
 
@@ -161,7 +177,7 @@ def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
             cost = zone.below_min_price
             remaining_for_free = free_over - sub
 
-    return ShippingQuote(
+    quote = ShippingQuote(
         cp=cp,
         zone_code=zone.code,
         zone_name=zone.name,
@@ -173,6 +189,20 @@ def resolve_shipping(raw_cp, subtotal=None) -> ShippingQuote:
         remaining_for_free=remaining_for_free,
         cod_allowed=zone.cod_allowed,
     )
+    now = now or timezone.now()
+    campaign = active_promotion(now) if is_caba_cp(raw_cp) else None
+    if campaign:
+        quote = replace(
+            quote,
+            cost=Decimal("0.00"),
+            is_free=True,
+            free_over=None,
+            remaining_for_free=None,
+            promotion=campaign,
+            promotion_applied_at=now,
+            cost_before_promotion=cost,
+        )
+    return quote
 
 
 def carrier_arranged_legend() -> str:

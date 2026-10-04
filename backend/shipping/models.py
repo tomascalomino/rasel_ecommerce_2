@@ -1,6 +1,170 @@
+from datetime import timedelta
 from decimal import Decimal
+from uuid import uuid4
 
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.urls import reverse
+from django.utils import timezone
+
+
+def promotion_start():
+    return (timezone.localtime() + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+
+
+def promotion_end():
+    return promotion_start() + timedelta(days=7)
+
+
+class ShippingPromotion(models.Model):
+    title = models.CharField(
+        "título", max_length=120, default="Una semana de envío gratis en CABA"
+    )
+    introduction = models.TextField(
+        "introducción",
+        max_length=1500,
+        blank=True,
+        default="De nuestro olivar a tu mesa, con envío gratis en CABA.",
+    )
+    slug = models.SlugField("URL permanente", max_length=160, unique=True, blank=True)
+    starts_at = models.DateTimeField("inicio (hora argentina)", default=promotion_start)
+    ends_at = models.DateTimeField(
+        "fin exclusivo (hora argentina)",
+        default=promotion_end,
+        help_text="A partir de este instante vuelve la tarifa habitual. Duración sugerida: siete días corridos.",
+    )
+    enabled = models.BooleanField("habilitada", default=False)
+    published_at = models.DateTimeField(
+        "publicada el", null=True, blank=True, editable=False
+    )
+
+    class Meta:
+        ordering = ["-starts_at", "-pk"]
+        verbose_name = "promoción de envío"
+        verbose_name_plural = "promociones de envío"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(ends_at__gt=models.F("starts_at")),
+                name="shipping_promotion_valid_dates",
+            )
+        ]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("shipping_promotion", kwargs={"slug": self.slug})
+
+    def state_at(self, now):
+        if not self.published_at:
+            return "draft"
+        if now >= self.ends_at:
+            return "finished"
+        if not self.enabled:
+            return "suspended"
+        return "scheduled" if now < self.starts_at else "active"
+
+    @property
+    def state(self):
+        return self.state_at(timezone.now())
+
+    @property
+    def state_label(self):
+        return {
+            "draft": "Borrador",
+            "scheduled": "Programada",
+            "active": "Vigente",
+            "suspended": "Suspendida",
+            "finished": "Finalizada",
+        }[self.state]
+
+    def clean(self):
+        super().clean()
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            raise ValidationError({"ends_at": "El fin debe ser posterior al inicio."})
+        old = type(self).objects.filter(pk=self.pk).first() if self.pk else None
+        if old and old.published_at:
+            frozen = ("title", "introduction", "slug", "starts_at", "ends_at")
+            if any(getattr(old, field) != getattr(self, field) for field in frozen):
+                raise ValidationError(
+                    "Las condiciones publicadas son permanentes. Creá una nueva campaña."
+                )
+            self.published_at = old.published_at
+        if self.enabled and self.starts_at and self.ends_at:
+            if not self.published_at and self.ends_at <= timezone.now():
+                raise ValidationError(
+                    {"ends_at": "No se puede publicar una campaña ya finalizada."}
+                )
+            if (
+                type(self)
+                .objects.filter(
+                    enabled=True, starts_at__lt=self.ends_at, ends_at__gt=self.starts_at
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            ):
+                raise ValidationError(
+                    "Ya existe una campaña habilitada en ese período."
+                )
+
+    def save(self, *args, **kwargs):
+        # A permanent singleton serializes ALL admin activations, including when
+        # the campaign table is empty. Row locks work across PostgreSQL workers.
+        from shop.models import CommercialSettings
+
+        with transaction.atomic():
+            CommercialSettings.objects.select_for_update().get(pk=1)
+            if not self.slug:
+                self.slug = f"envio-gratis-caba-{uuid4().hex[:12]}"
+            self.full_clean()
+            if self.enabled and not self.published_at:
+                self.published_at = timezone.now()
+                if kwargs.get("update_fields") is not None:
+                    kwargs["update_fields"] = set(kwargs["update_fields"]) | {
+                        "published_at"
+                    }
+            return super().save(*args, **kwargs)
+
+
+class ShippingPromotionSnapshot(models.Model):
+    shipping_promotion = models.ForeignKey(
+        ShippingPromotion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+    shipping_promotion_label = models.CharField(
+        "promoción de envío (histórico)",
+        max_length=120,
+        blank=True,
+        default="",
+        editable=False,
+    )
+    shipping_promotion_applied_at = models.DateTimeField(
+        "beneficio aplicado el", null=True, blank=True, editable=False
+    )
+    shipping_cost_before_promotion = models.DecimalField(
+        "envío habitual (histórico)",
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        editable=False,
+    )
+
+    class Meta:
+        abstract = True
+
+    @property
+    def shipping_promotion_savings(self):
+        if self.shipping_cost_before_promotion is None:
+            return Decimal("0.00")
+        return max(
+            Decimal("0.00"), self.shipping_cost_before_promotion - self.shipping_cost
+        )
 
 
 class ShippingZone(models.Model):
@@ -136,7 +300,10 @@ class PostalCodeRule(models.Model):
     """
 
     zone = models.ForeignKey(
-        ShippingZone, on_delete=models.CASCADE, related_name="rules", verbose_name="zona"
+        ShippingZone,
+        on_delete=models.CASCADE,
+        related_name="rules",
+        verbose_name="zona",
     )
     cp_from = models.PositiveIntegerField(
         "CP desde", help_text="CP inicial del rango (inclusive)."

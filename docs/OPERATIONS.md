@@ -588,6 +588,47 @@ la conciliación habitual a la reserva. El módulo de reportes no cambia ese flu
 3. Editar puntos de retiro activos, dirección e indicaciones antes de ofrecerlos
    al cliente.
 
+### Campañas de envío gratis en CABA
+
+1. Antes de publicar, verificar tarifas y cobertura reales: CABA comparte zona
+   con Moreno. No cambiar esa zona para activar una campaña. Mantener la zona
+   por defecto y el reparto propio de CABA correctamente configurados.
+2. Abrir **Envíos → Promociones de envío → Añadir**. Preparar título,
+   introducción, inicio y fin en horario argentino con **Habilitada** apagada.
+   Para una semana, configurar siete días corridos. El instante final es
+   exclusivo: por ejemplo, cerrar un lunes a las 00:00 excluye ese lunes.
+3. Revisar los datos antes de habilitar: publicar crea el enlace permanente y
+   bloquea fechas y textos. Operador puede crear y cambiar habilitación; Solo
+   lectura consulta. No se permite borrar ni superponer campañas habilitadas.
+   Para nuevas fechas o condiciones, crear otra campaña.
+4. Configurar staging y producción por separado. En staging usar solamente
+   datos ficticios y probar comienzo, vencimiento, suspensión, cotización,
+   reconfirmación y compras con envío/retiro. Antes de difundir, comprobar en
+   producción la versión aprobada, el enlace, stock y cobertura de CABA.
+5. Comprobar en Cloudflare que ninguna regla sobrescriba `Cache-Control` ni
+   guarde HTML comercial, `/shipping/quote/` o `/shipping/promotion-status/`.
+   Purgar HTML comercial previamente cacheado si existe. El vencimiento no
+   necesita desplegar código ni restaurar tarifas manualmente.
+6. Difundir la URL publicada con UTM solamente en canales externos, por ejemplo
+   `utm_source=instagram&utm_medium=social&utm_campaign=envio_caba_octubre`.
+   Revisar al iniciar y terminar que banner y cotización coincidan con el estado
+   del admin. Durante la campaña controlar pedidos, errores, stock y la rutina
+   habitual de conciliación MP.
+7. Filtrar pedidos y borradores por campaña. **Envío habitual (histórico)** y
+   ahorro adicional permiten distinguir pedidos beneficiados de descuentos
+   nuevos: compras que ya tenían envío gratis tienen ahorro adicional cero.
+   Los snapshots no se editan y los pedidos aceptados mantienen el costo incluso
+   si se suspende o termina la campaña. No recalcularlos con tarifas nuevas.
+8. Para suspender nuevas aplicaciones, deshabilitar. La página conserva sus
+   condiciones y la franja muestra suspensión hasta el cierre previsto. Si se
+   anunció fuera del sitio, comunicar la suspensión en esos mismos canales;
+   esta comunicación es responsabilidad del operador, no automática.
+9. Si vence mientras el comprador completa el checkout, debe revisar y
+   confirmar el nuevo total; ese primer POST no reserva stock ni genera pago.
+   Reservas MP válidas conservan su beneficio original. La limitación previa
+   de sesión/reintento tras un 503 inicial de Mercado Pago continúa pendiente
+   y requiere la conciliación habitual; la campaña no la corrige.
+
 ### Descuento por efectivo y transferencia
 
 1. Abrir **Catálogo → Configuración comercial → Descuento por medios de
