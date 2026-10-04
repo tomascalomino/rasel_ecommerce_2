@@ -442,10 +442,19 @@ y [Cron Jobs de Render](https://render.com/docs/cronjobs).
 
 ## Meta Pixel y Conversions API
 
-El código está preparado pero apagado por defecto. La recepción en Meta y la
-asociación con CP_Rasel requieren verificación del responsable con acceso al
-Administrador de eventos; no fueron activadas ni verificadas en producción como
-parte de la implementación. El ID es `1400536168898337`. Se incluyó `.env.example`
+El código está apagado por defecto, pero el píxel se habilitó el 04/10/2026 en
+staging y producción mediante `META_PIXEL_ENABLED=1`; el ID es
+`1400536168898337`. Producción ejecuta 1.11.0 del commit aprobado `8fef46a`
+(PR #18), con las migraciones de marketing, órdenes y borradores MP aplicadas.
+Render conserva Auto-Deploy apagado y el despliegue se hizo manualmente desde
+ese commit de `main`. Las 248 pruebas y las tres suites JavaScript pasaron
+también en el PostgreSQL del promotion-gate.
+
+`META_CAPI_ENABLED=0` en ambos servicios: falta cargar el token y realizar la
+prueba controlada de Purchase antes de activarlo. La recepción real en Meta y
+la asociación con CP_Rasel requieren verificación del responsable con acceso
+al Administrador de eventos. Se verificó HTTP 200 y la configuración pública
+consentida, sin ejecutar el SDK ni enviar compras como prueba. Se incluyó `.env.example`
 con placeholders solo para Meta: integrar sus variables sin reemplazar ni
 publicar el `.env` existente. Nunca poner el token en templates, JS o comandos
 que impriman credenciales.
