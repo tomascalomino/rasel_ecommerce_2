@@ -22,6 +22,7 @@
       {% else %}
         Gratis
       {% endif %}
+      {% if order.shipping_promotion_label %}<span class="promotion-order-label">{{ order.shipping_promotion_label }}</span>{% endif %}
     </span>
   </div>
   <div class="row order-total-final">

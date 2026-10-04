@@ -3107,3 +3107,39 @@ textarea:focus {
 .wa-float svg {
   display: block;
 }
+
+/* Scheduled shipping campaigns: compact, outside the sticky header. */
+.shipping-promotion-banner { background: #e4e6cd; border-bottom: 1px solid var(--border); color: var(--deep-olive); }
+.shipping-promotion-banner[hidden] { display: none; }
+.shipping-promotion-link { display: flex; align-items: center; gap: 12px; min-height: 64px; padding-top: 10px; padding-bottom: 10px; }
+.shipping-promotion-link:focus-visible { outline: 3px solid var(--deep-olive); outline-offset: -3px; }
+.shipping-promotion-icon { display: flex; flex: 0 0 24px; }
+.shipping-promotion-icon svg { width: 24px; height: 24px; }
+.shipping-promotion-copy { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 2px; }
+.shipping-promotion-copy strong { font-size: 16px; line-height: 1.3; }
+.shipping-promotion-copy > span { font-size: 13px; line-height: 1.4; }
+.shipping-promotion-cta { font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; flex: 0 0 auto; }
+.promotion-state { display: inline-block; font-weight: 700; color: var(--deep-olive); background: #e4e6cd; padding: 8px 14px; border-radius: var(--radius); }
+.promotion-facts { margin: 24px 0; }
+.promotion-facts > div { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.promotion-facts dt { font-weight: 700; }
+.promotion-facts dd { margin: 0; }
+.promotion-text-link { text-decoration: underline; text-underline-offset: 3px; }
+.promotion-order-label { display: block; font-size: 12px; color: var(--deep-olive); max-width: 240px; }
+.checkout-review { background: var(--gold-soft); border: 1px solid var(--gold); border-radius: var(--radius); padding: 14px; margin-bottom: 20px; }
+.checkout-review .errorlist { margin: 0; padding: 0; list-style: none; }
+.checkout-submit-summary { padding: 14px; margin-bottom: 14px; background: var(--gold-soft); border-radius: var(--radius); }
+.checkout-submit-summary > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.checkout-submit-summary strong { font-size: 24px; color: var(--deep-olive); }
+.checkout-submit-summary p { margin: 8px 0 0; font-size: 13px; overflow-wrap: anywhere; }
+.ship-summary #sum-shipping { text-align: right; overflow-wrap: anywhere; }
+.promotion-page-header, .promotion-conditions, .promotion-shipping-note { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .shipping-promotion-link { gap: 10px; flex-wrap: wrap; }
+  .shipping-promotion-icon { flex-basis: 20px; }
+  .shipping-promotion-icon svg { width: 20px; height: 20px; }
+  .shipping-promotion-copy { flex-basis: calc(100% - 40px); }
+  .shipping-promotion-cta { padding-left: 30px; }
+  .promotion-facts > div { grid-template-columns: minmax(0,1fr); gap: 4px; }
+  .promotion-conditions .card-inner { padding: 20px; }
+}

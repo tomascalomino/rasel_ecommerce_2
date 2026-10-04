@@ -60,8 +60,7 @@ def reconcile_expired_reservations(modeladmin, request, queryset):
                     (
                         row
                         for row in candidates
-                        if str(row.get("external_reference") or "")
-                        == str(draft.token)
+                        if str(row.get("external_reference") or "") == str(draft.token)
                     ),
                     None,
                 )
@@ -140,6 +139,10 @@ class PaymentEventAdmin(admin.ModelAdmin):
 
 @admin.register(PaymentDraft)
 class PaymentDraftAdmin(admin.ModelAdmin):
+    @admin.display(description="Ahorro adicional de envío")
+    def shipping_promotion_savings(self, obj):
+        return obj.shipping_promotion_savings
+
     list_display = (
         "token",
         "email",
@@ -150,9 +153,20 @@ class PaymentDraftAdmin(admin.ModelAdmin):
         "stock_released_at",
         "created_at",
     )
-    list_filter = ("state", "mp_status", "mp_live_mode", "created_at")
+    list_filter = (
+        "state",
+        "mp_status",
+        "mp_live_mode",
+        "created_at",
+        "shipping_promotion",
+    )
     search_fields = ("token", "email", "mp_preference_id", "mp_payment_id")
     readonly_fields = (
+        "shipping_promotion",
+        "shipping_promotion_label",
+        "shipping_promotion_applied_at",
+        "shipping_cost_before_promotion",
+        "shipping_promotion_savings",
         "token",
         "items",
         "state",

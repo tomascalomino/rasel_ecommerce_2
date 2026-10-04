@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
+from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -21,6 +22,13 @@ from payments.services import (
 )
 from shipping.models import PickupPoint
 from shipping.services import resolve_shipping
+from shipping.promotions import (
+    SNAPSHOT_FIELDS,
+    ShippingQuoteChanged,
+    quote_delivery,
+    revalidate_delivery,
+    sign_quote,
+)
 from shop.models import Variant
 
 from .emails import send_order_confirmation
@@ -28,13 +36,29 @@ from .forms import CheckoutForm
 from .models import Order, OrderItem
 
 
-def _render_checkout(request, cart, form, discount_percent):
+def _render_checkout(request, cart, form, discount_percent, review_quote=None):
     cart_rows = list(cart.items())
     subtotal = sum((item.line_total for item in cart_rows), Decimal("0.00"))
     offline_discount = payment_discount_for_lines(
         ((item.unit_price, item.qty) for item in cart_rows),
         "transfer",
         discount_percent,
+    )
+    if review_quote is not None:
+        data = form.data.copy()
+        data["shipping_quote_token"] = sign_quote(
+            data.get("postal_code"), subtotal, review_quote
+        )
+        form = CheckoutForm(data, discount_percent=discount_percent)
+        form.is_valid()
+        form.add_error(
+            None,
+            "Revisá el envío y confirmá el total actualizado. Todavía no creamos el pedido ni reservamos stock.",
+        )
+    selected_discount = (
+        offline_discount
+        if form["payment_method"].value() in {"transfer", "cod"}
+        else Decimal("0.00")
     )
     return render(
         request,
@@ -47,6 +71,11 @@ def _render_checkout(request, cart, form, discount_percent):
             "offline_discount_amount": offline_discount,
             "offline_discount_percent": discount_percent,
             "pickup_points": PickupPoint.objects.filter(is_active=True),
+            "review_quote": review_quote,
+            "review_discount": selected_discount,
+            "review_total": subtotal
+            - selected_discount
+            + (review_quote.cost if review_quote else 0),
         },
     )
 
@@ -75,9 +104,7 @@ def _delivery_from_form(form, subtotal, payment_method, discount_amount):
         "items_subtotal": subtotal,
         "pickup_point": None,
         "pickup_point_label": "",
-        "shipping_cost": quote.cost,
-        "shipping_zone": quote.zone_name,
-        "shipping_carrier_arranged": quote.carrier_arranged,
+        **quote_delivery(quote),
         "cod_allowed": quote.cod_allowed,
         "payment_discount_amount": discount_amount,
         "grand_total": discounted_subtotal + quote.cost,
@@ -100,7 +127,13 @@ def _customer_from_form(form):
 
 
 def _create_offline_order(
-    customer, delivery, cart_rows, payment_method, discount_percent, analytics_attribution=None
+    customer,
+    delivery,
+    cart_rows,
+    payment_method,
+    discount_percent,
+    analytics_attribution=None,
+    shipping_quote_token=None,
 ):
     with transaction.atomic():
         validated = []
@@ -131,9 +164,16 @@ def _create_offline_order(
             payment_method,
             discount_percent,
         )
+        now = timezone.now()
+        delivery = revalidate_delivery(
+            customer, delivery, validated_subtotal, shipping_quote_token, now
+        )
+        if payment_method == "cod" and not delivery["cod_allowed"]:
+            raise ValueError("El pago en efectivo no está disponible para tu zona.")
         grand_total = validated_subtotal - discount_amount + delivery["shipping_cost"]
 
         order = Order.objects.create(
+            created_at=now,
             **customer,
             analytics_attribution=analytics_attribution or {},
             analytics_attributed_at=(analytics_attribution or {}).get("captured_at"),
@@ -143,6 +183,7 @@ def _create_offline_order(
             shipping_cost=delivery["shipping_cost"],
             shipping_zone=delivery["shipping_zone"],
             shipping_carrier_arranged=delivery["shipping_carrier_arranged"],
+            **{key: delivery[key] for key in SNAPSHOT_FIELDS if key in delivery},
             payment_discount_amount=discount_amount,
             payment_discount_percent=(
                 discount_percent if payment_method in {"transfer", "cod"} else 0
@@ -223,7 +264,10 @@ def checkout(request):
                 payment_method,
                 discount_percent,
                 analytics_attribution=checkout_snapshot(request),
+                shipping_quote_token=form.cleaned_data["shipping_quote_token"],
             )
+        except ShippingQuoteChanged as exc:
+            return _render_checkout(request, cart, form, discount_percent, exc.quote)
         except (ValueError, Variant.DoesNotExist) as exc:
             messages.error(
                 request,
@@ -266,7 +310,10 @@ def checkout(request):
             cart_rows=cart_rows,
             total_amount=delivery["grand_total"],
             analytics_attribution=checkout_snapshot(request),
+            shipping_quote_token=form.cleaned_data["shipping_quote_token"],
         )
+    except ShippingQuoteChanged as exc:
+        return _render_checkout(request, cart, form, discount_percent, exc.quote)
     except (PaymentValidationError, Variant.DoesNotExist) as exc:
         messages.error(
             request,

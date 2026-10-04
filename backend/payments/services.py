@@ -13,6 +13,7 @@ from django.utils import timezone
 from orders.emails import send_order_confirmation, send_payment_alert
 from orders.models import Order, OrderItem
 from shop.models import Variant
+from shipping.promotions import SNAPSHOT_FIELDS, revalidate_delivery
 
 from .mercadopago import MercadoPagoError, create_preference
 from .models import PaymentDraft
@@ -40,11 +41,14 @@ def _decimal(value) -> Decimal:
 
 
 def reserve_payment_draft(
-    *, customer, delivery, cart_rows, total_amount, analytics_attribution=None
+    *,
+    customer,
+    delivery,
+    cart_rows,
+    total_amount,
+    analytics_attribution=None,
+    shipping_quote_token=None,
 ) -> PaymentDraft:
-    now = timezone.now()
-    expires_at = now + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
-
     with transaction.atomic():
         snapshots = []
         subtotal = Decimal("0.00")
@@ -79,6 +83,13 @@ def reserve_payment_draft(
                 "El carrito ya no tiene productos disponibles."
             )
 
+        now = timezone.now()
+        expires_at = now + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
+        if shipping_quote_token is not None:
+            delivery = revalidate_delivery(
+                customer, delivery, subtotal, shipping_quote_token, now
+            )
+            delivery.pop("cod_allowed", None)
         shipping_cost = _decimal(delivery["shipping_cost"])
         expected_total = (subtotal + shipping_cost).quantize(Decimal("0.01"))
         if expected_total != _decimal(total_amount):
@@ -92,6 +103,7 @@ def reserve_payment_draft(
             )
 
         return PaymentDraft.objects.create(
+            created_at=now,
             **customer,
             **delivery,
             analytics_attribution=analytics_attribution or {},
@@ -337,6 +349,7 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         shipping_cost=draft.shipping_cost,
         shipping_zone=draft.shipping_zone,
         shipping_carrier_arranged=draft.shipping_carrier_arranged,
+        **{key: getattr(draft, key) for key in SNAPSHOT_FIELDS},
         payment_discount_percent=0,
         total_amount=draft.total_amount,
         fulfillment_status="pending",

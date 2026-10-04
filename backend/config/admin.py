@@ -33,6 +33,7 @@ _OPERATOR_MATRIX = {
     "shop.variant": ("view", "add", "change"),
     "shop.commercialsettings": ("view", "change"),
     "shipping.shippingzone": ("view", "add", "change"),
+    "shipping.shippingpromotion": ("view", "add", "change"),
     # Las reglas de CP se editan inline dentro de la zona; sin "delete" no se
     # podría corregir un rango mal cargado.
     "shipping.postalcoderule": ("view", "add", "change", "delete"),
@@ -87,7 +88,7 @@ class RaselAdminSite(admin.AdminSite):
     _APP_ORDER = ("orders", "shop", "shipping", "auth")
     _MODEL_ORDER = {
         "shop": ("commercialsettings", "product", "variant", "category"),
-        "shipping": ("shippingzone", "pickuppoint"),
+        "shipping": ("shippingpromotion", "shippingzone", "pickuppoint"),
     }
 
     def each_context(self, request):

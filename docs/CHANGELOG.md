@@ -3,6 +3,22 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Campañas programadas de envío gratis en CABA (1.10.0)
+
+- Admin de campañas con fechas argentinas, publicación e historial permanentes,
+  permisos de Operador/Solo lectura y bloqueo de activaciones superpuestas.
+- Envío gratis temporal exclusivo para CABA, sin mínimo y acumulable; se
+  conservan las tarifas de Moreno y demás zonas. Cotización firmada y
+  revalidación transaccional con reconfirmación cuando falta o cambia.
+- Snapshots en pedidos y reservas MP, filtros de campaña y ahorro adicional.
+  Pagos posteriores, conciliación y emails conservan el beneficio obtenido.
+- Franja mobile-first crema/oliva, condiciones por campaña, estados públicos,
+  actualización al vencer o volver a pestañas, ajuste de Envíos/Términos,
+  integración analítica y respuestas comerciales sin caché.
+- Migraciones aditivas sin campañas activadas, pruebas de fechas, cobertura,
+  checkout, pagos tardíos, concurrencia PostgreSQL y respuestas AJAX desordenadas.
+  No se agregan datos fiscales ni se corrige el reintento MP tras el 503 inicial.
+
 ## 2026-09-17 — Fixtures de analítica en PostgreSQL (1.9.1)
 
 - Las pruebas de cobertura histórica y retención crean explícitamente los

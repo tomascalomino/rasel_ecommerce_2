@@ -16,6 +16,7 @@ from django.urls import reverse
 
 from shipping.models import PickupPoint
 from shipping.services import resolve_shipping
+from cart.cart import Cart
 from shop.models import Category, CommercialSettings, Product, Variant
 from django.contrib import admin as django_admin
 
@@ -35,6 +36,22 @@ from .admin import (
 )
 from .models import Order, OrderItem
 from .services import collect_and_complete as collect_and_complete_order
+
+
+def _post_checkout(client, data):
+    # Normal browser fixtures acknowledge the public quote before submitting.
+    # Separate promotion tests exercise missing, stale and forged acceptance.
+    data = dict(data)
+    if data.get("delivery_method") == "ship" and data.get("postal_code"):
+        quote = client.get(
+            reverse("shipping:quote"),
+            {
+                "postal_code": data["postal_code"],
+                "subtotal": str(Cart(client.session).total()),
+            },
+        ).json()
+        data["shipping_quote_token"] = quote["quote_token"]
+    return client.post(reverse("orders:checkout"), data)
 
 
 def _request_with_messages():
@@ -121,7 +138,7 @@ class TransferCheckoutTests(TestCase):
 
     def test_transfer_creates_order_decrements_stock_and_emails(self):
         self._add_to_cart(2)
-        resp = self.client.post(reverse("orders:checkout"), self._checkout_data())
+        resp = _post_checkout(self.client, self._checkout_data())
         self.assertEqual(resp.status_code, 302)
 
         order = Order.objects.get()
@@ -144,9 +161,7 @@ class TransferCheckoutTests(TestCase):
         body = mail.outbox[0].body
         self.assertIn("RESERVADO", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
-        self.assertIn(
-            "Descuento por transferencia/efectivo (10%): -$100.00", body
-        )
+        self.assertIn("Descuento por transferencia/efectivo (10%): -$100.00", body)
         self.assertNotIn("Precio de lanzamiento", body)
         # CABA/GBA: promesa de entrega en 48hs desde el pago.
         self.assertIn("48hs", body)
@@ -186,7 +201,7 @@ class TransferCheckoutTests(TestCase):
         self.assertNotContains(checkout_response, "0% de descuento")
         self.assertNotContains(checkout_response, "de descuento sobre los productos")
 
-        response = self.client.post(reverse("orders:checkout"), self._checkout_data())
+        response = _post_checkout(self.client, self._checkout_data())
         self.assertEqual(response.status_code, 302)
         order = Order.objects.get()
         quote = resolve_shipping("1000", subtotal=Decimal("200.00"))
@@ -197,7 +212,7 @@ class TransferCheckoutTests(TestCase):
 
     def test_order_keeps_applied_percentage_after_admin_change(self):
         self._add_to_cart(2)
-        self.client.post(reverse("orders:checkout"), self._checkout_data())
+        _post_checkout(self.client, self._checkout_data())
         order = Order.objects.get()
         CommercialSettings.objects.filter(pk=1).update(
             offline_payment_discount_percent=20
@@ -219,7 +234,7 @@ class TransferCheckoutTests(TestCase):
         self._add_to_cart(2)
         data = self._checkout_data()
         data.update({"postal_code": "5000", "city": "Córdoba"})
-        resp = self.client.post(reverse("orders:checkout"), data)
+        resp = _post_checkout(self.client, data)
         self.assertEqual(resp.status_code, 302)
 
         body = mail.outbox[0].body
@@ -228,7 +243,7 @@ class TransferCheckoutTests(TestCase):
 
     def test_transfer_blocks_when_insufficient_stock(self):
         self._add_to_cart(10)  # solo hay 5
-        resp = self.client.post(reverse("orders:checkout"), self._checkout_data())
+        resp = _post_checkout(self.client, self._checkout_data())
 
         self.assertEqual(resp.status_code, 200)  # re-render con error, no redirect
         self.assertEqual(Order.objects.count(), 0)
@@ -272,7 +287,7 @@ class CodCheckoutTests(TestCase):
 
     def test_cod_creates_pending_order_in_eligible_zone(self):
         self._add_to_cart(2)
-        resp = self.client.post(reverse("orders:checkout"), self._checkout_data("1425"))
+        resp = _post_checkout(self.client, self._checkout_data("1425"))
         self.assertEqual(resp.status_code, 302)
 
         order = Order.objects.get()
@@ -292,15 +307,13 @@ class CodCheckoutTests(TestCase):
         self.assertIn("buyer@example.com", mail.outbox[0].to)
         body = mail.outbox[0].body
         self.assertIn("efectivo al momento de la entrega", body)
-        self.assertIn(
-            "Descuento por transferencia/efectivo (10%): -$100.00", body
-        )
+        self.assertIn("Descuento por transferencia/efectivo (10%): -$100.00", body)
         self.assertIn("48hs", body)
         self.assertIn(settings.WHATSAPP_NUMBER, body)
 
     def test_cod_rejected_in_national_zone(self):
         self._add_to_cart(2)
-        resp = self.client.post(reverse("orders:checkout"), self._checkout_data("5000"))
+        resp = _post_checkout(self.client, self._checkout_data("5000"))
 
         self.assertEqual(resp.status_code, 200)  # re-render con error de form
         self.assertContains(resp, "contraentrega")
@@ -347,9 +360,7 @@ class PickupCheckoutTests(TestCase):
 
     def test_pickup_transfer_creates_order_without_address(self):
         self._add_to_cart(2)
-        resp = self.client.post(
-            reverse("orders:checkout"), self._pickup_data("transfer")
-        )
+        resp = _post_checkout(self.client, self._pickup_data("transfer"))
 
         order = Order.objects.get()
         self.assertRedirects(resp, reverse("orders:transfer_info", args=[order.id]))
@@ -373,7 +384,7 @@ class PickupCheckoutTests(TestCase):
     def test_pickup_cod_allowed_without_postal_code(self):
         # Con retiro, el efectivo no depende de la zona: no hay CP en el POST.
         self._add_to_cart(1)
-        resp = self.client.post(reverse("orders:checkout"), self._pickup_data("cod"))
+        resp = _post_checkout(self.client, self._pickup_data("cod"))
 
         order = Order.objects.get()
         self.assertRedirects(resp, reverse("orders:cod_info", args=[order.id]))
@@ -391,8 +402,8 @@ class PickupCheckoutTests(TestCase):
 
     def test_pickup_requires_pickup_point(self):
         self._add_to_cart(1)
-        resp = self.client.post(
-            reverse("orders:checkout"), self._pickup_data("transfer", pickup_point="")
+        resp = _post_checkout(
+            self.client, self._pickup_data("transfer", pickup_point="")
         )
 
         self.assertEqual(resp.status_code, 200)
@@ -403,8 +414,8 @@ class PickupCheckoutTests(TestCase):
 
     def test_ship_still_requires_address(self):
         self._add_to_cart(1)
-        resp = self.client.post(
-            reverse("orders:checkout"),
+        resp = _post_checkout(
+            self.client,
             {
                 "full_name": "Test User",
                 "email": "buyer@example.com",
@@ -438,8 +449,8 @@ class OrderAdminActionTests(TestCase):
         session = self.client.session
         session["cart"] = {str(self.variant.id): {"qty": qty}}
         session.save()
-        self.client.post(
-            reverse("orders:checkout"),
+        _post_checkout(
+            self.client,
             {
                 "full_name": "Test User",
                 "email": "buyer@example.com",

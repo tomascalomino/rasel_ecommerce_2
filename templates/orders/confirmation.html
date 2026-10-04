@@ -19,6 +19,7 @@
     </p>
     {% endif %}
     <div class="spacer"></div>
+    {% if order.shipping_promotion_label %}<p class="p">Envío gratis · {{ order.shipping_promotion_label }}.</p>{% endif %}
     <div class="stack-row" style="justify-content:center;">
       <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Seguir comprando</a>
       <a class="btn" href="{% url 'home' %}">Volver al inicio</a>

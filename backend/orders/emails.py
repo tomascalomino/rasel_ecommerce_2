@@ -98,6 +98,8 @@ def _totals_block(order) -> str:
         envio = f"${shipping}"
     else:
         envio = "Gratis"
+    if order.shipping_promotion_label:
+        envio += f" — {order.shipping_promotion_label}"
     lines.extend([f"Envío{zona}: {envio}", f"Total: ${order.total_amount}"])
     return "\n".join(lines)
 

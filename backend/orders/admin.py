@@ -130,6 +130,10 @@ class SituationFilter(admin.SimpleListFilter):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    @admin.display(description="Ahorro adicional de envío")
+    def shipping_promotion_savings(self, obj):
+        return obj.shipping_promotion_savings
+
     change_form_template = "admin/orders/order/change_form.html"
     list_display = (
         "id",
@@ -152,6 +156,7 @@ class OrderAdmin(admin.ModelAdmin):
         "payment_method",
         "delivery_method",
         "created_at",
+        "shipping_promotion",
     )
     date_hierarchy = "created_at"
     search_fields = (
@@ -162,6 +167,11 @@ class OrderAdmin(admin.ModelAdmin):
         "pickup_point_label",
     )
     readonly_fields = (
+        "shipping_promotion",
+        "shipping_promotion_label",
+        "shipping_promotion_applied_at",
+        "shipping_cost_before_promotion",
+        "shipping_promotion_savings",
         "situation_summary",
         "payment_status",
         "fulfillment_status",
@@ -209,6 +219,11 @@ class OrderAdmin(admin.ModelAdmin):
                     "shipping_cost",
                     "shipping_zone",
                     "shipping_carrier_arranged",
+                    "shipping_promotion",
+                    "shipping_promotion_label",
+                    "shipping_promotion_applied_at",
+                    "shipping_cost_before_promotion",
+                    "shipping_promotion_savings",
                 )
             },
         ),
