@@ -3,6 +3,17 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-05 — Botones móviles separados de WhatsApp (1.12.5)
+
+- La burbuja flotante se oculta mientras los botones de la portada móvil están
+  visibles y reaparece después, para que la franja de promoción no cause una
+  superposición con «Quiénes somos». No afecta escritorio ni otras páginas.
+- Sin JavaScript, el inicio móvil omite la burbuja y conserva el enlace de
+  WhatsApp de compras mayoristas.
+- Verificadas pausa/reanudación, pausa fuera de pantalla y reaparición de
+  WhatsApp al dejar atrás los botones; `manage.py check` y 43 pruebas de `shop`
+  correctos.
+
 ## 2026-10-05 — Información comercial sobre la mesa del video móvil (1.12.4)
 
 - Título y botones sobre la zona de mesa con degradado crema; origen arriba,

@@ -3284,6 +3284,12 @@ textarea:focus {
   display: block;
 }
 
+@media (max-width: 768px) {
+  .wa-float.hero-actions-visible {
+    visibility: hidden;
+  }
+}
+
 /* Scheduled shipping campaigns: compact, outside the sticky header. */
 .shipping-promotion-banner { background: #e4e6cd; border-bottom: 1px solid var(--border); color: var(--deep-olive); }
 .shipping-promotion-banner[hidden] { display: none; }

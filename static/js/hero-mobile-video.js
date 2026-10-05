@@ -6,10 +6,13 @@
 
   var video = media.querySelector("video");
   var toggle = media.querySelector("button");
+  var actions = media.closest(".hero-full").querySelector(".cta-row");
+  var floatingContact = document.querySelector(".wa-float");
   var mobile = window.matchMedia("(max-width: 768px)");
   var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   var connection = navigator.connection;
   var visible = false;
+  var actionsVisible = false;
   var userPaused = false;
   var failed = false;
   var revision = 0;
@@ -25,6 +28,9 @@
   }
 
   function sync() {
+    if (floatingContact) {
+      floatingContact.classList.toggle("hero-actions-visible", mobile.matches && actionsVisible);
+    }
     var currentRevision = ++revision;
     if (!allowed()) {
       video.pause();
@@ -92,10 +98,15 @@
   });
 
   if ("IntersectionObserver" in window) {
-    new IntersectionObserver(function (entries) {
-      visible = entries[0].isIntersecting;
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.target === media) visible = entry.isIntersecting;
+        if (entry.target === actions) actionsVisible = entry.isIntersecting;
+      });
       sync();
-    }).observe(media);
+    });
+    observer.observe(media);
+    if (actions) observer.observe(actions);
   }
   // Without visibility observation, keep the still frame and avoid background playback.
   sync();

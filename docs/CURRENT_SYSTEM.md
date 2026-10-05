@@ -106,6 +106,10 @@ UptimeRobot → GET https://rasel.ar/healthz
   La altura del área visual se limita a 700 px; cuando ese límite reduce el
   ancho del video, la escena completa se centra sobre fondo crema. Los botones
   conservan dos columnas y un mínimo táctil de 50 px en celular.
+  La burbuja flotante de WhatsApp se oculta mientras esos botones están visibles
+  y reaparece al desplazarse fuera de ellos, evitando superponer controles.
+  Sin JavaScript se omite esa burbuja en el inicio móvil; permanece disponible
+  el enlace de WhatsApp de compras mayoristas.
   El MP4 H.264 de
   720 × 1280 dura unos doce segundos, no tiene audio y pesa aproximadamente
   530 KB; incorpora la rotación del MOV original y usa píxeles cuadrados para
