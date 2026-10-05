@@ -3,6 +3,27 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Video completo en la portada móvil (1.12.0)
+
+- Hasta 768 px, video 16:9 completo con el contenido comercial debajo sobre
+  fondo crema. Escritorio conserva la foto original desde 769 px.
+- MP4 H.264 de 1280 × 720, sin audio, de unos doce segundos y 558 KB; fotograma
+  WebP de 34 KB. Ambos usan los archivos estáticos existentes.
+- Reproducción automática en bucle dentro de la página, pausa/reanudación
+  accesible y pausa al salir de pantalla o al ocultar la pestaña. Imagen
+  alternativa sin JavaScript, ante errores o bloqueo del navegador; movimiento
+  reducido y ahorro de datos informado evitan descargar el video. Escritorio
+  tampoco descarga el video ni el fotograma móvil.
+- Menú compacto hasta 1200 px para corregir el desborde previo del encabezado
+  en anchos intermedios, sin modificar el corte de la portada.
+- Verificación local: `manage.py check`, 248 pruebas Django (ocho omitidas por
+  requerir PostgreSQL), tres suites JavaScript y `collectstatic` correctos.
+  Chrome validado a 360, 390, 430, 768, 769 y 1280 px, pausa/reanudación,
+  navegación y compra rápida hasta carrito; alternativas probadas con
+  movimiento reducido, ahorro de datos, bloqueo y fallo de video simulados.
+  La reproducción en Safari de iPhone y Chrome de Android reales requiere
+  comprobación en esos dispositivos.
+
 ## 2026-10-04 — Estado operativo de Meta Pixel y CAPI (1.11.1)
 
 - Documentación actualizada con el despliegue aprobado del PR #18: píxel

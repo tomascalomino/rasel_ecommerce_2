@@ -97,6 +97,21 @@ UptimeRobot → GET https://rasel.ar/healthz
   usan una portada JPEG de 1200 × 800 basada en la fotografía real de la
   botella y el aceite. Los metadatos Open Graph y Twitter declaran esa imagen,
   sus dimensiones y un texto alternativo descriptivo.
+- La portada del inicio diferencia su contenido por ancho de pantalla. Hasta
+  768 px muestra el video de la botella sirviendo aceite sobre guacamole,
+  completo en proporción 16:9, y debajo conserva origen, título, descripción,
+  botones y beneficios sobre fondo crema con texto oscuro. El MP4 H.264 de
+  1280 × 720 dura unos doce segundos, no tiene audio y pesa aproximadamente
+  558 KB; se sirve como estático versionado con WhiteNoise. Se reproduce en
+  bucle dentro de la página y ofrece **Pausar video / Reanudar video**. Se pausa
+  al salir de pantalla o al ocultar la pestaña, conservando una pausa elegida
+  por el visitante. Un fotograma WebP queda como alternativa sin JavaScript,
+  ante bloqueo de reproducción o error, con movimiento reducido y con ahorro
+  de datos cuando el navegador lo informa. Estos dos últimos ajustes evitan
+  cargar el MP4. Desde 769 px se conserva la foto original y no se carga el
+  video ni su fotograma. El encabezado usa el menú compacto hasta 1200 px para
+  evitar desbordes en anchos intermedios; la navegación completa se muestra
+  por encima de ese límite.
 - El administrador activa o desactiva productos y variantes, y permite editar
   juntos el precio de venta, el precio regular y el texto de promoción. Rechaza campañas
   incompletas o un precio regular que no sea mayor al vigente. Las imágenes de
