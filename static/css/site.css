@@ -174,7 +174,7 @@ a {
 }
 
 /* Panel compacto hasta que marca, navegación, buscador y carrito caben juntos. */
-@media (max-width: 1200px) {
+@media (max-width: 1279px) {
   .nav {
     gap: 10px;
   }
@@ -1077,7 +1077,7 @@ select:focus {
   height: 18px;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1279px) {
   .search-form {
     width: 100%;
   }

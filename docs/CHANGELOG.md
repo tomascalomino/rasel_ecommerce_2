@@ -3,6 +3,12 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Límite del encabezado compacto (1.12.1)
+
+- Extendida la navegación compacta hasta 1279 px después de detectar un
+  desborde a 1201 px en la validación de staging. Desde 1280 px se conserva la
+  navegación completa. La portada sigue diferenciando video/foto a 768/769 px.
+
 ## 2026-10-04 — Video completo en la portada móvil (1.12.0)
 
 - Hasta 768 px, video 16:9 completo con el contenido comercial debajo sobre

@@ -109,7 +109,7 @@ UptimeRobot → GET https://rasel.ar/healthz
   ante bloqueo de reproducción o error, con movimiento reducido y con ahorro
   de datos cuando el navegador lo informa. Estos dos últimos ajustes evitan
   cargar el MP4. Desde 769 px se conserva la foto original y no se carga el
-  video ni su fotograma. El encabezado usa el menú compacto hasta 1200 px para
+  video ni su fotograma. El encabezado usa el menú compacto hasta 1279 px para
   evitar desbordes en anchos intermedios; la navegación completa se muestra
   por encima de ese límite.
 - El administrador activa o desactiva productos y variantes, y permite editar
