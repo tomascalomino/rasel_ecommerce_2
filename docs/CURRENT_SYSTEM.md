@@ -99,11 +99,15 @@ UptimeRobot → GET https://rasel.ar/healthz
   sus dimensiones y un texto alternativo descriptivo.
 - La portada del inicio diferencia su contenido por ancho de pantalla. Hasta
   768 px muestra el video de la botella sirviendo aceite sobre guacamole,
-  completo en proporción 16:9, y debajo conserva origen, título, descripción,
-  botones y beneficios sobre fondo crema con texto oscuro. El MP4 H.264 de
-  1280 × 720 dura unos doce segundos, no tiene audio y pesa aproximadamente
-  558 KB; se sirve como estático versionado con WhiteNoise. Se reproduce en
-  bucle dentro de la página y ofrece **Pausar video / Reanudar video**. Se pausa
+  completo en su proporción vertical original 9:16, y debajo conserva origen,
+  título, descripción, botones y beneficios sobre fondo crema con texto oscuro.
+  El MP4 H.264 de
+  720 × 1280 dura unos doce segundos, no tiene audio y pesa aproximadamente
+  530 KB; incorpora la rotación del MOV original y usa píxeles cuadrados para
+  mantener las proporciones sin deformación. El contenedor y el fotograma
+  también usan 9:16. Se sirve como estático versionado con WhiteNoise, se
+  reproduce en bucle dentro de la página y ofrece **Pausar video / Reanudar video**.
+  Se pausa
   al salir de pantalla o al ocultar la pestaña, conservando una pausa elegida
   por el visitante. Un fotograma WebP queda como alternativa sin JavaScript,
   ante bloqueo de reproducción o error, con movimiento reducido y con ahorro

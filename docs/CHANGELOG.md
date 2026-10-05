@@ -3,6 +3,21 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Proporciones originales del video móvil (1.12.2)
+
+- Corregida la deformación causada al convertir el MOV a 1280 × 720: el
+  archivo guarda cuadros horizontales con una rotación de 90° y su orientación
+  visible es vertical. La conversión anterior forzaba esa escena vertical a
+  16:9 y ensanchaba la imagen.
+- MP4 regenerado respetando la rotación, en 720 × 1280, proporción 9:16 y
+  píxeles cuadrados, con un peso de 530 KB. Fotograma, dimensiones HTML y
+  contenedor móvil actualizados a la misma proporción, mostrando la escena
+  completa. Se conservan los textos debajo, la reproducción y sus alternativas.
+- Verificados metadatos de orientación, tamaño y píxeles cuadrados; en Chrome
+  el video y su contenedor coinciden en 9:16 a 360, 390, 430 y 768 px, sin
+  desbordes. Fotograma sin JavaScript comprobado visualmente. `manage.py check`
+  y las 43 pruebas existentes de `shop` correctos.
+
 ## 2026-10-04 — Límite del encabezado compacto (1.12.1)
 
 - Extendida la navegación compacta hasta 1279 px después de detectar un

@@ -347,7 +347,7 @@ a {
     display: block;
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 9 / 16;
     background: var(--bg);
   }
 
