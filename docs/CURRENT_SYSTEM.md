@@ -97,6 +97,36 @@ UptimeRobot → GET https://rasel.ar/healthz
   usan una portada JPEG de 1200 × 800 basada en la fotografía real de la
   botella y el aceite. Los metadatos Open Graph y Twitter declaran esa imagen,
   sus dimensiones y un texto alternativo descriptivo.
+- La portada del inicio diferencia su contenido por ancho de pantalla. Hasta
+  768 px muestra el video de la botella sirviendo aceite sobre guacamole,
+  completo en su proporción vertical original 9:16, sin recorte ni deformación.
+  El origen aparece arriba y el título y los dos botones se superponen sobre la
+  mesa, con un degradado crema y texto oscuro. La descripción y los beneficios
+  quedan debajo; así el acceso a tienda aparece antes de terminar el video.
+  La altura del área visual se limita a 700 px; cuando ese límite reduce el
+  ancho del video, la escena completa se centra sobre fondo crema. Los botones
+  conservan dos columnas y un mínimo táctil de 50 px en celular.
+  La burbuja flotante de WhatsApp se oculta mientras esos botones están visibles
+  y reaparece al desplazarse fuera de ellos, evitando superponer controles.
+  Sin JavaScript se omite esa burbuja en el inicio móvil; permanece disponible
+  el enlace de WhatsApp de compras mayoristas.
+  El MP4 H.264 de
+  720 × 1280 dura unos doce segundos, no tiene audio y pesa aproximadamente
+  530 KB; incorpora la rotación del MOV original y usa píxeles cuadrados para
+  mantener las proporciones sin deformación. El video y el fotograma
+  respetan esa proporción. Se sirve como estático versionado con WhiteNoise, se
+  reproduce en bucle dentro de la página y ofrece **Pausar video / Reanudar video**
+  en la esquina superior izquierda, debajo del origen, evitando tanto el
+  texto comercial como el botón flotante de WhatsApp.
+  Se pausa
+  al salir de pantalla o al ocultar la pestaña, conservando una pausa elegida
+  por el visitante. Un fotograma WebP queda como alternativa sin JavaScript,
+  ante bloqueo de reproducción o error, con movimiento reducido y con ahorro
+  de datos cuando el navegador lo informa. Estos dos últimos ajustes evitan
+  cargar el MP4. Desde 769 px se conserva la foto original y no se carga el
+  video ni su fotograma. El encabezado usa el menú compacto hasta 1279 px para
+  evitar desbordes en anchos intermedios; la navegación completa se muestra
+  por encima de ese límite.
 - El administrador activa o desactiva productos y variantes, y permite editar
   juntos el precio de venta, el precio regular y el texto de promoción. Rechaza campañas
   incompletas o un precio regular que no sea mayor al vigente. Las imágenes de

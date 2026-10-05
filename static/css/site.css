@@ -173,8 +173,8 @@ a {
   display: inline-flex;
 }
 
-/* ── Header en mobile: panel desplegable con hamburguesa ── */
-@media (max-width: 768px) {
+/* Panel compacto hasta que marca, navegación, buscador y carrito caben juntos. */
+@media (max-width: 1279px) {
   .nav {
     gap: 10px;
   }
@@ -295,6 +295,10 @@ a {
   gap: 24px;
 }
 
+.hero-content-full .hero-desc { order: 1; }
+.hero-content-full .cta-row { order: 2; }
+.hero-content-full .hero-trust { order: 3; }
+
 .hero-full .h1 {
   color: white;
   text-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
@@ -322,6 +326,178 @@ a {
 .hero-full .kicker .dot {
   background: rgba(216, 201, 166, 0.95);
   box-shadow: 0 0 0 4px rgba(216, 201, 166, 0.3);
+}
+
+.hero-mobile-media {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .hero-full {
+    min-height: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    isolation: isolate;
+    background-image: none !important;
+    background-color: var(--card);
+    color: var(--text);
+  }
+
+  .hero-full::before {
+    display: none;
+  }
+
+  .hero-full::after {
+    content: "";
+    grid-area: 1 / 1;
+    align-self: stretch;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(to bottom,
+      rgba(251, 248, 240, .95) 0%,
+      rgba(251, 248, 240, .85) 8%,
+      rgba(251, 248, 240, 0) 13%,
+      rgba(251, 248, 240, 0) 69%,
+      rgba(251, 248, 240, .85) 73%,
+      rgba(251, 248, 240, .92) 78%,
+      rgba(251, 248, 240, .99) 100%);
+  }
+
+  .hero-mobile-media {
+    display: block;
+    position: relative;
+    grid-area: 1 / 1;
+    width: 100%;
+    aspect-ratio: 9 / 16;
+    max-height: 700px;
+    background: var(--bg);
+  }
+
+  .hero-mobile-poster,
+  .hero-mobile-video {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .hero-mobile-video {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hero-mobile-media.is-playing .hero-mobile-video {
+    opacity: 1;
+  }
+
+  .hero-video-toggle {
+    position: absolute;
+    left: 10px;
+    top: 52px;
+    z-index: 3;
+    min-height: 44px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, .65);
+    border-radius: 12px;
+    background: rgba(46, 51, 36, .9);
+    color: white;
+    font: 600 14px var(--font);
+    cursor: pointer;
+  }
+
+  .hero-video-toggle:focus-visible {
+    outline: 3px solid white;
+    outline-offset: 3px;
+  }
+
+  .hero-full .kicker {
+    position: static;
+    transform: none;
+    width: auto;
+    grid-area: 1 / 1;
+    align-self: start;
+    justify-self: center;
+    z-index: 2;
+    margin: 20px var(--pad) 0;
+    color: var(--deep-olive);
+    text-shadow: none;
+  }
+
+  .hero-full .kicker .dot {
+    background: var(--gold);
+    box-shadow: 0 0 0 4px var(--gold-soft);
+  }
+
+  .hero-content-full {
+    display: contents;
+  }
+
+  .hero-full .h1 {
+    grid-area: 1 / 1;
+    align-self: end;
+    z-index: 2;
+    margin: 0 var(--pad) 76px;
+    font-size: clamp(28px, 7.8vw, 32px);
+    line-height: 1.08;
+    color: var(--deep-olive);
+    text-shadow: none;
+  }
+
+  .hero-full .cta-row {
+    grid-area: 1 / 1;
+    align-self: end;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    margin: 0 var(--pad) 20px;
+  }
+
+  .hero-full .cta-row .btn {
+    min-width: 0;
+    min-height: 50px;
+    padding: 10px 8px;
+    gap: 8px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .hero-full .hero-desc {
+    grid-area: 2 / 1;
+    justify-self: center;
+    margin: 22px var(--pad) 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-2);
+    text-shadow: none;
+  }
+
+  .hero-full .btn-secondary {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--deep-olive);
+    backdrop-filter: none;
+  }
+
+  .hero-full .hero-trust {
+    grid-area: 3 / 1;
+    margin: 16px var(--pad) 30px;
+    padding: 12px;
+    border-radius: var(--radius);
+    background: rgba(156, 163, 106, .12);
+    backdrop-filter: none;
+  }
+
+  .hero-full .hero-trust .trust-item {
+    color: var(--text-2);
+  }
+
+  .hero-full .hero-trust .trust-item .icon {
+    color: var(--deep-olive);
+  }
 }
 
 .hero-content {
@@ -958,7 +1134,7 @@ select:focus {
   height: 18px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1279px) {
   .search-form {
     width: 100%;
   }
@@ -3106,6 +3282,12 @@ textarea:focus {
 
 .wa-float svg {
   display: block;
+}
+
+@media (max-width: 768px) {
+  .wa-float.hero-actions-visible {
+    visibility: hidden;
+  }
 }
 
 /* Scheduled shipping campaigns: compact, outside the sticky header. */

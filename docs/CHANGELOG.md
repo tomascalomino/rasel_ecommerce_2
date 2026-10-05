@@ -3,6 +3,79 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-05 — Botones móviles separados de WhatsApp (1.12.5)
+
+- La burbuja flotante se oculta mientras los botones de la portada móvil están
+  visibles y reaparece después, para que la franja de promoción no cause una
+  superposición con «Quiénes somos». No afecta escritorio ni otras páginas.
+- Sin JavaScript, el inicio móvil omite la burbuja y conserva el enlace de
+  WhatsApp de compras mayoristas.
+- Verificadas pausa/reanudación, pausa fuera de pantalla y reaparición de
+  WhatsApp al dejar atrás los botones; `manage.py check` y 43 pruebas de `shop`
+  correctos.
+
+## 2026-10-05 — Información comercial sobre la mesa del video móvil (1.12.4)
+
+- Título y botones sobre la zona de mesa con degradado crema; origen arriba,
+  descripción y beneficios debajo. Se conserva el video completo sin recortes
+  ni deformación, con un límite de altura de 700 px y centrado cuando corresponde.
+- Botones en dos columnas con tamaño táctil de 50 px, tipografía móvil ajustada
+  y pausa/reanudación arriba a la izquierda, separada del texto y de WhatsApp.
+- Escritorio conserva la foto y la disposición actual de su contenido.
+- Verificado en Chrome a 360, 390, 430, 768, 769 y 1280 px, sin desbordes;
+  a 390 px, el acceso a tienda sube aproximadamente 416 px respecto de la
+  portada anterior. Fotograma comprobado sin scripts, con movimiento reducido
+  y ahorro de datos simulados. `manage.py check`, las 248 pruebas Django
+  (ocho omitidas por requerir PostgreSQL) y las tres suites JavaScript correctos.
+
+## 2026-10-04 — Control del video separado de WhatsApp (1.12.3)
+
+- Control de pausa/reanudación ubicado en la esquina inferior izquierda del
+  video vertical para evitar su superposición con WhatsApp cuando aparece
+  una franja sobre la portada. Conserva el tamaño táctil de 44 px.
+
+## 2026-10-04 — Proporciones originales del video móvil (1.12.2)
+
+- Corregida la deformación causada al convertir el MOV a 1280 × 720: el
+  archivo guarda cuadros horizontales con una rotación de 90° y su orientación
+  visible es vertical. La conversión anterior forzaba esa escena vertical a
+  16:9 y ensanchaba la imagen.
+- MP4 regenerado respetando la rotación, en 720 × 1280, proporción 9:16 y
+  píxeles cuadrados, con un peso de 530 KB. Fotograma, dimensiones HTML y
+  contenedor móvil actualizados a la misma proporción, mostrando la escena
+  completa. Se conservan los textos debajo, la reproducción y sus alternativas.
+- Verificados metadatos de orientación, tamaño y píxeles cuadrados; en Chrome
+  el video y su contenedor coinciden en 9:16 a 360, 390, 430 y 768 px, sin
+  desbordes. Fotograma sin JavaScript comprobado visualmente. `manage.py check`
+  y las 43 pruebas existentes de `shop` correctos.
+
+## 2026-10-04 — Límite del encabezado compacto (1.12.1)
+
+- Extendida la navegación compacta hasta 1279 px después de detectar un
+  desborde a 1201 px en la validación de staging. Desde 1280 px se conserva la
+  navegación completa. La portada sigue diferenciando video/foto a 768/769 px.
+
+## 2026-10-04 — Video completo en la portada móvil (1.12.0)
+
+- Hasta 768 px, video 16:9 completo con el contenido comercial debajo sobre
+  fondo crema. Escritorio conserva la foto original desde 769 px.
+- MP4 H.264 de 1280 × 720, sin audio, de unos doce segundos y 558 KB; fotograma
+  WebP de 34 KB. Ambos usan los archivos estáticos existentes.
+- Reproducción automática en bucle dentro de la página, pausa/reanudación
+  accesible y pausa al salir de pantalla o al ocultar la pestaña. Imagen
+  alternativa sin JavaScript, ante errores o bloqueo del navegador; movimiento
+  reducido y ahorro de datos informado evitan descargar el video. Escritorio
+  tampoco descarga el video ni el fotograma móvil.
+- Menú compacto hasta 1200 px para corregir el desborde previo del encabezado
+  en anchos intermedios, sin modificar el corte de la portada.
+- Verificación local: `manage.py check`, 248 pruebas Django (ocho omitidas por
+  requerir PostgreSQL), tres suites JavaScript y `collectstatic` correctos.
+  Chrome validado a 360, 390, 430, 768, 769 y 1280 px, pausa/reanudación,
+  navegación y compra rápida hasta carrito; alternativas probadas con
+  movimiento reducido, ahorro de datos, bloqueo y fallo de video simulados.
+  La reproducción en Safari de iPhone y Chrome de Android reales requiere
+  comprobación en esos dispositivos.
+
 ## 2026-10-04 — Estado operativo de Meta Pixel y CAPI (1.11.1)
 
 - Documentación actualizada con el despliegue aprobado del PR #18: píxel
