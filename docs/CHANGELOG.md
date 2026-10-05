@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-05 — Información comercial sobre la mesa del video móvil (1.12.4)
+
+- Título y botones sobre la zona de mesa con degradado crema; origen arriba,
+  descripción y beneficios debajo. Se conserva el video completo sin recortes
+  ni deformación, con un límite de altura de 700 px y centrado cuando corresponde.
+- Botones en dos columnas con tamaño táctil de 50 px, tipografía móvil ajustada
+  y pausa/reanudación arriba a la izquierda, separada del texto y de WhatsApp.
+- Escritorio conserva la foto y la disposición actual de su contenido.
+- Verificado en Chrome a 360, 390, 430, 768, 769 y 1280 px, sin desbordes;
+  a 390 px, el acceso a tienda sube aproximadamente 416 px respecto de la
+  portada anterior. Fotograma comprobado sin scripts, con movimiento reducido
+  y ahorro de datos simulados. `manage.py check`, las 248 pruebas Django
+  (ocho omitidas por requerir PostgreSQL) y las tres suites JavaScript correctos.
+
 ## 2026-10-04 — Control del video separado de WhatsApp (1.12.3)
 
 - Control de pausa/reanudación ubicado en la esquina inferior izquierda del

@@ -99,15 +99,21 @@ UptimeRobot → GET https://rasel.ar/healthz
   sus dimensiones y un texto alternativo descriptivo.
 - La portada del inicio diferencia su contenido por ancho de pantalla. Hasta
   768 px muestra el video de la botella sirviendo aceite sobre guacamole,
-  completo en su proporción vertical original 9:16, y debajo conserva origen,
-  título, descripción, botones y beneficios sobre fondo crema con texto oscuro.
+  completo en su proporción vertical original 9:16, sin recorte ni deformación.
+  El origen aparece arriba y el título y los dos botones se superponen sobre la
+  mesa, con un degradado crema y texto oscuro. La descripción y los beneficios
+  quedan debajo; así el acceso a tienda aparece antes de terminar el video.
+  La altura del área visual se limita a 700 px; cuando ese límite reduce el
+  ancho del video, la escena completa se centra sobre fondo crema. Los botones
+  conservan dos columnas y un mínimo táctil de 50 px en celular.
   El MP4 H.264 de
   720 × 1280 dura unos doce segundos, no tiene audio y pesa aproximadamente
   530 KB; incorpora la rotación del MOV original y usa píxeles cuadrados para
-  mantener las proporciones sin deformación. El contenedor y el fotograma
-  también usan 9:16. Se sirve como estático versionado con WhiteNoise, se
+  mantener las proporciones sin deformación. El video y el fotograma
+  respetan esa proporción. Se sirve como estático versionado con WhiteNoise, se
   reproduce en bucle dentro de la página y ofrece **Pausar video / Reanudar video**
-  en la esquina inferior izquierda, evitando el botón flotante de WhatsApp.
+  en la esquina superior izquierda, debajo del origen, evitando tanto el
+  texto comercial como el botón flotante de WhatsApp.
   Se pausa
   al salir de pantalla o al ocultar la pestaña, conservando una pausa elegida
   por el visitante. Un fotograma WebP queda como alternativa sin JavaScript,
