@@ -3,6 +3,12 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-04 — Control del video separado de WhatsApp (1.12.3)
+
+- Control de pausa/reanudación ubicado en la esquina inferior izquierda del
+  video vertical para evitar su superposición con WhatsApp cuando aparece
+  una franja sobre la portada. Conserva el tamaño táctil de 44 px.
+
 ## 2026-10-04 — Proporciones originales del video móvil (1.12.2)
 
 - Corregida la deformación causada al convertir el MOV a 1280 × 720: el

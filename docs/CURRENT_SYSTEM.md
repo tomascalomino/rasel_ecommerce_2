@@ -106,7 +106,8 @@ UptimeRobot → GET https://rasel.ar/healthz
   530 KB; incorpora la rotación del MOV original y usa píxeles cuadrados para
   mantener las proporciones sin deformación. El contenedor y el fotograma
   también usan 9:16. Se sirve como estático versionado con WhiteNoise, se
-  reproduce en bucle dentro de la página y ofrece **Pausar video / Reanudar video**.
+  reproduce en bucle dentro de la página y ofrece **Pausar video / Reanudar video**
+  en la esquina inferior izquierda, evitando el botón flotante de WhatsApp.
   Se pausa
   al salir de pantalla o al ocultar la pestaña, conservando una pausa elegida
   por el visitante. Un fotograma WebP queda como alternativa sin JavaScript,
