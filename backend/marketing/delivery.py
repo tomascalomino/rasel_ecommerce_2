@@ -1,4 +1,4 @@
-"""Explicit manual dispatcher, with durable claims and bounded retries."""
+"""Dispatcher with durable claims, bounded retries and no payment network I/O."""
 
 import re
 import uuid

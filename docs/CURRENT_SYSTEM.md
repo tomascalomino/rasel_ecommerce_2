@@ -415,10 +415,41 @@ HTTP 200 y la configuración pública con `pixelEnabled=true`, elección inicial
 desconocida y `Cache-Control: private, no-store`. El conjunto/píxel es
 **RaSel - Tienda online**, ID `1400536168898337`.
 
-CAPI permanece desactivada en ambos entornos porque todavía falta el token.
-La recepción real en el Administrador de eventos y la asociación con CP_Rasel
-requieren validación del responsable con acceso a Meta. No se enviaron pedidos
-ni eventos reales como parte de las pruebas del agente.
+El 05/10/2026 se configuró el token privado y `META_CAPI_ENABLED=1` en
+producción y staging. La carga inicial se verificó sobre `560dcfd` (1.11.1),
+sin código de prueba productivo. La fuente operativa volvió a comprobarse al
+preparar la automatización: ambos servicios ejecutan `372d13b` (1.12.5), Live.
+El código de prueba queda exclusivamente en staging.
+
+Se verificó Purchase con la orden sintética #8 de staging: creada mediante
+checkout web con consentimiento, sin Purchase mientras estaba pendiente, y
+confirmada desde el admin como simulación, sin cobro real. Meta confirmó una
+recepción (`events_received_1`) de ARS 900 después de ARS 100 de descuento,
+con un único intento. Repetir el comando no produjo otra solicitud. No se
+enviaron compras productivas ni históricas. La consulta visual de Probar eventos
+y la asociación con CP_Rasel siguen a cargo del responsable con acceso a Meta.
+
+El repositorio incorpora **Meta Purchase dispatch** (1.13.0) en GitHub Actions,
+programado cada quince minutos, a los minutos 7, 22, 37 y 52. Ejecuta el comando
+existente contra Neon sin necesitar Shell, cron ni worker en Render Free, ni
+una computadora encendida. Los Environments `meta-production` y `meta-staging`
+tienen secretos independientes y admiten solo `main` y `bundle_work`,
+respectivamente. Producción permanece pausada mediante `META_DISPATCH_ENABLED=0`
+hasta publicar y desplegar la versión aprobada; configurar el token no activa
+por sí solo el despacho automático.
+
+El operador fija `META_DISPATCH_SHA` tras verificar el commit desplegado. Cada
+ejecución descarga exactamente ese código y valida pertenencia a la rama,
+huella de la base, PostgreSQL con TLS y modo de prueba. Staging requiere una
+orden de prueba explícita; producción exige código de prueba y orden vacíos.
+Los jobs no se solapan por entorno y los reclamos persistentes también protegen
+frente al comando manual. Los errores devuelven salida fallida, con diagnósticos
+solo de cantidades; nunca imprimen la conexión, token ni payload.
+
+GitHub puede retrasar ejecuciones y desactiva esta programación en repositorios
+públicos tras sesenta días sin actividad. El operador debe vigilar **Actions**
+y mantener activas las notificaciones de fallos. No existe monitor externo de
+ausencia de ejecuciones; el comando manual queda disponible para recuperación.
 
 - Una franja debajo del header ofrece **OK, aceptar**, **Rechazar** y privacidad.
   No bloquea navegación ni compra. No responder no habilita Meta. La elección
@@ -466,15 +497,18 @@ ni eventos reales como parte de las pruebas del agente.
   consentimiento ni eventos retroactivos. La primera confirmación permanece
   registrada incluso después de limpiar la auditoría, evitando reconstrucciones.
 - `send_meta_events` diagnostica sin enviar ni limpiar por defecto. Con `--send`
-  limpia y despacha lotes mediante reclamos persistentes recuperables. No hay
-  cron/worker: envío y reintentos requieren ejecutar el comando. Timeouts y
+  limpia y despacha lotes mediante reclamos persistentes recuperables. Actions
+  lo ejecuta periódicamente cuando se habilita el entorno; también se puede
+  ejecutar manualmente. `--fail-on-problems` marca fallo ante configuración
+  incompleta, fallos de envío, eventos vencidos en el lote, destino/modo de
+  prueba bloqueado y pendientes de más de una hora. Timeouts y
   errores temporales tienen espera creciente, con límite de 24 horas desde la
   creación del evento. Eventos con aprobación anterior a siete días no se
   envían ni se redatan. Errores permanentes se detienen para revisión.
 - Rechazar o revocar detiene nuevos envíos y cancela pendientes de esa elección;
   volver a aceptar no resucita compras anteriores. No se pueden retirar
   solicitudes ya enviadas o en curso. Contexto y payloads se limpian después
-  de 90 días; la auditoría mínima dura doce meses, mediante el comando manual.
+  de 90 días; la auditoría mínima dura doce meses, mediante el mismo comando.
 - El admin muestra fecha de pago y estado resumido de Purchase sin exponer
   payloads ni secretos. La política pública distingue analítica propia de
   publicidad Meta y explica hashes, cookies, conservación y revocación.

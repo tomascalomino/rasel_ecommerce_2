@@ -1,0 +1,109 @@
+name: Meta Purchase dispatch
+
+on:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+  push:
+    branches: [bundle_work]
+    paths:
+      - '.github/workflows/meta-events.yml'
+      - 'backend/marketing/**'
+      - 'scripts/run_meta_dispatch.py'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to dispatch
+        type: choice
+        options: [production, staging]
+        default: production
+      order:
+        description: Required test order for staging; leave empty for production
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    if: >-
+      (github.event_name == 'schedule' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/bundle_work') ||
+      (github.event_name == 'workflow_dispatch' &&
+       ((inputs.target == 'production' && github.ref == 'refs/heads/main') ||
+        (inputs.target == 'staging' && github.ref == 'refs/heads/bundle_work')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ github.ref_name == 'main' && 'meta-production' || 'meta-staging' }}
+    concurrency:
+      group: meta-dispatch-${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      cancel-in-progress: false
+    steps:
+      - name: Check activation and pinned deployed commit
+        id: gate
+        env:
+          ENABLED: ${{ vars.META_DISPATCH_ENABLED }}
+          DEPLOYED_SHA: ${{ vars.META_DISPATCH_SHA }}
+        run: |
+          if [ "$ENABLED" != "1" ]; then
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "Meta dispatch is paused; no database access." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [[ ! "$DEPLOYED_SHA" =~ ^[a-f0-9]{40}$ ]]; then
+            echo "A verified deployed META_DISPATCH_SHA is required."
+            exit 1
+          fi
+          echo "active=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout approved workflow tooling
+        if: steps.gate.outputs.active == 'true'
+        uses: actions/checkout@v7
+        with:
+          path: tooling
+          persist-credentials: false
+
+      - name: Checkout the deployed backend
+        if: steps.gate.outputs.active == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ vars.META_DISPATCH_SHA }}
+          path: application
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        if: steps.gate.outputs.active == 'true'
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: application/requirements.txt
+
+      - name: Install backend dependencies
+        if: steps.gate.outputs.active == 'true'
+        run: python -m pip install -r application/requirements.txt
+
+      - name: Diagnose and dispatch existing Purchase events
+        if: steps.gate.outputs.active == 'true'
+        env:
+          META_DISPATCH_ENABLED: ${{ vars.META_DISPATCH_ENABLED }}
+          META_DISPATCH_SHA: ${{ vars.META_DISPATCH_SHA }}
+          META_DATABASE_FINGERPRINT: ${{ vars.META_DATABASE_FINGERPRINT }}
+          META_DISPATCH_ORDER: ${{ github.ref_name == 'main' && '' || (inputs.order || vars.META_VALIDATION_ORDER) }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          META_CAPI_ACCESS_TOKEN: ${{ secrets.META_CAPI_ACCESS_TOKEN }}
+          META_TEST_EVENT_CODE: ${{ secrets.META_TEST_EVENT_CODE }}
+          META_GRAPH_API_VERSION: v26.0
+        run: |
+          target=staging
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then target=production; fi
+          python tooling/scripts/run_meta_dispatch.py --target "$target" --app-dir application
+
+      - name: Report dispatch outcome
+        if: always() && steps.gate.outputs.active == 'true'
+        env:
+          OUTCOME: ${{ job.status }}
+        run: |
+          echo "Meta Purchase dispatch: $OUTCOME. See sanitized counts in the dispatch step." >> "$GITHUB_STEP_SUMMARY"
+          echo "Payment confirmation is independent of this job. Failed sends remain for review or retry." >> "$GITHUB_STEP_SUMMARY"

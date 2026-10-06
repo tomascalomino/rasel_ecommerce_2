@@ -444,20 +444,31 @@ y [Cron Jobs de Render](https://render.com/docs/cronjobs).
 
 El código está apagado por defecto, pero el píxel se habilitó el 04/10/2026 en
 staging y producción mediante `META_PIXEL_ENABLED=1`; el ID es
-`1400536168898337`. Producción ejecuta 1.11.0 del commit aprobado `8fef46a`
-(PR #18), con las migraciones de marketing, órdenes y borradores MP aplicadas.
+`1400536168898337`. Producción ejecuta 1.12.5 del commit aprobado `372d13b`
+(PR #20), con las migraciones de marketing, órdenes y borradores MP aplicadas.
 Render conserva Auto-Deploy apagado y el despliegue se hizo manualmente desde
 ese commit de `main`. Las 248 pruebas y las tres suites JavaScript pasaron
 también en el PostgreSQL del promotion-gate.
 
-`META_CAPI_ENABLED=0` en ambos servicios: falta cargar el token y realizar la
-prueba controlada de Purchase antes de activarlo. La recepción real en Meta y
-la asociación con CP_Rasel requieren verificación del responsable con acceso
-al Administrador de eventos. Se verificó HTTP 200 y la configuración pública
-consentida, sin ejecutar el SDK ni enviar compras como prueba. Se incluyó `.env.example`
-con placeholders solo para Meta: integrar sus variables sin reemplazar ni
-publicar el `.env` existente. Nunca poner el token en templates, JS o comandos
-que impriman credenciales.
+El 05/10/2026 se configuró el token privado y `META_CAPI_ENABLED=1` en ambos
+servicios. Producción quedó Live mediante redeploy del mismo commit aprobado,
+sin `META_TEST_EVENT_CODE`; staging conserva su código para Probar eventos.
+
+La orden sintética #8 de staging verificó el recorrido completo: checkout web
+consentido, ningún Purchase en estado pendiente, confirmación simulada desde
+el admin y un único Purchase recibido por la API de Meta. Importe ARS 900
+(productos ARS 1000 menos descuento ARS 100, retiro sin cargo), un intento y
+diagnóstico `events_received_1`. Una segunda ejecución para esa orden no envió
+otra solicitud. No hubo cobro real ni envíos de compras productivas/históricas.
+La visualización en Probar eventos y la asociación con CP_Rasel requieren
+verificación del responsable con acceso al Administrador de eventos.
+
+Se agregó el workflow **Meta Purchase dispatch**. La automatización productiva
+permanece pausada hasta la publicación y activación descritas abajo; el redeploy
+por sí solo no ejecuta el despachador.
+Se incluyó `.env.example` con placeholders solo para Meta: integrar sus
+variables sin reemplazar ni publicar el `.env` existente. Nunca poner el token
+en templates, JS o comandos que impriman credenciales.
 
 ### Activación y prueba controlada
 
@@ -518,10 +529,89 @@ Referencias de contrato:
 y [solicitud/código de prueba en el SDK oficial](https://github.com/facebook/facebook-python-business-sdk/blob/main/facebook_business/adobjects/serverside/event_request.py).
 Revisar soporte de la versión durante el mantenimiento de la integración.
 
-### Rutina manual, incidentes y conservación
+### Automatización gratuita mediante GitHub Actions
 
-- No existe cron ni worker Meta. Ejecutar el envío después de confirmar cobros
-  offline y revisar la cola al menos cada hora durante la operación comercial:
+`.github/workflows/meta-events.yml` programa producción cada quince minutos en
+`main` (minutos 7, 22, 37 y 52). En `bundle_work`, los pushes que cambian el
+despachador validan una única orden sintética de staging. **Run workflow** está
+disponible una vez publicado en la rama por defecto: producción desde `main`;
+staging desde `bundle_work`, indicando una orden de prueba.
+
+Los Environments `meta-production` y `meta-staging` tienen secretos separados
+y admiten solo `main` y `bundle_work`, respectivamente. Son independientes de
+`production-promotion-approval`, cuyas reglas de aprobación no se modifican.
+No colocar credenciales productivas en secretos generales accesibles desde
+otras ramas o jobs de PR.
+
+| Configuración del Environment | Tipo | Uso |
+| --- | --- | --- |
+| `DATABASE_URL` | Secret | Conexión Neon del entorno, con TLS. |
+| `META_CAPI_ACCESS_TOKEN` | Secret | Token backend del conjunto Meta. |
+| `META_TEST_EVENT_CODE` | Secret | Solo staging; no crearlo en producción. |
+| `META_DISPATCH_ENABLED` | Variable | `1` permite despachar; `0` pausa sin acceder a la base. |
+| `META_DISPATCH_SHA` | Variable | SHA completo del código verificado como desplegado. |
+| `META_DATABASE_FINGERPRINT` | Variable | SHA-256 de host, puerto y nombre de base; no incluye contraseña. |
+| `META_VALIDATION_ORDER` | Variable | Orden sintética explícita para validar staging en un push. |
+
+El runner descarga el SHA fijado y verifica su pertenencia a la rama autorizada.
+No toma automáticamente el último `main`, que podría no estar desplegado.
+Comprueba la huella de DB antes de conectar, rechaza SQLite y PostgreSQL sin
+TLS, y valida modo de prueba/orden según el entorno. Solo necesita secretos
+Meta y DB: genera una clave Django efímera y no copia claves de sesiones,
+Mercado Pago, correo ni media. Deshabilita la carga del `.env` local. No usa
+jobs de Render ni requests para mantenerlo despierto, ni reconstruye históricos.
+
+Activación productiva después de aprobar este PR:
+
+1. Validar staging, obtener la aprobación personal del candidato y promover
+   mediante el PR habitual. La tarea no aprueba, promueve ni despliega código.
+2. Desplegar manualmente el commit aprobado de `main` en Render y verificar
+   `Live`, SHA y versión; mantener Auto-Deploy productivo apagado.
+3. En **Settings → Environments → meta-production**, fijar `META_DISPATCH_SHA`
+   al SHA completo verificado y después `META_DISPATCH_ENABLED=1`. Los secretos
+   ya están preparados. Si se cambia la base, actualizar secreto y huella
+   mientras el entorno esté pausado.
+4. Ejecutar **Actions → Meta Purchase dispatch → Run workflow** desde `main`,
+   destino `production`, orden vacía. Revisar diagnóstico y resultado. No crear
+   pedidos reales de prueba: la próxima compra web consentida y aprobada debe
+   mostrar **Recibido por Meta** tras el despacho.
+5. En cada cambio de código productivo, pausar este Environment, desplegar el
+   commit aprobado, actualizar el SHA y reactivar.
+
+`concurrency` impide solapar jobs por entorno; los reclamos de DB también
+protegen frente a comandos manuales o procesos interrumpidos. Se usa
+`--fail-on-problems`: fallos temporales quedan para el próximo intento y hacen
+fallar el run. Errores permanentes, modo/destino incompatible, eventos vencidos
+en el lote y pendientes de más de una hora requieren revisión. Los logs solo
+contienen estados y cantidades; un job fallido no cambia pagos, stock ni emails.
+
+Activar notificaciones de fallos de Actions en GitHub y comprobar diariamente
+que haya ejecuciones recientes, incluso sin ventas. La programación puede
+retrasarse y, en repositorios públicos, se desactiva tras sesenta días sin
+actividad: reactivarla desde Actions. No hay monitor externo de ausencia de
+ejecuciones ni envío garantizado al minuto exacto. Se consume el uso habitual
+de Neon. Referencias: [programación](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+y [runners estándar gratuitos](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
+
+### Comando manual, incidentes y conservación
+
+Los servicios actuales usan Render Free: no ofrecen Shell/SSH ni tareas
+One-Off. El comando debe ejecutarse desde otro entorno con el código desplegado,
+las dependencias y acceso a la base del servicio elegido. Para la prueba se
+usó el entorno local con una exportación privada de las variables de staging,
+fuera del repositorio y eliminada al terminar. No se sustituyó el `.env` local.
+
+Antes de operar producción, cargar su configuración en el proceso desde un
+archivo privado fuera del repositorio, comprobar que `SITE_URL` sea
+`https://rasel.ar/`, que `DATABASE_URL` corresponda a producción y que el código
+de prueba esté vacío. Ejecutar primero el diagnóstico. No usar la configuración
+local habitual ni la base SQLite para despachar la cola productiva. Mientras
+el scheduler esté pausado y nadie ejecute el comando, Purchase permanece pendiente; la ventana de envío
+es 24 horas desde su registro. No se configuró ningún cron ni worker.
+
+- No existe cron ni worker Meta en Render. Si Actions está pausado o no corre,
+  ejecutar el envío después de confirmar cobros offline y revisar la cola al
+  menos cada hora durante la operación comercial:
 
   ```powershell
   python backend/manage.py send_meta_events --send --limit 100
@@ -530,7 +620,7 @@ Revisar soporte de la versión durante el mantenimiento de la integración.
 - `--send` autoriza envío y limpieza. Sin esa opción el comando no escribe ni
   envía. Incluso con envío desactivado, `--send` ejecuta la limpieza. Si falta
   token o la configuración no es válida, lo informa y conserva pendientes.
-  Sin ejecutar el comando no hay envío ni reintentos automáticos.
+  Sin ejecuciones del comando, automáticas o manuales, no hay envío ni reintentos.
 - Timeouts, HTTP 429/5xx y errores transitorios vuelven a pendientes con espera
   de 1, 2, 4, 8 minutos y hasta una hora. Cada nueva ejecución respeta esa fecha.
   Los reclamos vencen a los cinco minutos para recuperar procesos interrumpidos.
@@ -562,8 +652,10 @@ Revisar soporte de la versión durante el mantenimiento de la integración.
   Cloudflare/Render. No habilitar lectura directa de `X-Forwarded-For` o
   `CF-Connecting-IP`; obtener IP exige verificar también el acceso directo al
   origen y los proxies que sobrescriben encabezados.
-- Para pausar Meta poner las banderas en `0`. No afecta Mercado Pago ni la
-  analítica propia. Para pausar solo CAPI usar `META_CAPI_ENABLED=0`; no borrar
+- Para pausar Actions poner `META_DISPATCH_ENABLED=0` en el Environment de
+  GitHub. `META_CAPI_ENABLED=0` en Render no detiene un proceso independiente
+  de Actions. Para pausar también píxel/comandos de Render, poner sus banderas
+  en `0`. No afecta Mercado Pago ni la analítica propia; no borrar
   eventos ni redatar compras al reactivarla. El píxel y los envíos de servidor
   comparten la misma elección de consentimiento.
 
