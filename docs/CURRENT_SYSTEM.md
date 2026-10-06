@@ -438,6 +438,13 @@ respectivamente. Producción permanece pausada mediante `META_DISPATCH_ENABLED=0
 hasta publicar y desplegar la versión aprobada; configurar el token no activa
 por sí solo el despacho automático.
 
+La validación real de Actions se completó el 05/10/2026 sobre `4e3e9b2`
+(1.13.0), también Live en staging: orden sintética #9 creada por checkout web
+consentido y confirmada como simulación desde el admin, sin cobro real. El job
+pasó de un pendiente a un enviado; Meta confirmó `events_received_1`, ARS 900
+y un único intento. No se enviaron compras productivas ni históricas. La
+programación productiva permanece pausada hasta completar la promoción.
+
 El operador fija `META_DISPATCH_SHA` tras verificar el commit desplegado. Cada
 ejecución descarga exactamente ese código y valida pertenencia a la rama,
 huella de la base, PostgreSQL con TLS y modo de prueba. Staging requiere una

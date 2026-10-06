@@ -563,6 +563,12 @@ jobs de Render ni requests para mantenerlo despierto, ni reconstruye históricos
 
 Activación productiva después de aprobar este PR:
 
+La preparación ya verificó el job real de staging sobre `4e3e9b2` (1.13.0),
+con deploy Live: la orden sintética #9, ARS 900, quedó **Recibido por Meta**,
+diagnóstico `events_received_1`, un intento. `meta-production` tiene sus dos
+secretos y huella preparados, pero `META_DISPATCH_ENABLED=0`; su SHA debe
+actualizarse al commit efectivamente desplegado antes de activar.
+
 1. Validar staging, obtener la aprobación personal del candidato y promover
    mediante el PR habitual. La tarea no aprueba, promueve ni despliega código.
 2. Desplegar manualmente el commit aprobado de `main` en Render y verificar

@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-05 — Validación real del despachador automático (1.13.1)
+
+- Secrets y variables separados configurados en GitHub; las políticas admiten
+  solo `main` en `meta-production` y `bundle_work` en `meta-staging`. No se
+  modificó el Environment de aprobación humana.
+- Actions envió únicamente la orden sintética #9 de staging, creada mediante
+  checkout consentido y confirmación simulada de pago. Meta recibió ARS 900
+  una vez, un intento y `events_received_1`. El candidato `4e3e9b2` (1.13.0)
+  quedó Live en staging. Sin cobro real ni envíos productivos/históricos.
+- Check Django, 41 pruebas de marketing (dos de concurrencia omitidas en
+  SQLite), 14 pruebas de scripts y actionlint correctos. Sin cambios visibles.
+- Automatización productiva pausada hasta promoción aprobada, deploy y
+  actualización del SHA operativo; los secretos ya están preparados.
+
 ## 2026-10-05 — Despacho automático de Purchase con GitHub Actions (1.13.0)
 
 - Workflow cada quince minutos, sin cron/worker pago en Render. Environments
