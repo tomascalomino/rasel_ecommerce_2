@@ -616,6 +616,123 @@ class PurchaseTests(TestCase):
             event.payload["event_time"],
         )
 
+    def test_automated_sender_requires_send_and_valid_configuration_before_cleanup(
+        self,
+    ):
+        self.paid()
+        with self.assertRaises(CommandError):
+            call_command("send_meta_events", fail_on_problems=True, stdout=StringIO())
+        with override_settings(META_CAPI_ACCESS_TOKEN=""):
+            with patch(
+                "marketing.management.commands.send_meta_events.cleanup"
+            ) as clean:
+                with self.assertRaisesMessage(
+                    CommandError, "Falta META_CAPI_ACCESS_TOKEN"
+                ):
+                    call_command(
+                        "send_meta_events",
+                        send=True,
+                        fail_on_problems=True,
+                        stdout=StringIO(),
+                    )
+                clean.assert_not_called()
+
+    def test_automated_sender_reports_temporary_failure_and_keeps_payment_approved(
+        self,
+    ):
+        event = self.paid()
+        with patch("marketing.delivery.requests.post", side_effect=requests.Timeout):
+            with self.assertRaisesMessage(CommandError, "temporales_en_este_lote"):
+                call_command(
+                    "send_meta_events",
+                    send=True,
+                    fail_on_problems=True,
+                    order=self.order.pk,
+                    stdout=StringIO(),
+                )
+        event.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(event.status, "pending")
+        self.assertEqual(event.attempts, 1)
+        self.assertGreater(event.next_attempt_at, timezone.now())
+        self.assertEqual(self.order.payment_status, "approved")
+
+    def test_automated_sender_reports_permanent_or_frozen_mode_errors(self):
+        event = self.paid()
+        response = Mock(status_code=400)
+        response.json.return_value = {"error": {"code": 190, "message": "secret"}}
+        with patch("marketing.delivery.requests.post", return_value=response):
+            with self.assertRaisesMessage(CommandError, "errores_por_revisar") as error:
+                call_command(
+                    "send_meta_events",
+                    send=True,
+                    fail_on_problems=True,
+                    order=self.order.pk,
+                    stdout=StringIO(),
+                )
+        self.assertNotIn("secret", str(error.exception))
+        MetaPurchase.objects.filter(pk=event.pk).update(status="pending")
+        with override_settings(META_TEST_EVENT_CODE="WRONG_MODE"):
+            with patch("marketing.delivery.requests.post") as http:
+                with self.assertRaisesMessage(
+                    CommandError, "destino_o_prueba_no_coincide"
+                ):
+                    call_command(
+                        "send_meta_events",
+                        send=True,
+                        fail_on_problems=True,
+                        order=self.order.pk,
+                        stdout=StringIO(),
+                    )
+                http.assert_not_called()
+
+    def test_automated_sender_sends_once_and_reports_expired_delivery(self):
+        event = self.paid()
+        response = Mock(status_code=200)
+        response.json.return_value = {"events_received": 1}
+        with patch("marketing.delivery.requests.post", return_value=response) as http:
+            for _ in range(2):
+                call_command(
+                    "send_meta_events",
+                    send=True,
+                    fail_on_problems=True,
+                    order=self.order.pk,
+                    stdout=StringIO(),
+                )
+            self.assertEqual(http.call_count, 1)
+        MetaPurchase.objects.filter(pk=event.pk).update(
+            status="pending", created_at=timezone.now() - timedelta(hours=25)
+        )
+        with patch("marketing.delivery.requests.post") as http:
+            with self.assertRaisesMessage(CommandError, "vencidos_en_este_lote"):
+                call_command(
+                    "send_meta_events",
+                    send=True,
+                    fail_on_problems=True,
+                    order=self.order.pk,
+                    stdout=StringIO(),
+                )
+            http.assert_not_called()
+
+    def test_automated_sender_reports_old_backlog_even_when_retry_is_not_due(self):
+        event = self.paid()
+        MetaPurchase.objects.filter(pk=event.pk).update(
+            created_at=timezone.now() - timedelta(hours=2),
+            next_attempt_at=timezone.now() + timedelta(minutes=30),
+        )
+        with patch("marketing.delivery.requests.post") as http:
+            with self.assertRaisesMessage(
+                CommandError, "pendientes_mayores_a_una_hora"
+            ):
+                call_command(
+                    "send_meta_events",
+                    send=True,
+                    fail_on_problems=True,
+                    order=self.order.pk,
+                    stdout=StringIO(),
+                )
+            http.assert_not_called()
+
     def test_old_or_expired_events_are_not_redated(self):
         event = self.paid()
         original = event.payload

@@ -3,6 +3,48 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-05 — Validación real del despachador automático (1.13.1)
+
+- Secrets y variables separados configurados en GitHub; las políticas admiten
+  solo `main` en `meta-production` y `bundle_work` en `meta-staging`. No se
+  modificó el Environment de aprobación humana.
+- Actions envió únicamente la orden sintética #9 de staging, creada mediante
+  checkout consentido y confirmación simulada de pago. Meta recibió ARS 900
+  una vez, un intento y `events_received_1`. El candidato `4e3e9b2` (1.13.0)
+  quedó Live en staging. Sin cobro real ni envíos productivos/históricos.
+- Check Django, 41 pruebas de marketing (dos de concurrencia omitidas en
+  SQLite), 14 pruebas de scripts y actionlint correctos. Sin cambios visibles.
+- Automatización productiva pausada hasta promoción aprobada, deploy y
+  actualización del SHA operativo; los secretos ya están preparados.
+
+## 2026-10-05 — Despacho automático de Purchase con GitHub Actions (1.13.0)
+
+- Workflow cada quince minutos, sin cron/worker pago en Render. Environments
+  con secretos y ramas separados; producción queda pausada hasta publicar,
+  desplegar y fijar el SHA aprobado. Validación de staging limitada a una orden
+  sintética y código de prueba.
+- Se reutiliza la cola persistente, sin llamadas a Meta en pagos ni backfill.
+  Se valida SHA, rama, huella de DB, TLS y modo de prueba; ejecuciones
+  simultáneas bloqueadas por entorno y reclamos persistentes.
+- `--fail-on-problems` convierte errores y atrasos de entrega en runs fallidos,
+  conservando reintentos, importes y pagos. Diagnósticos sin secretos ni PII;
+  notificaciones nativas de Actions sujetas a las preferencias del responsable.
+- Documentados activación, pausa, cambio de SHA, revisión de ejecuciones y la
+  limitación de sesenta días sin actividad de GitHub. Sin cambios visibles.
+
+## 2026-10-05 — Token CAPI configurado y Purchase de prueba recibido
+
+- Configuración operativa, sin cambios en el código productivo: token privado
+  y CAPI habilitados en producción y staging; código de prueba solo en staging.
+  Redeploy productivo del commit aprobado `560dcfd` (1.11.1) verificado Live.
+- Orden sintética #8 de staging: creada con consentimiento, sin Purchase
+  pendiente de pago, confirmada como simulación desde el admin y recibida por
+  Meta una sola vez, ARS 900 después de descuento. Repetir el envío no generó
+  otra solicitud. Sin cobro real ni envíos productivos o históricos.
+- Documentada la operación desde un entorno externo a Render Free, que no
+  ofrece Shell/SSH ni tareas One-Off. Activación y redeploy no despachan la
+  cola; continúan siendo necesarias las ejecuciones manuales y sus reintentos.
+
 ## 2026-10-05 — Botones móviles separados de WhatsApp (1.12.5)
 
 - La burbuja flotante se oculta mientras los botones de la portada móvil están
