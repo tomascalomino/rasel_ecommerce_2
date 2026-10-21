@@ -85,14 +85,17 @@ UptimeRobot → GET https://rasel.ar/healthz
   porcentajes, mínimos ni listas de precios.
 - La navegación pública se presenta como **Tienda**, **Virgen Extra**,
   **Quiénes Somos**, **Conservación** y **Contacto**. El hero del inicio
-  identifica el origen como “Andalgalá, Catamarca”, describe el producto como
+  no muestra un rótulo de ubicación, para evitar que el origen del aceite se
+  interprete como una restricción de venta o entrega. Describe el producto como
   aceite de oliva premium y destaca “Acidez menor a 0,3%” junto a sus otros
   beneficios. El footer conserva la información institucional y legal sin un
   badge adicional de producto. El header usa una versión recortada y
   transparente del logo para aprovechar el espacio existente sin aumentar la
   altura de la barra; el archivo original se conserva como respaldo. El
   buscador del encabezado integra campo y lupa en una única píldora, sin sombra
-  exterior, y ocupa todo el ancho del panel de navegación en móvil.
+  exterior, y ocupa todo el ancho del panel de navegación en móvil. En celulares
+  angostos el logo reduce su ancho para mantener accesibles carrito y menú sin
+  desplazamiento horizontal.
 - Las vistas previas al compartir cualquier página en WhatsApp y otras redes
   usan una portada JPEG de 1200 × 800 basada en la fotografía real de la
   botella y el aceite. Los metadatos Open Graph y Twitter declaran esa imagen,
@@ -100,7 +103,7 @@ UptimeRobot → GET https://rasel.ar/healthz
 - La portada del inicio diferencia su contenido por ancho de pantalla. Hasta
   768 px muestra el video de la botella sirviendo aceite sobre guacamole,
   completo en su proporción vertical original 9:16, sin recorte ni deformación.
-  El origen aparece arriba y el título y los dos botones se superponen sobre la
+  El título y los dos botones se superponen sobre la
   mesa, con un degradado crema y texto oscuro. La descripción y los beneficios
   quedan debajo; así el acceso a tienda aparece antes de terminar el video.
   La altura del área visual se limita a 700 px; cuando ese límite reduce el
@@ -116,7 +119,7 @@ UptimeRobot → GET https://rasel.ar/healthz
   mantener las proporciones sin deformación. El video y el fotograma
   respetan esa proporción. Se sirve como estático versionado con WhiteNoise, se
   reproduce en bucle dentro de la página y ofrece **Pausar video / Reanudar video**
-  en la esquina superior izquierda, debajo del origen, evitando tanto el
+  en la esquina superior izquierda, a 16 px del borde superior, evitando tanto el
   texto comercial como el botón flotante de WhatsApp.
   Se pausa
   al salir de pantalla o al ocultar la pestaña, conservando una pausa elegida
