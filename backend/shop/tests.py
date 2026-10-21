@@ -727,12 +727,13 @@ class HomeProductOrderTests(TestCase):
 
 
 class PublicNavigationCopyTests(TestCase):
-	def test_home_uses_simplified_origin_and_requested_navigation_order(self):
+	def test_home_omits_origin_badge_and_keeps_requested_navigation_order(self):
 		response = self.client.get(reverse("home"))
 		content = response.content.decode()
 		hero = content.split('<section class="hero-full"', 1)[1].split("</section>", 1)[0]
 
-		self.assertContains(response, "<span>Andalgalá, Catamarca</span>", html=True)
+		self.assertNotIn("Andalgalá, Catamarca", hero)
+		self.assertNotIn('class="kicker"', hero)
 		self.assertNotContains(response, "Blend · Andalgalá, Catamarca")
 		self.assertNotContains(response, 'class="pill pill-meta"')
 		self.assertLess(content.index("Quiénes Somos"), content.index("Conservación"))

@@ -3,6 +3,16 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-10-21 — Portada sin rótulo de ubicación (1.13.2)
+
+- Se retiró “Andalgalá, Catamarca” de la parte superior del inicio en celular
+  y escritorio, para evitar que se interprete como una limitación del área de
+  venta o entrega. El origen se conserva en la sección institucional del inicio.
+- El control de pausa del video móvil sube al borde superior, sin dejar el
+  espacio reservado para el rótulo anterior.
+- En celulares de 320 px el logo se adapta al ancho disponible para que el
+  carrito y el menú no desborden la pantalla.
+
 ## 2026-10-05 — Validación real del despachador automático (1.13.1)
 
 - Secrets y variables separados configurados en GitHub; las políticas admiten
