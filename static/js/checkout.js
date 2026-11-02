@@ -15,12 +15,27 @@
   var subtotal = parseFloat(summary.getAttribute("data-subtotal")) || 0;
   var offlineDiscount = parseFloat(summary.getAttribute("data-offline-discount")) || 0;
   var discountPercent = summary.getAttribute("data-discount-percent") || "0";
+  var couponMp = parseFloat(summary.getAttribute("data-coupon-mp")) || 0;
+  var couponOffline = parseFloat(summary.getAttribute("data-coupon-offline")) || 0;
+  var couponRow = document.getElementById("coupon-discount-row");
+  var couponAmount = document.getElementById("sum-coupon-discount");
   var discountEnabled = offlineDiscount > 0 && parseFloat(discountPercent) > 0;
   var currentShippingCost = 0;
   var shippingKnown = false;
   var quoteToken = document.getElementById("id_shipping_quote_token");
   var quoteVersion = 0;
   var timer;
+  var couponInput = document.getElementById("id_coupon_code");
+  var checkoutSubmit = document.querySelector("[data-checkout-submit]");
+  if (couponInput && couponInput.form && checkoutSubmit && couponInput.form.requestSubmit) {
+    couponInput.form.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" || event.target.tagName !== "INPUT" || /^(radio|checkbox|button|submit)$/.test(event.target.type)) return;
+      event.preventDefault();
+      couponInput.form.requestSubmit(event.target === couponInput
+        ? couponInput.form.querySelector('[name="coupon_action"][value="apply"]')
+        : checkoutSubmit);
+    });
+  }
 
   var codRadio = document.querySelector('input[name="payment_method"][value="cod"]');
   var paymentRadios = document.querySelectorAll('input[name="payment_method"]');
@@ -62,12 +77,15 @@
     var method = selectedPaymentMethod();
     var hasDiscount = discountEnabled && (method === "transfer" || method === "cod");
     var discount = hasDiscount ? offlineDiscount : 0;
+    var coupon = method === "transfer" || method === "cod" ? couponOffline : couponMp;
+    if (couponRow) couponRow.hidden = coupon <= 0;
+    if (couponAmount) couponAmount.textContent = "− " + money(coupon);
     discountRow.hidden = !hasDiscount;
     sumDiscount.textContent = "− " + money(discount);
     sumTotalLabel.textContent = !shippingKnown ? "Total estimado" : hasDiscount
       ? "Total con precio especial"
       : "Total";
-    sumTotal.textContent = money(subtotal - discount + currentShippingCost);
+    sumTotal.textContent = money(subtotal - discount - coupon + currentShippingCost);
     var submitTotal = document.getElementById("submit-total");
     var submitLabel = document.getElementById("submit-total-label");
     var submitShipping = document.getElementById("submit-shipping");

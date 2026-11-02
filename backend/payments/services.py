@@ -13,6 +13,16 @@ from django.utils import timezone
 from orders.emails import send_order_confirmation, send_payment_alert
 from orders.models import Order, OrderItem
 from shop.models import Variant
+from cart.cart import CartItem
+from config.pricing import get_offline_payment_discount_percent
+from shop.coupons import (
+    SNAPSHOT_FIELDS as COUPON_FIELDS,
+    assign_coupon,
+    checkout_coupon,
+    lock_coupon,
+    consume_draft_coupon,
+    release_coupon,
+)
 from shop.gifts import GIFT_FIELDS, checkout_gift
 from shipping.promotions import SNAPSHOT_FIELDS, revalidate_delivery
 from marketing.purchases import record_purchase
@@ -52,17 +62,22 @@ def reserve_payment_draft(
     marketing=None,
     shipping_quote_token=None,
     gift_offer_token=None,
+    coupon_code=None,
+    coupon_offer_token=None,
 ) -> PaymentDraft:
     with transaction.atomic():
+        lock_coupon(coupon_code)
         snapshots = []
+        coupon_rows = []
         subtotal = Decimal("0.00")
-        for cart_item in cart_rows:
+        for cart_item in sorted(cart_rows, key=lambda row: row.variant.pk):
             variant = (
                 Variant.objects.select_for_update()
                 .select_related("product")
                 .get(pk=cart_item.variant.id, is_active=True)
             )
             quantity = int(cart_item.qty)
+            coupon_rows.append(CartItem(variant, quantity))
             if quantity <= 0 or variant.stock_qty < quantity:
                 raise PaymentValidationError(
                     f"Sin stock suficiente de {variant.product.name} ({variant.name})."
@@ -88,6 +103,14 @@ def reserve_payment_draft(
             )
 
         now = timezone.now()
+        coupon_quote = checkout_coupon(
+            coupon_code,
+            coupon_rows,
+            get_offline_payment_discount_percent(),
+            coupon_offer_token,
+            "mp",
+            now=now,
+        )
         expires_at = now + timedelta(minutes=settings.MP_RESERVATION_MINUTES)
         if shipping_quote_token is not None:
             delivery = revalidate_delivery(
@@ -95,21 +118,29 @@ def reserve_payment_draft(
             )
             delivery.pop("cod_allowed", None)
         shipping_cost = _decimal(delivery["shipping_cost"])
-        expected_total = (subtotal + shipping_cost).quantize(Decimal("0.01"))
+        expected_total = (subtotal - coupon_quote.mp_amount + shipping_cost).quantize(
+            Decimal("0.01")
+        )
         if expected_total != _decimal(total_amount):
             raise PaymentValidationError(
                 "El total del carrito cambio. Volve a intentarlo."
             )
 
         gift = checkout_gift(gift_offer_token, now)
+        if coupon_quote.mp_amount:
+            for row in snapshots:
+                row["coupon_unit_discount"] = str(
+                    coupon_quote.unit_discounts.get(row["variant_id"], 0)
+                )
         for row in snapshots:
             Variant.objects.filter(pk=row["variant_id"]).update(
                 stock_qty=F("stock_qty") - row["quantity"]
             )
 
-        return PaymentDraft.objects.create(
+        draft = PaymentDraft.objects.create(
             created_at=now,
             **gift,
+            **coupon_quote.snapshot("mp"),
             **(marketing or {}),
             **customer,
             **delivery,
@@ -121,6 +152,8 @@ def reserve_payment_draft(
             stock_reserved_at=now,
             reservation_expires_at=expires_at,
         )
+        assign_coupon(coupon_quote, draft=draft)
+        return draft
 
 
 def build_preference_payload(draft: PaymentDraft) -> dict:
@@ -129,7 +162,10 @@ def build_preference_payload(draft: PaymentDraft) -> dict:
             "id": row.get("sku") or str(row["variant_id"]),
             "title": f"{row['product_name']} - {row['variant_name']}",
             "quantity": int(row["quantity"]),
-            "unit_price": float(_decimal(row["unit_price"])),
+            "unit_price": float(
+                _decimal(row["unit_price"])
+                - _decimal(row.get("coupon_unit_discount", 0))
+            ),
             "currency_id": "ARS",
         }
         for row in draft.items
@@ -227,6 +263,7 @@ def release_reserved_stock(draft_token, state="released") -> bool:
         draft = PaymentDraft.objects.select_for_update().get(token=draft_token)
         if draft.stock_released_at or draft.order_id:
             return False
+        lock_coupon(coupon_id=draft.coupon_id)
         if not draft.stock_reserved_at:
             draft.state = state
             draft.save(update_fields=["state"])
@@ -234,9 +271,9 @@ def release_reserved_stock(draft_token, state="released") -> bool:
         variant_ids = sorted(int(row["variant_id"]) for row in draft.items)
         variants = {
             variant.id: variant
-            for variant in Variant.objects.select_for_update().filter(
-                id__in=variant_ids
-            )
+            for variant in Variant.objects.select_for_update()
+            .filter(id__in=variant_ids)
+            .order_by("pk")
         }
         for row in draft.items:
             variant = variants.get(int(row["variant_id"]))
@@ -246,6 +283,7 @@ def release_reserved_stock(draft_token, state="released") -> bool:
         draft.stock_released_at = timezone.now()
         draft.state = state
         draft.save(update_fields=["stock_released_at", "state"])
+        release_coupon(draft=draft)
         return True
 
 
@@ -328,6 +366,7 @@ def _reservation_holds_stock(draft):
 
 
 def _create_order(draft, payment, *, review=False, stock_deducted=True):
+    lock_coupon(coupon_id=draft.coupon_id)
     payment_id = str(payment["id"])
     existing = Order.objects.filter(mp_payment_id=payment_id).first()
     if existing:
@@ -363,6 +402,7 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         shipping_carrier_arranged=draft.shipping_carrier_arranged,
         **{key: getattr(draft, key) for key in SNAPSHOT_FIELDS},
         **{key: getattr(draft, key) for key in GIFT_FIELDS},
+        **{key: getattr(draft, key) for key in COUPON_FIELDS},
         payment_discount_percent=0,
         total_amount=draft.total_amount,
         fulfillment_status="pending",
@@ -377,6 +417,11 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
     draft.order = order
     draft.consumed_at = timezone.now()
     draft.save(update_fields=["order", "consumed_at"])
+    if not consume_draft_coupon(draft, order):
+        order.payment_status = "review"
+        order.save(update_fields=["payment_status"])
+        draft.processing_error = "approved_without_coupon_quota"
+        draft.save(update_fields=["processing_error"])
     return order
 
 
@@ -422,12 +467,14 @@ def _approve(draft_id, payment):
                 transaction.on_commit(lambda: send_order_confirmation(order.id))
             return order
 
+        lock_coupon(coupon_id=draft.coupon_id)
         stock_deducted = _reservation_holds_stock(draft)
         if stock_deducted:
             variant_ids = {int(row["variant_id"]) for row in draft.items}
             existing_ids = set(
                 Variant.objects.select_for_update()
                 .filter(id__in=variant_ids)
+                .order_by("pk")
                 .values_list("id", flat=True)
             )
             if existing_ids != variant_ids:
@@ -445,7 +492,7 @@ def _approve(draft_id, payment):
                 return order
         if not stock_deducted:
             rows = []
-            for row in draft.items:
+            for row in sorted(draft.items, key=lambda row: int(row["variant_id"])):
                 variant = (
                     Variant.objects.select_for_update()
                     .filter(pk=int(row["variant_id"]), is_active=True)
@@ -473,6 +520,16 @@ def _approve(draft_id, payment):
             stock_deducted = True
 
         order = _create_order(draft, payment, stock_deducted=stock_deducted)
+        if order.payment_status == "review":
+            draft.state = "review"
+            draft.save(update_fields=["state"])
+            transaction.on_commit(
+                lambda: send_payment_alert(
+                    f"Pago MP en revisión - orden #{order.id}",
+                    "Pago tardío con descuento de cupón cuyo cupo ya fue utilizado. Revisar antes de preparar el pedido; no volver a cobrar.",
+                )
+            )
+            return order
         record_purchase(order, payment.get("date_approved"))
         draft.state = "approved"
         draft.processing_error = ""

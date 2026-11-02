@@ -7,6 +7,8 @@ from .cart import Cart
 from analytics.tracking import mark_cart_increase
 from shop.models import Variant
 from marketing.tracking import queue_cart_event
+from config.pricing import get_offline_payment_discount_percent
+from shop.coupons import SESSION_KEY as COUPON_SESSION_KEY, quote_coupon
 
 
 def _cart_input(request, allow_zero=False):
@@ -27,7 +29,8 @@ def _cart_input(request, allow_zero=False):
 
 def cart_detail(request):
     cart = Cart(request.session)
-    return render(request, "cart/cart_detail.html", {"cart": cart})
+    quote = quote_coupon(request.session.get(COUPON_SESSION_KEY), cart.items(), get_offline_payment_discount_percent(request))
+    return render(request, "cart/cart_detail.html", {"cart": cart, "coupon_quote": quote, "coupon_total": cart.total() - quote.mp_amount})
 
 
 @require_POST

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load money %}
 
 {% block title %}Estado del pago - RaSel{% endblock %}
 
@@ -27,6 +28,7 @@
       <div class="spacer"></div>
       <div class="result-list" style="text-align:left;">
         {% include "orders/partials/gift_snapshot.html" with snapshot=order only %}
+        {% if order.coupon_discount_amount %}<div class="row coupon-discount-row"><span>Cupón {{ order.coupon_code }}</span><strong>− {{ order.coupon_discount_amount|ars }}</strong></div>{% endif %}
         <div class="row"><span class="muted">Pedido</span><strong>#{{ order.id }}</strong></div>
         <div class="row"><span class="muted">Estado</span><strong>{{ order.get_payment_status_display }}</strong></div>
         {% if order.shipping_promotion_label %}<p class="p">Envío gratis · {{ order.shipping_promotion_label }}.</p>{% endif %}

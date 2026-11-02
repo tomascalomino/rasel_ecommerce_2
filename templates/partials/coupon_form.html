@@ -1,0 +1,19 @@
+<details class="coupon-panel" {% if coupon_quote.code %}open{% endif %}>
+  <summary>¿Tenés un cupón de descuento?</summary>
+  {% if not coupon_in_checkout %}<form method="post" action="{% url 'shop:coupon_apply' %}">{% csrf_token %}{% endif %}
+    <input type="hidden" name="coupon_next" value="{% if coupon_in_checkout %}checkout{% else %}cart{% endif %}">
+    <label for="id_coupon_code">Código de descuento</label>
+    <div class="coupon-controls">
+      <input id="id_coupon_code" name="coupon_code" type="text" maxlength="40" value="{{ coupon_quote.code }}" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="coupon-help">
+      <button type="submit" class="btn" name="coupon_action" value="apply" formaction="{% url 'shop:coupon_apply' %}" formnovalidate>Aplicar</button>
+    </div>
+    {% if coupon_quote.code %}
+      <p class="coupon-feedback {% if coupon_quote.error %}coupon-error{% endif %}" role="status">
+        {% if coupon_quote.error %}{{ coupon_quote.error }}{% else %}<strong>{{ coupon_quote.code }}</strong> · {{ coupon_quote.coupon.discount_percent }}% en las presentaciones incluidas.{% endif %}
+      </p>
+      {% if coupon_quote.coupon and not coupon_quote.coupon.combine_payment_discount %}<p class="muted tiny">En los productos incluidos aplicamos el descuento más conveniente entre el cupón y tu medio de pago.</p>{% endif %}
+      <button type="submit" class="btn btn-small" name="coupon_action" value="remove" formaction="{% url 'shop:coupon_apply' %}" formnovalidate>Quitar cupón</button>
+    {% endif %}
+    <p class="muted tiny" id="coupon-help">Sujeto a disponibilidad al confirmar el pedido. Un uso por pedido.</p>
+  {% if not coupon_in_checkout %}</form>{% endif %}
+</details>

@@ -172,6 +172,9 @@ def cancel_and_restore(order_id: int) -> TransitionResult:
             raise OrderTransitionError(
                 "Primero debe reintegrarse el dinero y conciliarse Mercado Pago."
             )
+        from shop.coupons import lock_coupon, release_coupon
+
+        lock_coupon(coupon_id=order.coupon_id)
         if order.stock_deducted and not order.stock_restored:
             for item in order.items.all():
                 if item.variant_id:
@@ -179,6 +182,8 @@ def cancel_and_restore(order_id: int) -> TransitionResult:
                         stock_qty=F("stock_qty") + item.quantity
                     )
             order.stock_restored = True
+        if not order.paid_at and order.payment_status != "approved":
+            release_coupon(order=order)
         order.fulfillment_status = "cancelled"
         if order.payment_method != "mp":
             order.payment_status = "cancelled"

@@ -3,6 +3,20 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Cupones con cupo global por pedido (1.15.0)
+
+- Cupones administrables por código, porcentaje, presentaciones, cupo, vigencia
+  y acumulación. Un pedido descuenta todas sus cajas elegibles y consume un uso.
+- Aplicación y retiro en carrito/checkout con conservación del formulario;
+  desglose por medio de pago, envío, regalo y cupón, también sin JavaScript.
+- Asignación transaccional del último uso, reservas MP, liberación idempotente
+  al cancelar sin pago y revisión de cobros tardíos sin cupo disponible.
+- Snapshots de código/importes en pedidos y borradores; emails, confirmaciones,
+  admin y preferencia MP coinciden con el precio aceptado. Historial de usos y
+  contadores disponibles/reservados/consumidos; roles operativos actualizados.
+- Fixture exclusiva de staging con caja y cupón ficticios. No se crean ni
+  habilitan cupones productivos por migración; no cambian accesos ni servicios.
+
 ## 2026-11-02 — Publicación de la promo en staging (1.14.3)
 
 - Una migración publica la mini de regalo únicamente en el servicio conocido

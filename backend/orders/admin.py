@@ -157,6 +157,7 @@ class OrderAdmin(admin.ModelAdmin):
         "created_at",
         "full_name",
         "gift_label",
+        "coupon_code",
         "situation_badge",
         "payment_badge",
         "fulfillment_badge",
@@ -175,6 +176,7 @@ class OrderAdmin(admin.ModelAdmin):
         "delivery_method",
         "created_at",
         "shipping_promotion",
+        "coupon",
         "gift_label",
     )
     date_hierarchy = "created_at"
@@ -186,6 +188,10 @@ class OrderAdmin(admin.ModelAdmin):
         "pickup_point_label",
     )
     readonly_fields = (
+        "coupon",
+        "coupon_code",
+        "coupon_discount_percent",
+        "coupon_discount_amount",
         "gift_label",
         "gift_applied_at",
         "paid_at",
@@ -230,6 +236,17 @@ class OrderAdmin(admin.ModelAdmin):
         ),
         ("Cliente", {"fields": ("full_name", "email", "phone")}),
         ("Regalo para preparar", {"fields": ("gift_label", "gift_applied_at")}),
+        (
+            "Cupón aplicado",
+            {
+                "fields": (
+                    "coupon",
+                    "coupon_code",
+                    "coupon_discount_percent",
+                    "coupon_discount_amount",
+                )
+            },
+        ),
         (
             "Entrega",
             {

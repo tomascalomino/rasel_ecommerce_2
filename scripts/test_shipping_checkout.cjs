@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../static/js/checkout.js'), 'utf8');
 
-function browser() {
+function browser(overrides = {}) {
   function element(value = '') {
     return {value, textContent: '', hidden: false, children: [], events: {},
       classList: {toggle() {}}, closest() {return this;},
@@ -14,9 +14,10 @@ function browser() {
     };
   }
   const ids = {};
-  for (const id of ['id_postal_code', 'ship-confirm', 'sum-subtotal', 'sum-shipping', 'payment-discount-row', 'sum-payment-discount', 'sum-total', 'sum-total-label', 'cod-hint', 'ship-fields', 'pickup-fields', 'id_shipping_quote_token']) ids[id] = element();
+  for (const id of ['id_postal_code', 'ship-confirm', 'sum-subtotal', 'sum-shipping', 'payment-discount-row', 'sum-payment-discount', 'coupon-discount-row', 'sum-coupon-discount', 'sum-total', 'sum-total-label', 'cod-hint', 'ship-fields', 'pickup-fields', 'id_shipping_quote_token']) ids[id] = element();
   const summary = element();
   const attrs = {'data-subtotal': '7780', 'data-offline-discount': '780', 'data-discount-percent': '10', 'data-quote-url': '/shipping/quote/', 'data-shop-url': '/shop/'};
+  Object.assign(attrs, overrides);
   summary.getAttribute = key => attrs[key];
   const payment = [element('mp'), element('transfer'), element('cod')];
   payment[1].checked = true;
@@ -42,6 +43,7 @@ function browser() {
     fetch(url) {return new Promise((resolve, reject) => calls.push({url, resolve, reject}));},
   });
   return {ids, calls, events,
+    pay(method) {payment.forEach(r => {r.checked = r.value === method;}); payment.find(r => r.checked).events.change();},
     cp(value) {ids.id_postal_code.value = value; ids.id_postal_code.events.input(); for (const [id, fn] of [...timers]) {timers.delete(id); fn();}},
     pickup() {delivery[0].checked = false; delivery[1].checked = true; delivery[1].events.change();},
   };
@@ -106,5 +108,21 @@ async function promotionBoundary() {
   assert.equal(safe.ids.id_shipping_quote_token.value, '');
   assert.equal(safe.ids['sum-total-label'].textContent, 'Total estimado');
   await promotionBoundary();
+  const combined = browser({'data-subtotal':'21000', 'data-offline-discount':'2100', 'data-coupon-mp':'4000', 'data-coupon-offline':'3600'});
+  combined.pickup();
+  assert.equal(combined.ids['sum-total'].textContent, '$ 15.300');
+  assert.equal(combined.ids['sum-coupon-discount'].textContent, '− $ 3.600');
+  combined.pay('mp');
+  assert.equal(combined.ids['sum-total'].textContent, '$ 17.000');
+  assert.equal(combined.ids['payment-discount-row'].hidden, true);
+  combined.pay('cod');
+  assert.equal(combined.ids['sum-total'].textContent, '$ 15.300');
+  const better = browser({'data-subtotal':'21000', 'data-offline-discount':'2100', 'data-coupon-mp':'1000', 'data-coupon-offline':'0'});
+  better.pickup();
+  assert.equal(better.ids['sum-total'].textContent, '$ 18.900');
+  assert.equal(better.ids['coupon-discount-row'].hidden, true);
+  better.pay('mp');
+  assert.equal(better.ids['sum-total'].textContent, '$ 20.000');
+  assert.equal(better.ids['coupon-discount-row'].hidden, false);
   console.log('Shipping checkout scenarios passed.');
 })().catch(error => {console.error(error); process.exitCode = 1;});

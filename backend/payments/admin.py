@@ -148,6 +148,7 @@ class PaymentDraftAdmin(admin.ModelAdmin):
         "email",
         "total_amount",
         "gift_label",
+        "coupon_code",
         "state",
         "mp_status",
         "reservation_expires_at",
@@ -164,6 +165,10 @@ class PaymentDraftAdmin(admin.ModelAdmin):
     search_fields = ("token", "email", "mp_preference_id", "mp_payment_id")
     readonly_fields = (
         "gift_label",
+        "coupon",
+        "coupon_code",
+        "coupon_discount_percent",
+        "coupon_discount_amount",
         "gift_applied_at",
         "shipping_promotion",
         "shipping_promotion_label",

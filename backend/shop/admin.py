@@ -1,5 +1,79 @@
 from django.contrib import admin
-from .models import Category, CommercialSettings, Product, Variant
+from django.db import transaction
+from .models import (
+    Category,
+    CommercialSettings,
+    Coupon,
+    CouponRedemption,
+    Product,
+    Variant,
+)
+
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    fields = (
+        "code",
+        "discount_percent",
+        "max_uses",
+        "variants",
+        "enabled",
+        "starts_at",
+        "ends_at",
+        "combine_payment_discount",
+        "reserved_uses",
+        "used_uses",
+        "remaining_uses",
+    )
+    list_display = (
+        "code",
+        "discount_percent",
+        "enabled",
+        "max_uses",
+        "reserved_uses",
+        "used_uses",
+        "remaining_uses",
+        "ends_at",
+    )
+    readonly_fields = ("reserved_uses", "used_uses", "remaining_uses")
+    list_filter = ("enabled", "combine_payment_discount")
+    search_fields = ("code",)
+    filter_horizontal = ("variants",)
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        with transaction.atomic():
+            if request.method == "POST" and object_id and object_id.isdigit():
+                Coupon.objects.select_for_update().filter(pk=object_id).first()
+            return super().changeform_view(request, object_id, form_url, extra_context)
+
+    @admin.display(description="Disponibles")
+    def remaining_uses(self, obj):
+        return obj.remaining_uses if obj and obj.pk else 0
+
+    @admin.display(description="Reservados para pago")
+    def reserved_uses(self, obj):
+        return obj.redemptions.filter(state="reserved").count() if obj and obj.pk else 0
+
+    @admin.display(description="Consumidos")
+    def used_uses(self, obj):
+        return obj.redemptions.filter(state="used").count() if obj and obj.pk else 0
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CouponRedemption)
+class CouponRedemptionAdmin(admin.ModelAdmin):
+    list_display = ("coupon", "state", "order", "draft", "created_at", "updated_at")
+    list_filter = ("state", "coupon")
+    search_fields = ("coupon__code",)
+    readonly_fields = ("coupon", "state", "order", "draft", "created_at", "updated_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class VariantInline(admin.TabularInline):
@@ -21,9 +95,17 @@ class VariantInline(admin.TabularInline):
 
 @admin.register(CommercialSettings)
 class CommercialSettingsAdmin(admin.ModelAdmin):
-    fields = ("offline_payment_discount_percent", "cyber_gift_enabled", "cyber_gift_started_at")
+    fields = (
+        "offline_payment_discount_percent",
+        "cyber_gift_enabled",
+        "cyber_gift_started_at",
+    )
     readonly_fields = ("cyber_gift_started_at",)
-    list_display = ("offline_payment_discount_percent", "cyber_gift_enabled", "cyber_gift_started_at")
+    list_display = (
+        "offline_payment_discount_percent",
+        "cyber_gift_enabled",
+        "cyber_gift_started_at",
+    )
 
     def has_add_permission(self, request):
         return not CommercialSettings.objects.exists() and super().has_add_permission(

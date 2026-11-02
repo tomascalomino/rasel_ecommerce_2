@@ -819,6 +819,42 @@ la conciliación habitual a la reserva. El módulo de reportes no cambia ese flu
 3. Editar puntos de retiro activos, dirección e indicaciones antes de ofrecerlos
    al cliente.
 
+### Cupones de descuento
+
+1. En **Catálogo → Cupones de descuento**, crear el código, porcentaje, cupo
+   global por pedido y las presentaciones elegibles. Para una campaña de cajas,
+   seleccionar las variantes de los packs correspondientes; las botellas
+   individuales no deben quedar incluidas por accidente. Dejar deshabilitado
+   mientras se revisan las condiciones. Inicio incluido y fin opcional exclusivo,
+   ambos en horario argentino; sin fin, termina al agotar cupo o deshabilitarlo.
+2. Elegir si se acumula con efectivo/transferencia. Acumulable significa aplicar
+   el cupón al precio neto tras ese descuento, no sumar porcentajes. Si no se
+   acumula, se aplica la mejor opción por presentación. Todos los medios
+   habilitados pueden usar el código; las campañas de envío y regalo mantienen
+   sus propias reglas. Un pedido usa un cupón aunque incluya varias cajas.
+3. Validar primero en móvil y después escritorio: aplicar/quitar, caja más
+   botella, varios packs, medios de pago, envío/retiro, vencimiento y último uso.
+   En staging la migración crea únicamente la caja ficticia de pruebas y
+   `pruebacajas20` (20%, acumulable, cinco usos, siete días). Ese código no es
+   una condición comercial productiva y no se publica en otros entornos.
+4. Después del despliegue aprobado, crear o revisar el cupón real en producción
+   y habilitarlo allí. Las migraciones no cargan códigos comerciales reales ni
+   habilitan descuentos productivos. El cupón no se anuncia automáticamente en
+   banners; se comunica al público elegido por el responsable de la tienda.
+5. Consultar **Disponibles**, **Reservados para pago**, **Consumidos** y
+   **Usos de cupones**. Aplicar en carrito no reserva. Pedidos offline consumen
+   al confirmarse y MP reserva con su stock; la conciliación normal devuelve las
+   reservas cuando se confirma rechazo, cancelación o vencimiento. Mantener la
+   rutina de conciliación existente: no liberar por asumir que un pago falló.
+6. Cancelar un pedido no pagado devuelve su uso una vez. Un consumo ya pagado
+   no se repone por cancelación/reembolso. No editar snapshots ni usos a mano.
+   No se puede reducir el cupo por debajo de asignaciones activas; para detener
+   nuevos usos, deshabilitar. Los pedidos aceptados conservan su descuento.
+7. Si aparece una orden con pago tardío y diagnóstico
+   `approved_without_coupon_quota`, revisar el pago y coordinar la solución
+   antes de despachar. La orden conserva lo pagado y no promete entrega ni
+   dispara un segundo cobro. No se debe reciclar el mismo pago como otra compra.
+
 ### Regalo Cyber Monday 2026
 
 1. Desplegar la versión aprobada y sus migraciones por el flujo habitual.
