@@ -8,4 +8,6 @@
 .coupon-error { color: #872b25; }
 .coupon-discount-row { color: var(--deep-olive); gap: 12px; overflow-wrap: anywhere; }
 .coupon-discount-row[hidden] { display: none; }
+.coupon-discount-row > span { min-width: 0; }
+.coupon-discount-row strong { white-space: nowrap; flex-shrink: 0; }
 @media (min-width: 600px) { .coupon-controls { grid-template-columns: minmax(0, 1fr) auto; } }

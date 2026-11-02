@@ -318,6 +318,9 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   Aplicar o consultar no aparta un cupón. Aplicar desde checkout conserva los
   campos de contacto, entrega y pago incluso sin JavaScript; el envío se vuelve
   a cotizar y, sin JS, se reconfirma su total antes de crear la compra.
+- En pantallas de 320 px, cantidad y botones del carrito se ajustan en
+  varias líneas sin desborde horizontal; el importe del cupón se mantiene
+  completo en una sola línea y su código puede envolver.
 - Si el cupón es acumulable, se aplica al precio neto de cada unidad después
   del descuento por efectivo/transferencia. Los porcentajes no se suman. Si no
   es acumulable, cada presentación recibe el descuento más conveniente; las

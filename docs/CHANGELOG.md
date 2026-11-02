@@ -3,6 +3,13 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Carrito y cupones en celulares angostos (1.15.1)
+
+- Cantidad y acciones del carrito se ajustan al ancho disponible sin dejar
+  controles fuera de pantalla a 320 px.
+- El código del cupón puede envolver y su importe permanece completo,
+  sin separar el signo, la moneda y el monto entre líneas.
+
 ## 2026-11-02 — Cupones con cupo global por pedido (1.15.0)
 
 - Cupones administrables por código, porcentaje, presentaciones, cupo, vigencia
