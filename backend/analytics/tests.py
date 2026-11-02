@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Group
 from django.contrib.sessions.models import Session
 from django.core.management import call_command
-from django.db import close_old_connections, connection, transaction
+from django.db import close_old_connections, connection, connections, transaction
 from django.test import (
     Client,
     RequestFactory,
@@ -527,7 +527,7 @@ class ConcurrentTrackingTests(TransactionTestCase):
             except Exception as exc:
                 errors.append(exc)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=worker) for _ in range(2)]
         for thread in threads:
@@ -555,7 +555,7 @@ class ConcurrentTrackingTests(TransactionTestCase):
             except Exception as exc:
                 errors.append(exc)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=worker) for _ in range(2)]
         for thread in threads:

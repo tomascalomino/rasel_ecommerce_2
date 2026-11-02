@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import signing
-from django.db import connection, close_old_connections
+from django.db import connection, close_old_connections, connections
 from django.test import (
     Client,
     TestCase,
@@ -410,7 +410,7 @@ class ConcurrentActivityTests(TransactionTestCase):
             except Exception as exc:
                 errors.append(type(exc).__name__)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         with self.assertNoLogs("analytics.activity", level="WARNING"):
             threads = [threading.Thread(target=worker) for _ in range(2)]
