@@ -821,9 +821,14 @@ la conciliación habitual a la reserva. El módulo de reportes no cambia ese flu
 
 ### Regalo Cyber Monday 2026
 
-1. Desplegar la versión aprobada y sus migraciones por el flujo habitual. La
-   campaña viene deshabilitada y no se publica al migrar. Staging y producción
-   se configuran por separado.
+1. Desplegar la versión aprobada y sus migraciones por el flujo habitual.
+   Producción viene deshabilitada. La migración de publicación activa solo
+   `https://rasel-mp-staging.onrender.com`, desde el 02/11/2026 hasta el cierre
+   del 08/11 en Argentina, cuando todavía no hay una fecha de publicación.
+   Esto permite iniciar las pruebas web sin ingresar al admin de staging.
+   Otros sitios y fechas no se activan; una suspensión previa se respeta.
+   No se modifican usuarios, contraseñas ni permisos. Producción se habilita
+   por separado desde su propio admin después del deploy aprobado.
 2. Verificar disponibilidad física de las minis para todos los pedidos hasta
    el domingo 08/11 inclusive. No hay cupo automático ni descuento de stock de
    este obsequio: corresponde preparar una unidad por pedido beneficiado.

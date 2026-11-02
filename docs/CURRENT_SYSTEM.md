@@ -276,7 +276,10 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
 - **Catálogo → Configuración comercial** permite habilitar una mini RaSel de
   28 ml gratis por pedido. La primera habilitación registra el inicio de la
   publicación. El cierre fijo es el 09/11/2026 a las 00:00 de Argentina (fin
-  exclusivo); no requiere cron ni otro deploy. La migración la deja apagada.
+  exclusivo); no requiere cron ni otro deploy. Producción permanece apagada
+  tras migrar y se habilita desde su propio admin. La migración de publicación
+  activa únicamente el servicio conocido de staging durante esa semana, si la
+  campaña nunca se publicó; respeta una suspensión previa y no cambia accesos.
 - Aplica a toda compra web confirmada dentro de la vigencia, sin mínimo, con
   cualquier medio de pago habilitado, envío o retiro, y se acumula con las
   promociones vigentes. El operador garantiza disponibilidad para la semana;

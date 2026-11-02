@@ -3,6 +3,15 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Publicación de la promo en staging (1.14.3)
+
+- Una migración publica la mini de regalo únicamente en el servicio conocido
+  de staging y dentro de la semana de campaña, sin requerir acceso al admin.
+- Se conserva la primera fecha de publicación y cualquier suspensión manual;
+  reintentos no reinician la campaña. Producción y otros sitios no se activan.
+- No cambia usuarios, contraseñas ni permisos. Se agregan pruebas de aislamiento
+  de producción, fechas y conservación de la configuración existente.
+
 ## 2026-11-02 — Mini RaSel de regalo por Cyber Monday (1.14.0)
 
 - Campaña administrable, apagada por defecto, desde su publicación hasta el
