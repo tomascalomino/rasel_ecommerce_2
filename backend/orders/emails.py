@@ -70,6 +70,8 @@ def _build_lines(order) -> str:
         rows.append(
             f"  - {it.product_name} ({it.variant_name}) x{it.quantity}: ${it.line_total}"
         )
+    if order.gift_label:
+        rows.append(f"  - REGALO: {order.gift_label} x1: $0 (Cyber Monday)")
     return "\n".join(rows)
 
 

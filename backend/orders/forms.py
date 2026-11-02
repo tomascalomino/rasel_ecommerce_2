@@ -8,6 +8,7 @@ from shipping.promotions import contradictory_cp
 
 
 class CheckoutForm(forms.Form):
+    gift_offer_token = forms.CharField(required=False, widget=forms.HiddenInput)
     shipping_quote_token = forms.CharField(required=False, widget=forms.HiddenInput)
     DELIVERY_CHOICES = [
         ("ship", "Envío a domicilio"),

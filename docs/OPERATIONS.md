@@ -819,6 +819,31 @@ la conciliación habitual a la reserva. El módulo de reportes no cambia ese flu
 3. Editar puntos de retiro activos, dirección e indicaciones antes de ofrecerlos
    al cliente.
 
+### Regalo Cyber Monday 2026
+
+1. Desplegar la versión aprobada y sus migraciones por el flujo habitual. La
+   campaña viene deshabilitada y no se publica al migrar. Staging y producción
+   se configuran por separado.
+2. Verificar disponibilidad física de las minis para todos los pedidos hasta
+   el domingo 08/11 inclusive. No hay cupo automático ni descuento de stock de
+   este obsequio: corresponde preparar una unidad por pedido beneficiado.
+3. En **Catálogo → Configuración comercial**, marcar **regalo Cyber Monday
+   habilitado** y guardar. **Publicado desde** registra la primera activación,
+   no se edita y no incluye compras anteriores. La fecha final está fijada en
+   código: 09/11/2026 a las 00:00, horario argentino.
+4. Comprobar primero en celular: franja, foto y condiciones del inicio, tienda,
+   carrito y checkout. Probar transferencia/efectivo y MP con datos ficticios
+   en staging; revisar confirmaciones, email, admin, cierre y reconfirmación.
+   Una aprobación MP posterior debe conservar el regalo del borrador original.
+5. Preparar **Mini RaSel de 28 ml × 1** cuando figure en el pedido. El listado
+   permite filtrar por el regalo; el detalle muestra su fecha de asignación.
+   No agregarlo a mano como producto cobrado ni cambiar el total del pedido.
+6. El cierre retira los avisos y deja de asignar regalos automáticamente. Para
+   suspender antes, desmarcar la habilitación. Las compras aceptadas mantienen
+   el beneficio; no editar snapshots ni adjudicarlo a pedidos históricos.
+7. Mantener sin caché HTML comercial y `/shop/gift-status/`, y la rutina normal
+   de conciliación MP. El regalo no añade servicios ni variables de entorno.
+
 ### Campañas de envío gratis en CABA
 
 1. Antes de publicar, verificar tarifas y cobertura reales: CABA comparte zona

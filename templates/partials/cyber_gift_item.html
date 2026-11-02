@@ -1,0 +1,7 @@
+{% load static %}
+<div class="cyber-gift-item" data-cyber-gift {% if not cyber_gift.active %}hidden{% endif %}>
+  <div class="cyber-gift-thumb"><img {% if cyber_gift.active %}src="{% static 'img/cyber-mini-28ml.jpg' %}"{% endif %} data-gift-src="{% static 'img/cyber-mini-28ml.jpg' %}" alt="" width="1368" height="1824" loading="lazy"></div>
+  <div class="cyber-gift-item-copy"><strong>Mini RaSel de 28 ml × 1</strong><span>Regalo Cyber Monday · Hasta el 8/11 inclusive</span></div>
+  <strong class="cyber-gift-price">Gratis</strong>
+</div>
+<p class="cyber-gift-ended" data-gift-ended hidden role="status">La promoción de la mini RaSel terminó. Revisá tu pedido antes de continuar.</p>

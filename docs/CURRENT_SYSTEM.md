@@ -271,6 +271,33 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   ninguna migración habilita una promoción. No se agregan datos fiscales; sigue
   vigente la limitación previa del reintento MP ante el primer error 503.
 
+## Regalo Cyber Monday 2026
+
+- **Catálogo → Configuración comercial** permite habilitar una mini RaSel de
+  28 ml gratis por pedido. La primera habilitación registra el inicio de la
+  publicación. El cierre fijo es el 09/11/2026 a las 00:00 de Argentina (fin
+  exclusivo); no requiere cron ni otro deploy. La migración la deja apagada.
+- Aplica a toda compra web confirmada dentro de la vigencia, sin mínimo, con
+  cualquier medio de pago habilitado, envío o retiro, y se acumula con las
+  promociones vigentes. El operador garantiza disponibilidad para la semana;
+  no se administra un cupo ni stock de minis en el catálogo.
+- Inicio, tienda, detalle y carrito anuncian el regalo debajo del menú. El
+  inicio usa la foto original de la mini con encuadre CSS. Carrito y checkout
+  muestran una unidad gratis, sin alterar precios, descuentos ni envío.
+- Orden y borrador MP conservan el nombre y la fecha de asignación. Al aprobar
+  MP se copia ese beneficio, incluso después del cierre, sin duplicarlo. No
+  se agrega un ítem monetario a Mercado Pago ni a la medición de ventas. Los
+  pedidos históricos y los creados desde admin no reciben regalos retroactivos.
+- El regalo aparece en las confirmaciones, emails al comprador y aviso interno,
+  y en el listado y detalle del admin para preparar la compra. Los snapshots
+  son de solo lectura y sobreviven al cierre o suspensión de la campaña.
+- El checkout firma la oferta mostrada y la vuelve a comprobar en el POST,
+  antes de crear órdenes o reservar stock. Si terminó, se suspendió o se activó
+  mientras el formulario estaba abierto, conserva los datos y pide confirmar
+  el resumen actualizado. El HTML comercial y `/shop/gift-status/` no se
+  cachean. Las pestañas abiertas actualizan los avisos por fecha, al volver del
+  historial y al recuperar visibilidad; el cierre local funciona aun sin red.
+
 ## Órdenes, stock y notificaciones
 
 Pago y entrega son estados independientes. El estado financiero puede ser

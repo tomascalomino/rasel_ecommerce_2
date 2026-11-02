@@ -1,0 +1,32 @@
+/* Cyber Monday: regalo por pedido. El encuadre conserva la fotografía original. */
+[data-cyber-gift][hidden], [data-gift-ended][hidden] { display: none; }
+.cyber-gift-banner { background: var(--deep-olive); color: var(--card); }
+.cyber-gift-banner-link { display: flex; align-items: center; gap: 12px; padding-top: 12px; padding-bottom: 12px; min-height: 66px; font-size: 14px; line-height: 1.35; }
+.cyber-gift-banner-link > span:nth-child(2) { flex: 1; min-width: 0; }
+.cyber-gift-banner-detail { display: block; margin-top: 3px; font-size: 12px; color: #eee5d0; }
+.cyber-gift-banner-arrow { font-size: 22px; }
+.cyber-gift-home { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid rgba(169,133,69,.35); border-radius: var(--radius); background: var(--card); overflow: hidden; margin-bottom: 36px; scroll-margin-top: 110px; }
+.cyber-gift-photo { height: 260px; overflow: hidden; background: #b4b2a5; }
+.cyber-gift-photo img, .cyber-gift-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.8); transform-origin: 50% 48%; }
+.cyber-gift-photo img { object-position: 50% 43%; transform: scale(1.3); transform-origin: 50% 50%; }
+.cyber-gift-home-copy { padding: 24px; }
+.cyber-gift-eyebrow { display: block; color: #72552c; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.cyber-gift-home h2 { margin: 10px 0 14px; font-family: var(--font-serif); font-size: clamp(27px, 5vw, 40px); font-weight: 500; line-height: 1.15; }
+.cyber-gift-home p { margin: 0 0 16px; }
+.cyber-gift-home .cyber-gift-conditions { font-size: 13px; color: var(--text-2); line-height: 1.6; }
+.cyber-gift-home .btn { min-height: 48px; }
+.cyber-gift-item { display: flex; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 14px 0 22px; }
+.cyber-gift-thumb { width: 46px; height: 64px; flex: 0 0 46px; overflow: hidden; border-radius: 8px; }
+.cyber-gift-item-copy { flex: 1; min-width: 0; line-height: 1.4; }
+.cyber-gift-item-copy strong { display: block; font-size: 15px; }
+.cyber-gift-item-copy span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+.cyber-gift-price { color: var(--deep-olive); font-size: 14px; }
+.cyber-gift-snapshot { display: flex; align-items: center; justify-content: space-between; gap: 16px; text-align: left; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.cyber-gift-ended { font-size: 14px; padding: 12px; border: 1px solid var(--gold); border-radius: 8px; }
+@media (min-width: 600px) {
+  .cyber-gift-home { grid-template-columns: minmax(200px, .8fr) minmax(0, 1.2fr); }
+  .cyber-gift-photo { height: 100%; min-height: 380px; }
+  .cyber-gift-home-copy { padding: 36px; align-self: center; }
+  .cyber-gift-banner-link { font-size: 15px; }
+  .cyber-gift-banner-detail { font-size: 13px; }
+}

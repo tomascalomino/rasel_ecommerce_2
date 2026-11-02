@@ -156,6 +156,7 @@ class OrderAdmin(admin.ModelAdmin):
         "id",
         "created_at",
         "full_name",
+        "gift_label",
         "situation_badge",
         "payment_badge",
         "fulfillment_badge",
@@ -174,6 +175,7 @@ class OrderAdmin(admin.ModelAdmin):
         "delivery_method",
         "created_at",
         "shipping_promotion",
+        "gift_label",
     )
     date_hierarchy = "created_at"
     search_fields = (
@@ -184,6 +186,8 @@ class OrderAdmin(admin.ModelAdmin):
         "pickup_point_label",
     )
     readonly_fields = (
+        "gift_label",
+        "gift_applied_at",
         "paid_at",
         "meta_purchase_status",
         "shipping_promotion",
@@ -225,6 +229,7 @@ class OrderAdmin(admin.ModelAdmin):
             {"fields": ("created_at", "payment_method", "delivery_method")},
         ),
         ("Cliente", {"fields": ("full_name", "email", "phone")}),
+        ("Regalo para preparar", {"fields": ("gift_label", "gift_applied_at")}),
         (
             "Entrega",
             {

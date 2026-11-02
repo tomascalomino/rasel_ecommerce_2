@@ -31,6 +31,8 @@
       <form method="post">
         {% csrf_token %}
         {{ form.shipping_quote_token }}
+        {{ form.gift_offer_token }}
+        {% include "partials/cyber_gift_item.html" %}
         <noscript><style>#ship-fields[hidden], #pickup-fields[hidden] { display: block; }</style></noscript>
         {% if form.non_field_errors %}<div class="checkout-review" role="alert">{{ form.non_field_errors }}</div>{% endif %}
         <div class="field-wrap">
@@ -165,6 +167,10 @@
           <strong>{{ item.line_total|ars }}</strong>
         </div>
         {% endfor %}
+      </div>
+
+      <div class="cyber-gift-snapshot" data-cyber-gift {% if not cyber_gift.active %}hidden{% endif %}>
+        <span>Mini RaSel de 28 ml × 1<br><span class="muted tiny">Regalo Cyber Monday</span></span><strong>Gratis</strong>
       </div>
 
       <div

@@ -3,6 +3,7 @@ from django.utils import timezone
 import uuid
 from shipping.models import ShippingPromotionSnapshot
 from marketing.models import MarketingSnapshot
+from shop.models import GiftSnapshot
 
 
 class PaymentEvent(models.Model):
@@ -40,7 +41,7 @@ class PaymentEvent(models.Model):
         return f"{self.provider} {self.topic} {self.created_at:%Y-%m-%d %H:%M:%S}"
 
 
-class PaymentDraft(ShippingPromotionSnapshot, MarketingSnapshot):
+class PaymentDraft(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot):
     analytics_attribution = models.JSONField(default=dict, blank=True, editable=False)
     analytics_attributed_at = models.DateTimeField(
         null=True, blank=True, db_index=True, editable=False

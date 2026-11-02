@@ -13,6 +13,7 @@ from django.utils import timezone
 from orders.emails import send_order_confirmation, send_payment_alert
 from orders.models import Order, OrderItem
 from shop.models import Variant
+from shop.gifts import GIFT_FIELDS, checkout_gift
 from shipping.promotions import SNAPSHOT_FIELDS, revalidate_delivery
 from marketing.purchases import record_purchase
 
@@ -50,6 +51,7 @@ def reserve_payment_draft(
     analytics_attribution=None,
     marketing=None,
     shipping_quote_token=None,
+    gift_offer_token=None,
 ) -> PaymentDraft:
     with transaction.atomic():
         snapshots = []
@@ -99,6 +101,7 @@ def reserve_payment_draft(
                 "El total del carrito cambio. Volve a intentarlo."
             )
 
+        gift = checkout_gift(gift_offer_token, now)
         for row in snapshots:
             Variant.objects.filter(pk=row["variant_id"]).update(
                 stock_qty=F("stock_qty") - row["quantity"]
@@ -106,6 +109,7 @@ def reserve_payment_draft(
 
         return PaymentDraft.objects.create(
             created_at=now,
+            **gift,
             **(marketing or {}),
             **customer,
             **delivery,
@@ -358,6 +362,7 @@ def _create_order(draft, payment, *, review=False, stock_deducted=True):
         shipping_zone=draft.shipping_zone,
         shipping_carrier_arranged=draft.shipping_carrier_arranged,
         **{key: getattr(draft, key) for key in SNAPSHOT_FIELDS},
+        **{key: getattr(draft, key) for key in GIFT_FIELDS},
         payment_discount_percent=0,
         total_amount=draft.total_amount,
         fulfillment_status="pending",

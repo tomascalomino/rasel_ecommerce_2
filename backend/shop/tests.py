@@ -39,12 +39,13 @@ class CommercialSettingsTests(TestCase):
 		with self.assertRaises(IntegrityError), transaction.atomic():
 			CommercialSettings.objects.filter(pk=1).update(id=2)
 
-	def test_admin_only_exposes_the_discount_and_disables_deletion(self):
+	def test_admin_exposes_discount_and_gift_with_publication_readonly(self):
 		settings_admin = CommercialSettingsAdmin(
 			CommercialSettings, django_admin.site
 		)
 
-		self.assertEqual(settings_admin.fields, ("offline_payment_discount_percent",))
+		self.assertEqual(settings_admin.fields, ("offline_payment_discount_percent", "cyber_gift_enabled", "cyber_gift_started_at"))
+		self.assertIn("cyber_gift_started_at", settings_admin.readonly_fields)
 		self.assertFalse(settings_admin.has_delete_permission(None))
 
 

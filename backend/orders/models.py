@@ -2,9 +2,10 @@ from django.db import models
 from django.utils import timezone
 from shipping.models import ShippingPromotionSnapshot
 from marketing.models import MarketingSnapshot
+from shop.models import GiftSnapshot
 
 
-class Order(ShippingPromotionSnapshot, MarketingSnapshot):
+class Order(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot):
     paid_at = models.DateTimeField(
         "primera confirmación de pago", null=True, blank=True, editable=False
     )

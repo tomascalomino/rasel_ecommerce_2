@@ -26,6 +26,7 @@
     {% if order %}
       <div class="spacer"></div>
       <div class="result-list" style="text-align:left;">
+        {% include "orders/partials/gift_snapshot.html" with snapshot=order only %}
         <div class="row"><span class="muted">Pedido</span><strong>#{{ order.id }}</strong></div>
         <div class="row"><span class="muted">Estado</span><strong>{{ order.get_payment_status_display }}</strong></div>
         {% if order.shipping_promotion_label %}<p class="p">Envío gratis · {{ order.shipping_promotion_label }}.</p>{% endif %}
