@@ -3,6 +3,18 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Condiciones de cybercajarasel11 (1.15.2)
+
+- Configuración confirmada: 5%, 50 pedidos, ambas cajas (6 × 500 ml y
+  9 × 250 ml), acumulable con efectivo/transferencia y sin fecha de cierre.
+- Staging recibe dos cajas ficticias y el código habilitado para validación.
+  Producción recibe un borrador deshabilitado asociado solo a las dos fichas
+  verificadas; si el catálogo no coincide o es ambiguo, queda sin elegibilidad
+  para revisión manual. No se crean productos ni se modifican precios/stock.
+- Reejecutar la preparación conserva configuración, suspensiones y cupo
+  administrados; no repone usos. Activar en producción requiere el despliegue
+  aprobado y la revisión del cupón en su admin.
+
 ## 2026-11-02 — Carrito y cupones en celulares angostos (1.15.1)
 
 - Cantidad y acciones del carrito se ajustan al ancho disponible sin dejar

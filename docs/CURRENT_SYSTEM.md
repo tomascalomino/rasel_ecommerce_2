@@ -307,7 +307,8 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   1 a 99, presentaciones elegibles, cupo total, inicio y fin opcional en horario
   argentino. El inicio se incluye y el fin es exclusivo. Los códigos ignoran
   mayúsculas y espacios en los extremos; solo se admite un código por carrito.
-  Se crean deshabilitados. Ninguna migración crea o activa cupones productivos.
+  Se crean deshabilitados por defecto. Las migraciones no activan descuentos
+  productivos; la campaña confirmada de cajas se prepara como borrador.
 - Cada pedido beneficiado consume **un uso**, aunque compre varias cajas; el
   descuento alcanza todas las unidades de las presentaciones seleccionadas.
   Los productos restantes y el envío no reciben el descuento del cupón. Los
@@ -354,6 +355,15 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   prueba `pruebacajas20`: 20% acumulable, cinco usos y siete días de vigencia.
   La semilla es idempotente y conserva suspensiones o ediciones posteriores;
   no toca productos, cupones ni accesos de producción.
+- La campaña `cybercajarasel11` se prepara con 5%, 50 usos globales por
+  pedido, acumulable con efectivo/transferencia y sin fin programado: termina
+  al agotar cupo o suspenderla. En producción se crea **deshabilitada** y solo
+  incluye las variantes de seis y nueve unidades de las fichas verificadas
+  `pack-6x500ml-blend` y `pack-9x250ml-blend`. Si falta alguna o hay más de una
+  coincidencia, queda sin presentaciones para revisión manual. No se crean
+  productos ni se cambian precios/stock productivos. En staging el código se
+  habilita sobre dos cajas ficticias con las mismas condiciones. La preparación
+  conserva cualquier configuración existente y nunca reinicia su cupo.
 
 ## Órdenes, stock y notificaciones
 

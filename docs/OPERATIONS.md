@@ -837,10 +837,21 @@ la conciliación habitual a la reserva. El módulo de reportes no cambia ese flu
    En staging la migración crea únicamente la caja ficticia de pruebas y
    `pruebacajas20` (20%, acumulable, cinco usos, siete días). Ese código no es
    una condición comercial productiva y no se publica en otros entornos.
-4. Después del despliegue aprobado, crear o revisar el cupón real en producción
-   y habilitarlo allí. Las migraciones no cargan códigos comerciales reales ni
-   habilitan descuentos productivos. El cupón no se anuncia automáticamente en
-   banners; se comunica al público elegido por el responsable de la tienda.
+4. Después del despliegue aprobado, revisar el borrador productivo
+   **cybercajarasel11**: **5%**, **50 usos**, acumulable con efectivo/transferencia,
+   sin fecha final y únicamente las cajas **6 × 500 ml** y **9 × 250 ml**.
+   La migración lo crea deshabilitado y no altera cupones ya existentes. Las
+   presentaciones se asignan por ficha pública y cantidad por caja; si falta
+   alguna o hay ambigüedad quedan vacías: seleccionar ambas en el admin antes
+   de habilitar. No se crean productos ni se cambian precios/stock productivos.
+   Staging habilita este código sobre dos cajas ficticias del producto
+   **Cajas Cyber ficticias para pruebas**, exclusivamente para validar esas
+   condiciones; sus usos no reducen los 50 de producción. Con el precio offline
+   actual de $75.000, el 5% adicional deja la caja 6 × 500 ml en $71.250.
+   Verificar código, elegibilidad, acumulación y 50 disponibles antes de marcar
+   **habilitado** y guardar. Ninguna migración activa descuentos productivos.
+   El cupón no se anuncia automáticamente en banners; se comunica al público
+   elegido por el responsable de la tienda.
 5. Consultar **Disponibles**, **Reservados para pago**, **Consumidos** y
    **Usos de cupones**. Aplicar en carrito no reserva. Pedidos offline consumen
    al confirmarse y MP reserva con su stock; la conciliación normal devuelve las
