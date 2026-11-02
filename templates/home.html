@@ -64,6 +64,17 @@
 
 {% block content %}
 
+<section id="regalo-cyber" class="cyber-gift-home" data-cyber-gift {% if not cyber_gift.active %}hidden{% endif %} aria-labelledby="cyber-gift-title">
+  <div class="cyber-gift-photo"><img {% if cyber_gift.active %}src="{% static 'img/cyber-mini-28ml.jpg' %}"{% endif %} data-gift-src="{% static 'img/cyber-mini-28ml.jpg' %}" alt="Mini botella de aceite de oliva RaSel de 28 ml con tapa dorada" width="1368" height="1824" loading="lazy"></div>
+  <div class="cyber-gift-home-copy">
+    <span class="cyber-gift-eyebrow">Cyber Monday en RaSel</span>
+    <h2 id="cyber-gift-title">Un pequeño regalo.<br>Todo el sabor de RaSel.</h2>
+    <p>Esta semana, con tu compra te regalamos una <strong>mini RaSel de 28 ml</strong>.</p>
+    <p class="cyber-gift-conditions">Sin mínimo de compra · Una por pedido<br>Hasta el 8/11 inclusive, horario argentino.<br>Todos los medios de pago, con envío o retiro. Acumulable con las promociones vigentes.</p>
+    <a class="btn btn-primary" href="{% url 'shop:product_list' %}">Elegí tu RaSel <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
 {% if featured_products %}
 <section class="content-section">
   <div class="related-head">

@@ -10,7 +10,7 @@ from unittest.mock import patch
 from django.core import mail
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.test import (
     TestCase,
     TransactionTestCase,
@@ -523,7 +523,7 @@ class PaymentConcurrencyTests(TransactionTestCase):
             except Exception as exc:  # pragma: no cover - asserted below on PostgreSQL
                 errors.append(exc)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=worker) for _ in range(2)]
         for thread in threads:

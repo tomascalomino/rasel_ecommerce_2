@@ -1,0 +1,7 @@
+<aside class="cyber-gift-banner" data-cyber-gift {% if not cyber_gift.active %}hidden{% endif %} aria-label="Regalo Cyber Monday">
+  <a class="container cyber-gift-banner-link" href="{% url 'home' %}#regalo-cyber">
+    <span class="icon" aria-hidden="true">{% include 'partials/icons/bottle.svg' %}</span>
+    <span><strong>Cyber Monday · Una mini RaSel de regalo</strong><span class="cyber-gift-banner-detail">28 ml con tu compra · Hasta el 8/11 inclusive</span></span>
+    <span class="cyber-gift-banner-arrow" aria-hidden="true">→</span>
+  </a>
+</aside>

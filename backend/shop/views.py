@@ -1,6 +1,8 @@
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import escape
@@ -11,6 +13,13 @@ from config.pricing import (
 )
 
 from .models import Product, Variant
+from .gifts import gift_state
+
+
+@require_GET
+@never_cache
+def gift_status(request):
+    return JsonResponse(gift_state())
 
 
 def _attach_product_card_data(products, discount_percent):

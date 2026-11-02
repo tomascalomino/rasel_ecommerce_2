@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
+from django.utils import timezone
 
 from config.pricing import price_discount_label, price_discount_percent
 
@@ -41,6 +42,13 @@ class CommercialSettings(models.Model):
             "o efectivo. Usá 0 para desactivar el descuento y ocultar sus leyendas."
         ),
     )
+    cyber_gift_enabled = models.BooleanField(
+        "regalo Cyber Monday habilitado", default=False
+    )
+    cyber_gift_started_at = models.DateTimeField(
+        "publicado desde", null=True, blank=True, editable=False,
+        help_text="Se registra al habilitar por primera vez. Cierra el 09/11/2026 a las 00:00 de Argentina.",
+    )
 
     class Meta:
         verbose_name = "configuración comercial"
@@ -61,10 +69,28 @@ class CommercialSettings(models.Model):
 
     def save(self, *args, **kwargs):
         self.pk = 1
+        if self.cyber_gift_enabled and self.cyber_gift_started_at is None:
+            self.cyber_gift_started_at = timezone.now()
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"cyber_gift_started_at"}
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return "Descuento por medios de pago"
+        return "Configuración comercial"
+
+
+class GiftSnapshot(models.Model):
+    """Una unidad de regalo por checkout, independiente del catálogo y sus precios."""
+
+    gift_label = models.CharField(
+        "regalo incluido (1 unidad)", max_length=120, blank=True, default="", editable=False
+    )
+    gift_applied_at = models.DateTimeField(
+        "regalo asignado el", null=True, blank=True, editable=False
+    )
+
+    class Meta:
+        abstract = True
 
 
 class Product(models.Model):

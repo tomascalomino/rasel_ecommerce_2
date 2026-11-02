@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core import mail
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.test import (
     RequestFactory,
     TestCase,
@@ -776,7 +776,7 @@ class OrderTransitionConcurrencyTests(TransactionTestCase):
             except Exception as exc:  # pragma: no cover - asserted on PostgreSQL
                 errors.append(exc)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=worker) for _ in range(2)]
         for thread in threads:

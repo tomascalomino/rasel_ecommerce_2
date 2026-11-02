@@ -31,6 +31,7 @@ from shipping.promotions import (
     sign_quote,
 )
 from shop.models import Variant
+from shop.gifts import GiftOfferChanged, checkout_gift, gift_state, offer_token
 
 from .emails import send_order_confirmation
 from .forms import CheckoutForm
@@ -61,11 +62,18 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
         if form["payment_method"].value() in {"transfer", "cod"}
         else Decimal("0.00")
     )
+    current_gift = gift_state()
+    if form.is_bound:
+        form.data = form.data.copy()
+        form.data["gift_offer_token"] = offer_token(current_gift)
+    else:
+        form.initial["gift_offer_token"] = offer_token(current_gift)
     return render(
         request,
         "orders/checkout.html",
         {
             "cart": cart,
+            "cyber_gift": current_gift,
             "form": form,
             "mp_enabled": settings.MP_CHECKOUT_ENABLED,
             "mp_max_installments": settings.MP_MAX_INSTALLMENTS,
@@ -136,6 +144,7 @@ def _create_offline_order(
     analytics_attribution=None,
     marketing=None,
     shipping_quote_token=None,
+    gift_offer_token=None,
 ):
     with transaction.atomic():
         validated = []
@@ -173,9 +182,11 @@ def _create_offline_order(
         if payment_method == "cod" and not delivery["cod_allowed"]:
             raise ValueError("El pago en efectivo no está disponible para tu zona.")
         grand_total = validated_subtotal - discount_amount + delivery["shipping_cost"]
+        gift = checkout_gift(gift_offer_token, now)
 
         order = Order.objects.create(
             created_at=now,
+            **gift,
             **(marketing or {}),
             **customer,
             analytics_attribution=analytics_attribution or {},
@@ -270,6 +281,7 @@ def checkout(request):
                 analytics_attribution=checkout_snapshot(request),
                 marketing=marketing_snapshot(request),
                 shipping_quote_token=form.cleaned_data["shipping_quote_token"],
+                gift_offer_token=form.cleaned_data["gift_offer_token"],
             )
         except ShippingQuoteChanged as exc:
             return _render_checkout(request, cart, form, discount_percent, exc.quote)
@@ -317,15 +329,16 @@ def checkout(request):
             analytics_attribution=checkout_snapshot(request),
             marketing=marketing_snapshot(request),
             shipping_quote_token=form.cleaned_data["shipping_quote_token"],
+            gift_offer_token=form.cleaned_data["gift_offer_token"],
         )
     except ShippingQuoteChanged as exc:
         return _render_checkout(request, cart, form, discount_percent, exc.quote)
-    except (PaymentValidationError, Variant.DoesNotExist) as exc:
+    except (PaymentValidationError, GiftOfferChanged, Variant.DoesNotExist) as exc:
         messages.error(
             request,
             (
                 str(exc)
-                if isinstance(exc, PaymentValidationError)
+                if isinstance(exc, ValueError)
                 else "Uno de los productos ya no esta disponible."
             ),
         )

@@ -21,8 +21,9 @@ class VariantInline(admin.TabularInline):
 
 @admin.register(CommercialSettings)
 class CommercialSettingsAdmin(admin.ModelAdmin):
-    fields = ("offline_payment_discount_percent",)
-    list_display = ("offline_payment_discount_percent",)
+    fields = ("offline_payment_discount_percent", "cyber_gift_enabled", "cyber_gift_started_at")
+    readonly_fields = ("cyber_gift_started_at",)
+    list_display = ("offline_payment_discount_percent", "cyber_gift_enabled", "cyber_gift_started_at")
 
     def has_add_permission(self, request):
         return not CommercialSettings.objects.exists() and super().has_add_permission(

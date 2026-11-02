@@ -6,6 +6,7 @@ from django.conf import settings
 
 from .pricing import get_offline_payment_discount_percent
 from shipping.promotions import public_state
+from shop.gifts import gift_state
 from django.urls import reverse
 
 
@@ -34,6 +35,8 @@ def site(request):
         digits = f"549{digits}"
     return {
         "mp_checkout_enabled": settings.MP_CHECKOUT_ENABLED,
+        "cyber_gift": gift_state(),
+        "show_gift_banner": show_banner,
         "offline_payment_discount_percent": get_offline_payment_discount_percent(
             request
         ),

@@ -3,6 +3,28 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Publicación de la promo en staging (1.14.3)
+
+- Una migración publica la mini de regalo únicamente en el servicio conocido
+  de staging y dentro de la semana de campaña, sin requerir acceso al admin.
+- Se conserva la primera fecha de publicación y cualquier suspensión manual;
+  reintentos no reinician la campaña. Producción y otros sitios no se activan.
+- No cambia usuarios, contraseñas ni permisos. Se agregan pruebas de aislamiento
+  de producción, fechas y conservación de la configuración existente.
+
+## 2026-11-02 — Mini RaSel de regalo por Cyber Monday (1.14.0)
+
+- Campaña administrable, apagada por defecto, desde su publicación hasta el
+  final del 08/11 de Argentina: una mini de 28 ml por pedido, sin mínimo,
+  acumulable, para todos los medios habilitados y entrega o retiro.
+- Franja pública, bloque del inicio con la foto original, regalo automático en
+  carrito y checkout, y constancia histórica en confirmaciones, emails y admin.
+- Pedidos offline y borradores MP guardan el beneficio al confirmar checkout;
+  la aprobación posterior lo conserva una sola vez, sin cambiar importes.
+- Cierre automático, refresco de pestañas y reconfirmación cuando cambia la
+  oferta, preservando datos y evitando reservas o pedidos con condiciones viejas.
+- Migraciones aditivas, pruebas de fechas/pagos/historial y validación móvil.
+
 ## 2026-10-21 — Portada sin rótulo de ubicación (1.13.2)
 
 - Se retiró “Andalgalá, Catamarca” de la parte superior del inicio en celular

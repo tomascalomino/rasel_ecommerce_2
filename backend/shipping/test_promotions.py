@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.db import close_old_connections
+from django.db import close_old_connections, connections
 from django.test import (
     TestCase,
     TransactionTestCase,
@@ -395,7 +395,7 @@ class CampaignConcurrencyTests(TransactionTestCase):
             except ValidationError:
                 results.append("rejected")
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=publish) for _ in range(2)]
         for thread in threads:

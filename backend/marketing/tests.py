@@ -12,7 +12,7 @@ from django.contrib.auth.models import Group
 from django.core import signing
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import close_old_connections, transaction
+from django.db import close_old_connections, connections, transaction
 from django.test import (
     Client,
     TestCase,
@@ -844,7 +844,7 @@ class ConcurrentMetaTests(TransactionTestCase):
             except Exception as error:
                 errors.append(error)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=confirm) for _ in range(2)]
         for thread in threads:
@@ -873,7 +873,7 @@ class ConcurrentMetaTests(TransactionTestCase):
             except Exception as error:
                 errors.append(error)
             finally:
-                close_old_connections()
+                connections.close_all()
 
         threads = [threading.Thread(target=claim) for _ in range(2)]
         for thread in threads:
