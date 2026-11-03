@@ -7,13 +7,12 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from cart.cart import Cart
+from cart.cart import Cart, CartItem
 from analytics.tracking import mark_stage
 from analytics.attribution import checkout_snapshot
 from marketing.tracking import checkout_snapshot as marketing_snapshot
 from config.pricing import (
     get_offline_payment_discount_percent,
-    payment_discount_for_lines,
 )
 from payments.mercadopago import MercadoPagoError
 from payments.services import (
@@ -32,6 +31,14 @@ from shipping.promotions import (
 )
 from shop.models import Variant
 from shop.gifts import GiftOfferChanged, checkout_gift, gift_state, offer_token
+from shop.coupons import (
+    SESSION_KEY as COUPON_SESSION_KEY,
+    assign_coupon,
+    checkout_coupon,
+    lock_coupon,
+    normalize_code,
+    quote_coupon,
+)
 
 from .emails import send_order_confirmation
 from .forms import CheckoutForm
@@ -41,11 +48,10 @@ from .models import Order, OrderItem
 def _render_checkout(request, cart, form, discount_percent, review_quote=None):
     cart_rows = list(cart.items())
     subtotal = sum((item.line_total for item in cart_rows), Decimal("0.00"))
-    offline_discount = payment_discount_for_lines(
-        ((item.unit_price, item.qty) for item in cart_rows),
-        "transfer",
-        discount_percent,
+    coupon_quote = quote_coupon(
+        request.session.get(COUPON_SESSION_KEY), cart_rows, discount_percent
     )
+    offline_discount = coupon_quote.payment_amount
     if review_quote is not None:
         data = form.data.copy()
         data["shipping_quote_token"] = sign_quote(
@@ -63,11 +69,15 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
         else Decimal("0.00")
     )
     current_gift = gift_state()
+    selected_coupon_discount = coupon_quote.amount(form["payment_method"].value())
     if form.is_bound:
         form.data = form.data.copy()
         form.data["gift_offer_token"] = offer_token(current_gift)
+        form.data["coupon_offer_token"] = coupon_quote.token
     else:
         form.initial["gift_offer_token"] = offer_token(current_gift)
+        form.initial["coupon_offer_token"] = coupon_quote.token
+        form.initial["coupon_code"] = coupon_quote.code
     return render(
         request,
         "orders/checkout.html",
@@ -75,6 +85,8 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
             "cart": cart,
             "cyber_gift": current_gift,
             "form": form,
+            "coupon_quote": coupon_quote,
+            "coupon_discount": selected_coupon_discount,
             "mp_enabled": settings.MP_CHECKOUT_ENABLED,
             "mp_max_installments": settings.MP_MAX_INSTALLMENTS,
             "offline_discount_amount": offline_discount,
@@ -84,6 +96,7 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
             "review_discount": selected_discount,
             "review_total": subtotal
             - selected_discount
+            - selected_coupon_discount
             + (review_quote.cost if review_quote else 0),
         },
     )
@@ -145,11 +158,14 @@ def _create_offline_order(
     marketing=None,
     shipping_quote_token=None,
     gift_offer_token=None,
+    coupon_code=None,
+    coupon_offer_token=None,
 ):
     with transaction.atomic():
+        lock_coupon(coupon_code)
         validated = []
         validated_subtotal = Decimal("0.00")
-        for item in cart_rows:
+        for item in sorted(cart_rows, key=lambda row: row.variant.pk):
             variant = (
                 Variant.objects.select_for_update()
                 .select_related("product")
@@ -170,23 +186,37 @@ def _create_offline_order(
                 "El precio de uno de los productos cambió. Revisá el pedido."
             )
 
-        discount_amount = payment_discount_for_lines(
-            ((unit_price, quantity) for _, quantity, unit_price, _ in validated),
-            payment_method,
-            discount_percent,
-        )
         now = timezone.now()
+        coupon_quote = checkout_coupon(
+            coupon_code,
+            [CartItem(v, qty) for v, qty, _, _ in validated],
+            discount_percent,
+            coupon_offer_token,
+            payment_method,
+            now=now,
+        )
+        discount_amount = (
+            coupon_quote.payment_amount
+            if payment_method in {"transfer", "cod"}
+            else Decimal("0.00")
+        )
         delivery = revalidate_delivery(
             customer, delivery, validated_subtotal, shipping_quote_token, now
         )
         if payment_method == "cod" and not delivery["cod_allowed"]:
             raise ValueError("El pago en efectivo no está disponible para tu zona.")
-        grand_total = validated_subtotal - discount_amount + delivery["shipping_cost"]
+        grand_total = (
+            validated_subtotal
+            - discount_amount
+            - coupon_quote.amount(payment_method)
+            + delivery["shipping_cost"]
+        )
         gift = checkout_gift(gift_offer_token, now)
 
         order = Order.objects.create(
             created_at=now,
             **gift,
+            **coupon_quote.snapshot(payment_method),
             **(marketing or {}),
             **customer,
             analytics_attribution=analytics_attribution or {},
@@ -199,15 +229,14 @@ def _create_offline_order(
             shipping_carrier_arranged=delivery["shipping_carrier_arranged"],
             **{key: delivery[key] for key in SNAPSHOT_FIELDS if key in delivery},
             payment_discount_amount=discount_amount,
-            payment_discount_percent=(
-                discount_percent if payment_method in {"transfer", "cod"} else 0
-            ),
+            payment_discount_percent=(discount_percent if discount_amount > 0 else 0),
             total_amount=grand_total,
             fulfillment_status="pending",
             payment_status="pending",
             payment_method=payment_method,
             stock_deducted=True,
         )
+        assign_coupon(coupon_quote, order=order, method=payment_method)
         for variant, quantity, unit_price, line_total in validated:
             OrderItem.objects.create(
                 order=order,
@@ -243,6 +272,14 @@ def checkout(request):
     form = CheckoutForm(request.POST, discount_percent=discount_percent)
     if not form.is_valid():
         return _render_checkout(request, cart, form, discount_percent)
+    if normalize_code(form.cleaned_data["coupon_code"]) != request.session.get(
+        COUPON_SESSION_KEY, ""
+    ):
+        form.add_error(
+            None,
+            "Aplicá el código con el botón Aplicar para revisar el descuento antes de continuar.",
+        )
+        return _render_checkout(request, cart, form, discount_percent)
 
     payment_method = form.cleaned_data.get("payment_method", "transfer")
     cart_rows = list(cart.items())
@@ -250,11 +287,14 @@ def checkout(request):
         messages.error(request, "Los productos del carrito ya no estan disponibles.")
         return redirect("cart:detail")
     subtotal = sum((item.line_total for item in cart_rows), Decimal("0.00"))
-    discount_amount = payment_discount_for_lines(
-        ((item.unit_price, item.qty) for item in cart_rows),
-        payment_method,
-        discount_percent,
+    coupon_quote = quote_coupon(
+        request.session.get(COUPON_SESSION_KEY), cart_rows, discount_percent
     )
+    discount_amount = (
+        coupon_quote.payment_amount
+        if payment_method in {"transfer", "cod"}
+        else Decimal("0.00")
+    ) + coupon_quote.amount(payment_method)
     delivery = _delivery_from_form(
         form,
         subtotal,
@@ -282,6 +322,8 @@ def checkout(request):
                 marketing=marketing_snapshot(request),
                 shipping_quote_token=form.cleaned_data["shipping_quote_token"],
                 gift_offer_token=form.cleaned_data["gift_offer_token"],
+                coupon_code=request.session.get(COUPON_SESSION_KEY),
+                coupon_offer_token=form.cleaned_data["coupon_offer_token"],
             )
         except ShippingQuoteChanged as exc:
             return _render_checkout(request, cart, form, discount_percent, exc.quote)
@@ -330,10 +372,17 @@ def checkout(request):
             marketing=marketing_snapshot(request),
             shipping_quote_token=form.cleaned_data["shipping_quote_token"],
             gift_offer_token=form.cleaned_data["gift_offer_token"],
+            coupon_code=request.session.get(COUPON_SESSION_KEY),
+            coupon_offer_token=form.cleaned_data["coupon_offer_token"],
         )
     except ShippingQuoteChanged as exc:
         return _render_checkout(request, cart, form, discount_percent, exc.quote)
-    except (PaymentValidationError, GiftOfferChanged, Variant.DoesNotExist) as exc:
+    except (
+        PaymentValidationError,
+        GiftOfferChanged,
+        ValueError,
+        Variant.DoesNotExist,
+    ) as exc:
         messages.error(
             request,
             (

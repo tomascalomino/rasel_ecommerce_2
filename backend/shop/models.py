@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from django.utils import timezone
 
 from config.pricing import price_discount_label, price_discount_percent
+from .coupon_models import Coupon, CouponRedemption, CouponSnapshot
 
 
 class Category(models.Model):

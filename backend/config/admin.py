@@ -32,6 +32,8 @@ _OPERATOR_MATRIX = {
     "shop.product": ("view", "add", "change"),
     "shop.variant": ("view", "add", "change"),
     "shop.commercialsettings": ("view", "change"),
+    "shop.coupon": ("view", "add", "change"),
+    "shop.couponredemption": ("view",),
     "shipping.shippingzone": ("view", "add", "change"),
     "shipping.shippingpromotion": ("view", "add", "change"),
     # Las reglas de CP se editan inline dentro de la zona; sin "delete" no se

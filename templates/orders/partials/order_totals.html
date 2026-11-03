@@ -11,6 +11,9 @@
     <strong>− {{ order.payment_discount_amount|ars }}</strong>
   </div>
   {% endif %}
+  {% if order.coupon_discount_amount %}
+  <div class="row coupon-discount-row"><span>Cupón {{ order.coupon_code }} ({{ order.coupon_discount_percent }}%)</span><strong>− {{ order.coupon_discount_amount|ars }}</strong></div>
+  {% endif %}
   <div class="row">
     <span class="muted">{% if order.delivery_method == "pickup" %}Retiro{% else %}Envío{% endif %}</span>
     <span>

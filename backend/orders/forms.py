@@ -8,6 +8,8 @@ from shipping.promotions import contradictory_cp
 
 
 class CheckoutForm(forms.Form):
+    coupon_code = forms.CharField(required=False, max_length=40, label="Código de descuento")
+    coupon_offer_token = forms.CharField(required=False, widget=forms.HiddenInput)
     gift_offer_token = forms.CharField(required=False, widget=forms.HiddenInput)
     shipping_quote_token = forms.CharField(required=False, widget=forms.HiddenInput)
     DELIVERY_CHOICES = [

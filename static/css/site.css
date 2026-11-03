@@ -1724,6 +1724,8 @@ textarea:focus {
 
 .cart-footer .stack {
   flex-direction: row;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .cart-total {
@@ -1792,12 +1794,31 @@ textarea:focus {
 
   .cart-table td {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
     text-align: right;
     padding: 10px 0;
     border-bottom: 1px solid rgba(14, 22, 18, .08);
+  }
+
+  .cart-table td:first-child {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .cart-table .name-row,
+  .cart-table .name-row > div {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .cart-table .pill {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .cart-table tr td:last-child {
@@ -1820,6 +1841,8 @@ textarea:focus {
 
   .cart-table .qtyform {
     justify-content: flex-end;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
   .cart-remove-cell {

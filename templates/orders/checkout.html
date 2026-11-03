@@ -28,11 +28,13 @@
     <div class="card-inner">
       <h2 class="h2">Datos de contacto y entrega</h2>
       <div class="spacer"></div>
-      <form method="post">
+      <form method="post" action="{% url 'orders:checkout' %}">
         {% csrf_token %}
         {{ form.shipping_quote_token }}
         {{ form.gift_offer_token }}
+        {{ form.coupon_offer_token }}
         {% include "partials/cyber_gift_item.html" %}
+        {% include "partials/coupon_form.html" with coupon_in_checkout=True %}
         <noscript><style>#ship-fields[hidden], #pickup-fields[hidden] { display: block; }</style></noscript>
         {% if form.non_field_errors %}<div class="checkout-review" role="alert">{{ form.non_field_errors }}</div>{% endif %}
         <div class="field-wrap">
@@ -146,7 +148,7 @@
         </div>
         <div class="stack-row">
           <a class="btn" href="{% url 'cart:detail' %}">← Volver al carrito</a>
-          <button class="btn btn-gold" type="submit">{% if review_quote %}Confirmar total y continuar →{% else %}Continuar a pago →{% endif %}</button>
+          <button class="btn btn-gold" type="submit" data-checkout-submit>{% if review_quote %}Confirmar total y continuar →{% else %}Continuar a pago →{% endif %}</button>
         </div>
       </form>
     </div>
@@ -178,6 +180,8 @@
         data-subtotal="{{ cart.total|unlocalize }}"
         data-offline-discount="{{ offline_discount_amount|unlocalize }}"
         data-discount-percent="{{ offline_discount_percent }}"
+        data-coupon-mp="{{ coupon_quote.mp_amount|unlocalize }}"
+        data-coupon-offline="{{ coupon_quote.offline_amount|unlocalize }}"
         data-quote-url="{% url 'shipping:quote' %}"
         data-shop-url="{% url 'shop:product_list' %}"
       >
@@ -192,6 +196,10 @@
         <div class="row">
           <span class="label-sm">Envío</span>
           <span id="sum-shipping" class="muted" aria-live="polite">{% if review_quote %}{{ review_quote.cost_display }}{% if review_quote.promotion %} · promoción CABA{% endif %}{% elif form.delivery_method.value == 'pickup' %}Retiro sin cargo{% else %}Ingresá tu CP{% endif %}</span>
+        </div>
+        <div class="row coupon-discount-row" id="coupon-discount-row" {% if not coupon_discount %}hidden{% endif %}>
+          <span class="label-sm">Cupón {{ coupon_quote.code }}</span>
+          <strong id="sum-coupon-discount">− {{ coupon_discount|ars }}</strong>
         </div>
       </div>
 

@@ -36,6 +36,7 @@ class Cart:
 
     def clear(self) -> None:
         self.session.pop(SESSION_KEY, None)
+        self.session.pop("rasel_coupon_code", None)
         self.session.pop("rasel_meta_checkout_cycle", None)
         self.session.modified = True
 

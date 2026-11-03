@@ -89,11 +89,16 @@
       </p>
 
       {% include "partials/cyber_gift_item.html" %}
+      {% include "partials/coupon_form.html" %}
+      {% if coupon_quote.mp_amount %}
+      <div class="row coupon-discount-row"><span>Cupón {{ coupon_quote.code }}</span><strong>− {{ coupon_quote.mp_amount|ars }}</strong></div>
+      <p class="muted tiny">Descuento por cupón sobre los productos incluidos. El envío y el precio según tu medio de pago se confirman en el checkout.</p>
+      {% endif %}
 
       <div class="cart-footer">
         <div>
-          <div class="label-sm">Subtotal</div>
-          <div class="cart-total">{{ cart.total|ars }}</div>
+          <div class="label-sm">{% if coupon_quote.mp_amount %}Productos con cupón{% else %}Subtotal{% endif %}</div>
+          <div class="cart-total">{{ coupon_total|ars }}</div>
         </div>
 
         <div class="stack">

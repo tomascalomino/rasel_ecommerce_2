@@ -78,13 +78,15 @@ def _build_lines(order) -> str:
 def _totals_block(order) -> str:
     shipping = order.shipping_cost or 0
     discount = getattr(order, "payment_discount_amount", 0) or 0
-    subtotal = order.total_amount - shipping + discount
+    subtotal = order.items_subtotal
     lines = [f"Subtotal: ${subtotal}"]
     if discount > 0:
         lines.append(
             f"Descuento por transferencia/efectivo "
             f"({order.payment_discount_percent}%): -${discount}"
         )
+    if order.coupon_discount_amount:
+        lines.append(f"Cupón {order.coupon_code} ({order.coupon_discount_percent}%): -${order.coupon_discount_amount}")
     if getattr(order, "delivery_method", "ship") == "pickup":
         lines.extend(
             [

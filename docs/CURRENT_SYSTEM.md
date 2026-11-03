@@ -301,6 +301,70 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   cachean. Las pestañas abiertas actualizan los avisos por fecha, al volver del
   historial y al recuperar visibilidad; el cierre local funciona aun sin red.
 
+## Cupones de descuento
+
+- **Catálogo → Cupones de descuento** administra código, porcentaje entero de
+  1 a 99, presentaciones elegibles, cupo total, inicio y fin opcional en horario
+  argentino. El inicio se incluye y el fin es exclusivo. Los códigos ignoran
+  mayúsculas y espacios en los extremos; solo se admite un código por carrito.
+  Se crean deshabilitados por defecto. Las migraciones no activan descuentos
+  productivos; la campaña confirmada de cajas se prepara como borrador.
+- Cada pedido beneficiado consume **un uso**, aunque compre varias cajas; el
+  descuento alcanza todas las unidades de las presentaciones seleccionadas.
+  Los productos restantes y el envío no reciben el descuento del cupón. Los
+  umbrales habituales de envío gratis conservan el subtotal previo a descuentos.
+  El regalo Cyber y las promociones de envío se evalúan independientemente.
+- Carrito y checkout permiten aplicar y quitar el código, muestran el ahorro y
+  explican códigos inexistentes, no vigentes, agotados o sin productos elegibles.
+  Aplicar o consultar no aparta un cupón. Aplicar desde checkout conserva los
+  campos de contacto, entrega y pago incluso sin JavaScript; el envío se vuelve
+  a cotizar y, sin JS, se reconfirma su total antes de crear la compra.
+- En pantallas de 320 px, cantidad y botones del carrito se ajustan en
+  varias líneas sin desborde horizontal; el importe del cupón se mantiene
+  completo en una sola línea y su código puede envolver.
+- Si el cupón es acumulable, se aplica al precio neto de cada unidad después
+  del descuento por efectivo/transferencia. Los porcentajes no se suman. Si no
+  es acumulable, cada presentación recibe el descuento más conveniente; las
+  presentaciones no elegibles conservan su beneficio por medio de pago. Un
+  cupón que no mejora el precio offline no consume un uso. Se redondea por
+  unidad a centavos; los ítems de Mercado Pago conservan al menos un centavo.
+- La confirmación bloquea primero el cupón y luego las variantes dentro de la misma
+  transacción. Una oferta firmada detecta cambios de código, condiciones o
+  importes; si cambió o se agotó el cupo, se conserva el formulario y se requiere
+  revisar antes de crear pedidos, reservar stock o iniciar Mercado Pago.
+- Transferencia y efectivo consumen el uso al crear el pedido. Mercado Pago lo
+  reserva junto con el stock; aprobar convierte la misma asignación en uso
+  consumido y los webhooks repetidos no crean otra. Rechazo, cancelación o
+  vencimiento confirmado por la conciliación liberan la reserva una sola vez.
+  El simple paso del tiempo no libera beneficios de pagos de estado incierto.
+- Cancelar un pedido todavía no pagado devuelve el uso. Los pagos ya aceptados
+  y sus reembolsos conservan el consumo. Si llega un pago MP tardío después de
+  liberar su uso, se recupera el cupo si sigue disponible; si otro comprador ya
+  lo consumió, se conserva el importe pagado y la orden queda en revisión antes
+  de prometer entrega. No se excede el cupo ni se cobra una diferencia automática.
+- Pedido y borrador guardan código, porcentaje y monto históricos. Totales,
+  confirmaciones, emails, admin y Mercado Pago usan esos importes aunque después
+  cambie o se suspenda el cupón. La API de MP recibe precios unitarios netos;
+  los ítems de la orden conservan el precio previo al cupón para el desglose.
+- Admin muestra disponibles, reservados, consumidos y el historial de usos.
+  No permite borrar cupones/usos ni editar asignaciones históricas; el cupo no
+  puede bajar de lo ya reservado o consumido. Operador administra los cupones y
+  consulta usos; Solo lectura únicamente consulta. No se agregan servicios ni
+  variables de entorno.
+- Solo el servicio exacto de staging recibe una caja ficticia y el código de
+  prueba `pruebacajas20`: 20% acumulable, cinco usos y siete días de vigencia.
+  La semilla es idempotente y conserva suspensiones o ediciones posteriores;
+  no toca productos, cupones ni accesos de producción.
+- La campaña `cybercajarasel11` se prepara con 5%, 50 usos globales por
+  pedido, acumulable con efectivo/transferencia y sin fin programado: termina
+  al agotar cupo o suspenderla. En producción se crea **deshabilitada** y solo
+  incluye las variantes de seis y nueve unidades de las fichas verificadas
+  `pack-6x500ml-blend` y `pack-9x250ml-blend`. Si falta alguna o hay más de una
+  coincidencia, queda sin presentaciones para revisión manual. No se crean
+  productos ni se cambian precios/stock productivos. En staging el código se
+  habilita sobre dos cajas ficticias con las mismas condiciones. La preparación
+  conserva cualquier configuración existente y nunca reinicia su cupo.
+
 ## Órdenes, stock y notificaciones
 
 Pago y entrega son estados independientes. El estado financiero puede ser

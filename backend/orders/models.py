@@ -2,10 +2,10 @@ from django.db import models
 from django.utils import timezone
 from shipping.models import ShippingPromotionSnapshot
 from marketing.models import MarketingSnapshot
-from shop.models import GiftSnapshot
+from shop.models import CouponSnapshot, GiftSnapshot
 
 
-class Order(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot):
+class Order(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot, CouponSnapshot):
     paid_at = models.DateTimeField(
         "primera confirmación de pago", null=True, blank=True, editable=False
     )
@@ -119,7 +119,7 @@ class Order(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot):
     @property
     def items_subtotal(self):
         """Subtotal histórico antes del descuento y del envío."""
-        return self.total_amount - self.shipping_cost + self.payment_discount_amount
+        return self.total_amount - self.shipping_cost + self.payment_discount_amount + self.coupon_discount_amount
 
     # MercadoPago tracking (MVP)
     mp_preference_id = models.CharField(max_length=120, blank=True, default="")
