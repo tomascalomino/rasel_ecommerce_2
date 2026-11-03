@@ -322,6 +322,14 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
 - En pantallas de 320 px, cantidad y botones del carrito se ajustan en
   varias líneas sin desborde horizontal; el importe del cupón se mantiene
   completo en una sola línea y su código puede envolver.
+- El carrito muestra **Total de productos** por medio de pago: primero
+  **Efectivo o transferencia** y, cuando MP está habilitado, **Tarjeta / Mercado
+  Pago**. Ambos totales usan la cotización del servidor y desglosan por separado
+  el descuento del medio y del cupón, incluso cuando no se acumulan. Aparecen
+  también sin cupón para mantener la continuidad con los precios del catálogo.
+  La tabla identifica precio base y subtotal; el envío y la selección del medio
+  se confirman en checkout. En móvil los dos importes se apilan y en escritorio
+  se muestran en dos columnas.
 - Si el cupón es acumulable, se aplica al precio neto de cada unidad después
   del descuento por efectivo/transferencia. Los porcentajes no se suman. Si no
   es acumulable, cada presentación recibe el descuento más conveniente; las
@@ -364,6 +372,11 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   productos ni se cambian precios/stock productivos. En staging el código se
   habilita sobre dos cajas ficticias con las mismas condiciones. La preparación
   conserva cualquier configuración existente y nunca reinicia su cupo.
+- En la activación productiva, el propietario renombró esa campaña a
+  **cyberrasel** y la habilitó con 5%, cupo inicial de 50, ambas cajas y
+  acumulación. Es el código vigente que se comunica y verifica en producción;
+  staging conserva `cybercajarasel11` para pruebas. El cambio de nombre no crea
+  otra campaña ni repone usos; los despliegues siguientes no repiten la semilla.
 
 ## Órdenes, stock y notificaciones
 

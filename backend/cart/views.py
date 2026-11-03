@@ -29,8 +29,25 @@ def _cart_input(request, allow_zero=False):
 
 def cart_detail(request):
     cart = Cart(request.session)
-    quote = quote_coupon(request.session.get(COUPON_SESSION_KEY), cart.items(), get_offline_payment_discount_percent(request))
-    return render(request, "cart/cart_detail.html", {"cart": cart, "coupon_quote": quote, "coupon_total": cart.total() - quote.mp_amount})
+    rows = list(cart.items())
+    subtotal = sum((item.line_total for item in rows), 0)
+    quote = quote_coupon(
+        request.session.get(COUPON_SESSION_KEY),
+        rows,
+        get_offline_payment_discount_percent(request),
+    )
+    return render(
+        request,
+        "cart/cart_detail.html",
+        {
+            "cart": cart,
+            "coupon_quote": quote,
+            "coupon_total": subtotal - quote.mp_amount,
+            "cart_offline_total": subtotal
+            - quote.payment_amount
+            - quote.offline_amount,
+        },
+    )
 
 
 @require_POST

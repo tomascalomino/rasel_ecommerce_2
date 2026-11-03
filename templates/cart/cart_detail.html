@@ -24,9 +24,9 @@
             <tr>
               <th>Producto</th>
               <th>Variante</th>
-              <th class="num">Precio</th>
+              <th class="num">Precio base</th>
               <th class="num">Cantidad</th>
-              <th class="num">Total</th>
+              <th class="num">Subtotal</th>
               <th class="num"></th>
             </tr>
           </thead>
@@ -53,7 +53,7 @@
                   </span>
                 </td>
 
-                <td class="num" data-label="Precio">
+                <td class="num" data-label="Precio base">
                   {{ item.unit_price|ars }}
                 </td>
 
@@ -66,7 +66,7 @@
                   </form>
                 </td>
 
-                <td class="num" data-label="Total">
+                <td class="num" data-label="Subtotal">
                   <strong>{{ item.line_total|ars }}</strong>
                 </td>
 
@@ -90,17 +90,31 @@
 
       {% include "partials/cyber_gift_item.html" %}
       {% include "partials/coupon_form.html" %}
-      {% if coupon_quote.mp_amount %}
-      <div class="row coupon-discount-row"><span>Cupón {{ coupon_quote.code }}</span><strong>− {{ coupon_quote.mp_amount|ars }}</strong></div>
-      <p class="muted tiny">Descuento por cupón sobre los productos incluidos. El envío y el precio según tu medio de pago se confirman en el checkout.</p>
-      {% endif %}
+      <h2 class="h2 cart-prices-title">Total de productos</h2>
+      <div class="cart-payment-prices" aria-label="Precios por medio de pago">
+        <section class="cart-payment-price cart-payment-price-offline" aria-label="Efectivo o transferencia">
+          <h3>Efectivo o transferencia</h3>
+          <div class="cart-payment-amount">{{ cart_offline_total|ars }}</div>
+          {% if coupon_quote.payment_amount %}
+          <p class="cart-payment-saving"><span>Descuento por medio de pago</span><strong>− {{ coupon_quote.payment_amount|ars }}</strong></p>
+          {% endif %}
+          {% if coupon_quote.offline_amount %}
+          <p class="cart-payment-saving"><span>Cupón {{ coupon_quote.code }}</span><strong>− {{ coupon_quote.offline_amount|ars }}</strong></p>
+          {% endif %}
+        </section>
+        {% if mp_checkout_enabled %}
+        <section class="cart-payment-price" aria-label="Tarjeta / Mercado Pago">
+          <h3>Tarjeta / Mercado Pago</h3>
+          <div class="cart-payment-amount">{{ coupon_total|ars }}</div>
+          {% if coupon_quote.mp_amount %}
+          <p class="cart-payment-saving"><span>Cupón {{ coupon_quote.code }}</span><strong>− {{ coupon_quote.mp_amount|ars }}</strong></p>
+          {% endif %}
+        </section>
+        {% endif %}
+      </div>
+      <p class="muted tiny">Elegí cómo pagar en el checkout. El envío se confirma según tu código postal.</p>
 
       <div class="cart-footer">
-        <div>
-          <div class="label-sm">{% if coupon_quote.mp_amount %}Productos con cupón{% else %}Subtotal{% endif %}</div>
-          <div class="cart-total">{{ coupon_total|ars }}</div>
-        </div>
-
         <div class="stack">
           <a class="btn" href="{% url 'shop:product_list' %}">← Seguir comprando</a>
           <a class="btn btn-gold" href="{% url 'orders:checkout' %}">
