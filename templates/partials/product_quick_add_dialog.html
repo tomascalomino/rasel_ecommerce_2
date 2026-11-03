@@ -80,7 +80,7 @@
         </div>
       </div>
 
-      <form action="{% url 'cart:add' %}" method="post" class="quick-add-form">
+      <form action="{% url 'cart:add' %}" method="post" class="quick-add-form" data-cart-add-form>
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
@@ -109,6 +109,7 @@
           </div>
         {% endif %}
 
+        <p class="cart-add-error" role="alert" hidden data-cart-add-error></p>
         <div class="quick-add-submit-row">
           <div class="quick-add-quantity" data-quick-add-quantity>
             <button type="button" aria-label="Restar una unidad" data-quick-add-qty="decrease">−</button>

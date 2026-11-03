@@ -253,6 +253,23 @@ class BrowserConsentTests(TestCase):
             self.client.session[ACTIONS][0]["data"]["contents"][0]["quantity"], 2
         )
 
+    def test_ajax_cart_event_respects_consent_and_deduplicates_queued_copy(self):
+        data = {"variant_id": self.variant.pk, "qty": 1}
+        response = self.client.post(reverse("cart:add"), data, HTTP_ACCEPT="application/json")
+        self.assertEqual(response.json()["meta_events"], [])
+        self.choose()
+        response = self.client.post(reverse("cart:add"), data, HTTP_ACCEPT="application/json")
+        event = response.json()["meta_events"][0]
+        claimed = self.client.post(reverse("marketing:claim"), json.dumps(event), content_type="application/json")
+        self.assertTrue(claimed.json()["claimed"])
+        self.assertEqual(claimed.json()["name"], "AddToCart")
+        queued = config_from(self.client.get(reverse("cart:detail")))["events"][0]
+        repeated = self.client.post(reverse("marketing:claim"), json.dumps(queued), content_type="application/json")
+        self.assertFalse(repeated.json()["claimed"])
+        self.choose(False)
+        response = self.client.post(reverse("cart:add"), data, HTTP_ACCEPT="application/json")
+        self.assertEqual(response.json()["meta_events"], [])
+
     def test_checkout_claim_stable_across_reload_invalid_post_and_forgery(self):
         self.add()
         first = config_from(self.client.get(reverse("orders:checkout")))["events"][0]

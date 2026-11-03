@@ -21,6 +21,13 @@ python backend/manage.py test config shop cart orders payments shipping analytic
 python backend/manage.py ops_kpis --days 7
 ```
 
+La lógica del agregado al carrito se verifica con `node scripts/test_cart_add.cjs`:
+doble toque, confirmación, foco, falta de stock, espera agotada, respuesta perdida
+y alternativa de formulario nativo. `promotion-gate` ejecuta también esta prueba
+junto con las suites JavaScript existentes. La validación visual empieza en
+celular: probar compra rápida y detalle, seguir comprando, ver carrito y entrada
+directa a checkout con el carrito completo; repetir después en escritorio.
+
 ## Versionado de la aplicación
 
 `app_version` en la raíz es la única fuente de verdad y contiene una versión

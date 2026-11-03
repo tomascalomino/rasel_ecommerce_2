@@ -137,6 +137,18 @@ UptimeRobot → GET https://rasel.ar/healthz
 - El carrito se guarda en la sesión del navegador con `variant_id` como clave.
   No hay login, persistencia entre dispositivos ni reserva de stock al agregar
   al carrito.
+- Agregar desde compra rápida o el detalle confirma la presentación y la cantidad
+  en una ventana con **Ir al checkout**, **Seguir comprando** y **Ver carrito**.
+  El checkout recibe todos los productos del carrito. Seguir comprando, cerrar
+  o usar Escape conserva la página, el desplazamiento y devuelve el foco al
+  control de compra. La ventana no se cierra sola y usa botones de al menos
+  44 px, también en celulares de 320 px; en pantallas bajas permite desplazarse.
+  El agregado actualiza el contador sin recargar ni volver al inicio. Se bloquean
+  envíos repetidos mientras se procesa la solicitud y se rechazan cantidades
+  mayores al stock contando las unidades ya agregadas. Ante una respuesta perdida
+  o un tiempo de espera agotado se ofrece revisar el carrito, sin repetir el POST.
+  Sin JavaScript o sin soporte de ventanas nativas se muestra una página de
+  confirmación con las mismas opciones; actualizarla no vuelve a agregar.
 
 ## Checkout, envíos y pagos
 
@@ -180,8 +192,7 @@ del servidor y nunca confía en el total enviado por el navegador.
   el precio por transferencia o efectivo cuando existe; con descuento offline
   en 0% muestra el precio de venta. Ese texto no cambia el importe base usado
   por carrito, checkout o Mercado Pago. Al agregar, el cliente permanece en la
-  página de origen, ve el
-  mensaje de confirmación y el contador del carrito se actualiza.
+  página de origen y elige el siguiente paso en la confirmación del carrito.
 - **Mercado Pago Checkout Pro:** el flujo está habilitado en producción con
   `MP_CHECKOUT_ENABLED=1`. Usa redirección alojada por Mercado
   Pago; RaSel no recibe tarjetas ni utiliza la Public Key. Ofrece tarjeta,
@@ -579,7 +590,9 @@ ausencia de ejecuciones; el comando manual queda disponible para recuperación.
   presentación no lo repite. Admin, staff, webhooks, endpoints técnicos y páginas
   privadas de pedidos no cargan el píxel ni su fallback sin JavaScript.
 - AddToCart utiliza el incremento validado por el servidor, transportado tras
-  la redirección mediante un mensaje de sesión de un solo uso. Los aumentos
+  la redirección mediante un mensaje de sesión de un solo uso o mediante un
+  token firmado en la respuesta del agregado sin recarga. Ambos conservan el
+  mismo identificador y el reclamo único del servidor evita duplicarlos. Los aumentos
   desde el carrito también cuentan; quitar o reducir no cuenta. Variantes
   inválidas/inactivas y cantidades inválidas no generan acciones exitosas.
   InitiateCheckout usa un identificador del ciclo del carrito y se reclama una

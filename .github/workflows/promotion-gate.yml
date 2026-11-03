@@ -62,3 +62,4 @@ jobs:
           node scripts/test_shipping_checkout.cjs
           node scripts/test_meta_marketing.cjs
           node scripts/test_cyber_gift.cjs
+          node scripts/test_cart_add.cjs

@@ -30,6 +30,8 @@
   <link rel="stylesheet" href="{% static 'css/site.css' %}">
   <link rel="stylesheet" href="{% static 'css/cyber-gift.css' %}">
   <script src="{% static 'js/product-quick-add.js' %}" defer></script>
+  <script src="{% static 'js/cart-add.js' %}" defer></script>
+  <link rel="stylesheet" href="{% static 'css/cart-added.css' %}">
   {% if analytics_activity_token %}
   <meta name="rasel-activity" content="{{ analytics_activity_token }}" data-endpoint="{% url 'analytics_activity' %}" data-csrf="{{ csrf_token }}">
   <script src="{% static 'js/analytics-activity.js' %}" defer></script>
@@ -74,6 +76,14 @@
   {% endif %}
 
   {% include "partials/_footer.html" %}
+  <dialog class="cart-added-dialog" id="cart-added-dialog" aria-labelledby="cart-added-title">
+    <div class="cart-added-shell">
+      <button class="cart-added-close" type="button" aria-label="Cerrar y seguir comprando" data-cart-added-close>
+        {% include "partials/icons/close.svg" %}
+      </button>
+      <div data-cart-added-content></div>
+    </div>
+  </dialog>
 </body>
 </html>
 

@@ -175,6 +175,8 @@ def queue_cart_event(request, variant, quantity):
             }
         )
         request.session[ACTIONS] = actions
+        # The queued copy survives a lost response; claims deduplicate its ID.
+        return {"token": signing.dumps(actions[-1], salt=EVENT_SALT)}
     except Exception:
         logger.warning("No se pudo preparar la acción opcional de Meta.")
 

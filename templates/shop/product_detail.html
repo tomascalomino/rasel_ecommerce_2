@@ -98,13 +98,15 @@
 
     <div class="spacer"></div>
 
-    <form action="{% url 'cart:add' %}" method="post" class="buybox">
+    <form action="{% url 'cart:add' %}" method="post" class="buybox" data-cart-add-form>
       {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <p class="cart-add-error" role="alert" hidden data-cart-add-error></p>
 
       <div class="buy-grid">
 
         <div class="buy-col">
-          <span class="label-sm">Elegí presentación</span>
+          <label class="label-sm" for="product-variant">Elegí presentación</label>
           <select name="variant_id" id="product-variant" required>
             {% for v in product.variants.all %}
               <option
@@ -126,8 +128,8 @@
         </div>
 
         <div class="buy-col-small">
-          <span class="label-sm">Cantidad</span>
-          <input type="number" name="qty" value="1" min="1" inputmode="numeric">
+          <label class="label-sm" for="product-quantity">Cantidad</label>
+          <input id="product-quantity" type="number" name="qty" value="1" min="1" inputmode="numeric">
         </div>
 
         <div class="stack">
