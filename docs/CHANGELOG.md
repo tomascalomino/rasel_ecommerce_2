@@ -3,6 +3,19 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Totales del carrito por medio de pago (1.15.3)
+
+- El carrito identifica por separado efectivo/transferencia y tarjeta/Mercado
+  Pago, antes y después de aplicar un cupón. Cada importe desglosa sus descuentos
+  reales y efectivo/transferencia aparece primero, como en el catálogo.
+- Precio base y subtotal de cada producto se distinguen de los totales finales;
+  el envío y la elección del medio se confirman en checkout. Mercado Pago no se
+  anuncia en el resumen si ese medio está deshabilitado.
+- Registro operativo: el propietario habilitó y renombró el cupón productivo a
+  **cyberrasel** (5%, 50 usos, ambas cajas y acumulable). La prueba pública
+  verificó el descuento de ambas cajas, exclusión de botellas, regalo y envío
+  CABA, sin crear pedidos ni consumir cupo. La semilla original conserva su nombre.
+
 ## 2026-11-02 — Condiciones de cybercajarasel11 (1.15.2)
 
 - Configuración confirmada: 5%, 50 pedidos, ambas cajas (6 × 500 ml y

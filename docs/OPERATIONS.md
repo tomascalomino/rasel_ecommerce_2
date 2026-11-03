@@ -852,6 +852,14 @@ la conciliación habitual a la reserva. El módulo de reportes no cambia ese flu
    **habilitado** y guardar. Ninguna migración activa descuentos productivos.
    El cupón no se anuncia automáticamente en banners; se comunica al público
    elegido por el responsable de la tienda.
+   En la activación productiva el propietario lo renombró a **cyberrasel**
+   y lo habilitó: usar ese nombre al comunicar y probar la campaña. Staging
+   conserva el código original para pruebas. No crear otro cupón ni reponer
+   cupo por un cambio de nombre; los usos siguen perteneciendo al mismo registro.
+   El carrito presenta ambos totales por medio de pago, con sus descuentos,
+   antes de elegir cómo pagar en checkout. Al validar un cambio de condiciones,
+   comprobar tanto efectivo/transferencia como tarjeta/MP y la exclusión de
+   productos no elegibles. Cotizar o aplicar no consume usos.
 5. Consultar **Disponibles**, **Reservados para pago**, **Consumidos** y
    **Usos de cupones**. Aplicar en carrito no reserva. Pedidos offline consumen
    al confirmarse y MP reserva con su stock; la conciliación normal devuelve las

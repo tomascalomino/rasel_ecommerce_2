@@ -11,3 +11,14 @@
 .coupon-discount-row > span { min-width: 0; }
 .coupon-discount-row strong { white-space: nowrap; flex-shrink: 0; }
 @media (min-width: 600px) { .coupon-controls { grid-template-columns: minmax(0, 1fr) auto; } }
+
+.cart-prices-title { margin: 24px 0 12px; }
+.cart-payment-prices { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.cart-payment-price { min-width: 0; padding: 18px; border: 1px solid var(--border); border-radius: 14px; background: #f9f7ef; }
+.cart-payment-price-offline { background: #e9eddd; border-color: #cbd3b4; }
+.cart-payment-price h3 { margin: 0 0 12px; font-family: inherit; font-size: 16px; font-weight: 600; line-height: 1.4; }
+.cart-payment-amount { font: 600 clamp(26px, 4vw, 34px)/1.2 var(--font-serif); color: var(--deep-olive); overflow-wrap: anywhere; }
+.cart-payment-saving { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin: 12px 0 0; font-size: 13px; line-height: 1.5; }
+.cart-payment-saving span { min-width: 0; overflow-wrap: anywhere; }
+.cart-payment-saving strong { white-space: nowrap; }
+@media (min-width: 720px) { .cart-payment-prices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
