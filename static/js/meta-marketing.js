@@ -11,6 +11,7 @@
   var state = config.state;
   var pageTracked = false;
   var claimsRunning = false;
+  var claimsPending = false;
   var generation = 0;
   var synchronization = 0;
 
@@ -52,7 +53,11 @@
   }
 
   function claimEvents() {
-    if (claimsRunning || state !== "accepted" || !config.pixelEnabled) return;
+    if (state !== "accepted" || !config.pixelEnabled) return;
+    if (claimsRunning) {
+      claimsPending = true;
+      return;
+    }
     claimsRunning = true;
     var currentGeneration = generation;
     Promise.all(config.events.map(function (event) {
@@ -66,8 +71,19 @@
             track(result.name, result.data, result.id);
           }
         }).catch(function () {});
-    })).finally(function () { claimsRunning = false; });
+    })).finally(function () {
+      claimsRunning = false;
+      if (claimsPending) {
+        claimsPending = false;
+        claimEvents();
+      }
+    });
   }
+
+  document.addEventListener("rasel:cart-added", function (event) {
+    config.events = config.events.concat(event.detail.events);
+    claimEvents();
+  });
 
   function activate() {
     if (state !== "accepted" || !config.pixelEnabled) return;

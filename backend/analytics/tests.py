@@ -270,7 +270,7 @@ class CheckoutTrackingTests(TransactionTestCase):
         )
 
     def test_quick_add_and_cart_updates_deduplicate(self):
-        self.assertEqual(self.add(next="/").url, "/")
+        self.assertEqual(self.add(next="/").url, reverse("cart:added"))
         self.add()
         self.client.post(
             reverse("cart:update"), dict(variant_id=self.variant.pk, qty=3)

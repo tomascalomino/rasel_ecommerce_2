@@ -1,0 +1,23 @@
+<div class="cart-added-heading">
+  <span class="cart-added-check" aria-hidden="true">✓</span>
+  <h2 class="h2" id="cart-added-title">Agregaste a tu carrito</h2>
+</div>
+<div class="cart-added-product">
+  {% if variant.product.image %}
+    <img src="{{ variant.product.image.url }}" alt="" width="76" height="90">
+  {% else %}
+    <span class="cart-added-placeholder" aria-hidden="true">{% include "partials/icons/bottle.svg" %}</span>
+  {% endif %}
+  <div>
+    <strong>{{ variant.product.name }}</strong>
+    <span>{{ variant.name }}</span>
+    <span>Cantidad agregada: {{ qty }}</span>
+  </div>
+</div>
+<p class="cart-added-count">Tenés {{ cart_quantity }} producto{{ cart_quantity|pluralize:"s" }} en tu carrito.</p>
+<p class="cart-added-note">En el próximo paso elegís la entrega y el medio de pago.</p>
+<div class="cart-added-actions">
+  <a class="btn btn-primary" href="{% url 'orders:checkout' %}" data-cart-added-checkout>Ir al checkout <span aria-hidden="true">→</span></a>
+  <a class="btn" href="{{ continue_url }}" data-cart-added-continue>Seguir comprando</a>
+  <a class="cart-added-review" href="{% url 'cart:detail' %}">Ver carrito</a>
+</div>

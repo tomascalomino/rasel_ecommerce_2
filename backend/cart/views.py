@@ -1,6 +1,10 @@
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .cart import Cart
@@ -51,28 +55,67 @@ def cart_detail(request):
 
 
 @require_POST
+@never_cache
 def cart_add(request):
     cart = Cart(request.session)
+    wants_json = request.headers.get("Accept") == "application/json"
     variant, qty = _cart_input(request)
     if not variant or variant.stock_qty < 1:
-        messages.error(
-            request,
-            "No se pudo agregar el producto. Revisá la presentación y cantidad.",
-        )
+        error = "No se pudo agregar el producto. Revisá la presentación y cantidad."
+        if wants_json:
+            return JsonResponse({"error": error}, status=400)
+        messages.error(request, error)
         return redirect("cart:detail")
     variant_id = variant.pk
+    previous_qty = cart._cart.get(str(variant_id), {}).get("qty", 0)
+    if previous_qty + qty > variant.stock_qty:
+        error = "No hay stock suficiente para esa cantidad, incluyendo lo que ya tenés en el carrito."
+        if wants_json:
+            return JsonResponse({"error": error}, status=400)
+        messages.error(request, error)
+        return redirect("cart:detail")
     cart.add(variant_id=variant_id, qty=qty, override=False)
     mark_cart_increase(request, variant_id, 0, qty)
-    queue_cart_event(request, variant, qty)
-    messages.success(request, "Producto agregado al carrito.")
+    meta_event = queue_cart_event(request, variant, qty)
     next_url = (request.POST.get("next") or "").strip()
-    if next_url and url_has_allowed_host_and_scheme(
+    if not next_url or not url_has_allowed_host_and_scheme(
         next_url,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):
-        return redirect(next_url)
-    return redirect("cart:detail")
+        next_url = reverse("shop:product_list")
+    confirmation = {
+        "variant_id": variant_id,
+        "qty": qty,
+        "continue_url": next_url,
+    }
+    if wants_json:
+        return JsonResponse({
+            "html": render_to_string(
+                "partials/cart_added_summary.html",
+                {**confirmation, "variant": variant, "cart_quantity": len(cart)},
+                request=request,
+            ),
+            "cart_quantity": len(cart),
+            "meta_events": [meta_event] if meta_event else [],
+        })
+    request.session["cart_added_confirmation"] = confirmation
+    return redirect("cart:added")
+
+
+@never_cache
+def cart_added(request):
+    confirmation = request.session.pop("cart_added_confirmation", None)
+    if not confirmation:
+        return redirect("cart:detail")
+    variant = Variant.objects.filter(pk=confirmation["variant_id"]).select_related("product").first()
+    if not variant:
+        return redirect("cart:detail")
+    return render(request, "cart/cart_added.html", {
+        **confirmation,
+        "variant": variant,
+        "cart_quantity": len(Cart(request.session)),
+    })
 
 
 @require_POST

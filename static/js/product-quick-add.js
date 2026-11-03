@@ -90,6 +90,7 @@
         var dialog = document.getElementById(opener.dataset.quickAddOpen);
         if (!dialog || typeof dialog.showModal !== "function") return;
         event.preventDefault();
+        dialog.quickAddOpener = opener;
         dialog.showModal();
       });
     });

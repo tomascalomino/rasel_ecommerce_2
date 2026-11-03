@@ -3,6 +3,22 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-02 — Elegir cómo continuar después de agregar al carrito (1.16.0)
+
+- Compra rápida y detalle confirman el producto, la presentación y la cantidad
+  con acceso directo al checkout, seguir comprando y ver carrito. El contador
+  cambia sin recargar la página ni perder el lugar en el catálogo.
+- Confirmación accesible con foco en checkout, cierre visible, Escape, retorno
+  del foco y controles táctiles; funciona desde 320 px y permite desplazarse en
+  pantallas bajas. Sin JavaScript ofrece las mismas opciones en una página,
+  con redirección posterior al POST para no repetirlo al actualizar.
+- Se evita reenviar mientras hay una solicitud pendiente y se valida el stock
+  acumulado. Ante pérdida de respuesta o espera agotada se invita a revisar el
+  carrito antes de agregar otra vez. AddToCart conserva consentimiento y
+  deduplicación también sin recargar; agregar no reserva stock ni crea pedidos.
+- `promotion-gate` incorpora la prueba JavaScript de agregado: doble toque,
+  errores, espera agotada y recuperación ante respuesta perdida.
+
 ## 2026-11-02 — Totales del carrito por medio de pago (1.15.3)
 
 - El carrito identifica por separado efectivo/transferencia y tarjeta/Mercado
