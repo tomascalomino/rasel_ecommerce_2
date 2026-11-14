@@ -161,6 +161,9 @@ class CampaignTests(TestCase):
         self.publish()
         home = self.client.get(reverse("home"))
         self.assertContains(home, 'id="shipping-promotion-banner"')
+        self.assertContains(
+            home, "<span data-promotion-copy>Sin mínimo de compra</span>"
+        )
         self.assertIn("no-store", home["Cache-Control"])
         self.assertNotContains(
             self.client.get(reverse("orders:confirmation", args=[999])),

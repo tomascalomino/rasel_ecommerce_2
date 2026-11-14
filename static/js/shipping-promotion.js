@@ -21,7 +21,7 @@
       if (visible) {
         banner.querySelector("a").href = campaign.url;
         banner.querySelector("[data-promotion-heading]").textContent = campaign.state === "suspended" ? "Promoción suspendida" : "Envío gratis en CABA";
-        banner.querySelector("[data-promotion-copy]").textContent = campaign.state === "suspended" ? "Consultá las condiciones de la campaña." : "Sin mínimo de compra · " + campaign.dates;
+        banner.querySelector("[data-promotion-copy]").textContent = campaign.state === "suspended" ? "Consultá las condiciones de la campaña." : "Sin mínimo de compra";
       }
     }
     if (detail && state.detail) {
