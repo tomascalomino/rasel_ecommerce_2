@@ -58,7 +58,8 @@ async function promotionBoundary() {
   const campaign = {url: '/promociones/demo/', state: 'active', dates: 'Del 04/10 al 04/10', ends_at: end};
   const parts = {'a': {}, '[data-promotion-heading]': {}, '[data-promotion-copy]': {}};
   const banner = {hidden: false, querySelector: key => parts[key]};
-  const info = {hidden: false, querySelector: key => parts[key]};
+  const infoParts = {'a': {}, '[data-promotion-heading]': {}, '[data-promotion-copy]': {}};
+  const info = {hidden: false, querySelector: key => infoParts[key]};
   const detail = {dataset: {}};
   const events = {}, timers = [];
   class Clock extends Date {static now() {return now;}}
@@ -71,6 +72,7 @@ async function promotionBoundary() {
     fetch: () => Promise.reject(new Error('offline')),
   });
   assert.equal(banner.hidden, false);
+  assert.equal(parts['[data-promotion-copy]'].textContent, 'Sin mínimo de compra');
   now = Date.parse(end);
   timers[0]();
   await new Promise(setImmediate);

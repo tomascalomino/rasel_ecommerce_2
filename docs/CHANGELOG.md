@@ -3,6 +3,11 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-14 — Cartel de envío gratis sin fechas (1.16.1)
+
+- El cartel de envío gratis en CABA muestra «Sin mínimo de compra». Las fechas
+  se consultan desde «Ver condiciones».
+
 ## 2026-11-02 — Elegir cómo continuar después de agregar al carrito (1.16.0)
 
 - Compra rápida y detalle confirman el producto, la presentación y la cantidad

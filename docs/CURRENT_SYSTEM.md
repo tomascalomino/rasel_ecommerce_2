@@ -269,10 +269,12 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   de pedidos anteriores quedan vacíos. Admin permite filtrar por campaña y
   consultar ahorro adicional, que es cero si el envío ya era gratuito.
 - La franja crema y oliva aparece debajo del header, fuera de su área fija, en
-  inicio, catálogo, productos y carrito; checkout comunica el beneficio al
-  cotizar. La página `/promociones/<slug>/` conserva fechas y condiciones al
-  finalizar. Suspender sustituye el aviso hasta el fin previsto y respeta
-  pedidos aceptados. Envíos diferencia la promoción de las tarifas habituales;
+  inicio, catálogo, productos y carrito. La franja anuncia el envío gratis
+  sin mínimo y enlaza a **Ver condiciones**, donde se consultan las fechas.
+  Checkout comunica el beneficio al cotizar. La página `/promociones/<slug>/`
+  conserva fechas y condiciones al finalizar. Suspender sustituye el aviso
+  hasta el fin previsto y respeta pedidos aceptados. Envíos diferencia la
+  promoción de las tarifas habituales;
   confirmaciones y emails usan snapshots. La página integra la analítica
   existente, sin UTM en enlaces internos.
 - Fechas y estados se evalúan por consulta, sin cron ni servicios nuevos.

@@ -345,6 +345,9 @@ class CouponTests(TestCase):
         self.assertEqual(order.coupon_discount_amount, Decimal("4000"))
 
     def test_coupon_gift_and_caba_shipping_stack(self):
+        self.enterContext(
+            patch("shop.gifts.GIFT_END", timezone.now() + timedelta(days=1))
+        )
         CommercialSettings.objects.filter(pk=1).update(
             cyber_gift_enabled=True,
             cyber_gift_started_at=timezone.now() - timedelta(minutes=1),
