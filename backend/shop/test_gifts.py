@@ -161,3 +161,18 @@ class CyberGiftTests(TestCase):
         self.assertTrue(checkout.context["form"]["gift_offer_token"].value())
         self.assertContains(checkout, "Mini RaSel de 28 ml × 1")
         self.assertTrue(self.client.get(reverse("shop:gift_status")).json()["active"])
+
+    def test_closed_gift_status_works_without_queries_for_old_tabs(self):
+        self.enable()
+        self.cart()
+        with patch("django.utils.timezone.now", return_value=GIFT_END):
+            with self.assertNumQueries(0):
+                response = self.client.get(reverse("shop:gift_status"))
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(response.json()["active"])
+            self.assertIn("no-store", response["Cache-Control"])
+            for route in ("home", "shop:product_list", "cart:detail", "orders:checkout"):
+                with self.subTest(route=route):
+                    page = self.client.get(reverse(route))
+                    self.assertNotContains(page, "cyber-gift-state")
+                    self.assertContains(page, "shipping-promotion-config")

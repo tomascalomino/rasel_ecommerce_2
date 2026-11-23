@@ -62,6 +62,7 @@ async function promotionBoundary() {
   const info = {hidden: false, querySelector: key => infoParts[key]};
   const detail = {dataset: {}};
   const events = {}, timers = [];
+  let statusRequests = 0;
   class Clock extends Date {static now() {return now;}}
   const config = {textContent: JSON.stringify({status_url: '/shipping/promotion-status/', state: {server_now: new Date(now).toISOString(), campaign, detail: campaign, next_change_at: end}})};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../static/js/shipping-promotion.js'), 'utf8'), {
@@ -69,13 +70,19 @@ async function promotionBoundary() {
     document: {hidden: false, getElementById: id => ({'shipping-promotion-config': config, 'shipping-promotion-banner': banner, 'shipping-promotion-info': info})[id], querySelector: () => detail, addEventListener: (name, fn) => {events[name] = fn;}, dispatchEvent() {}},
     window: {addEventListener: (name, fn) => {events[name] = fn;}},
     setTimeout: fn => {timers.push(fn); return timers.length;}, clearTimeout() {},
-    fetch: () => Promise.reject(new Error('offline')),
+    fetch: () => {statusRequests++; return Promise.reject(new Error('offline'));},
   });
   assert.equal(banner.hidden, false);
   assert.equal(parts['[data-promotion-copy]'].textContent, 'Sin mínimo de compra');
+  events.pageshow({persisted: false});
+  assert.equal(statusRequests, 0);
+  events.pageshow({persisted: true});
+  assert.equal(statusRequests, 1);
+  await new Promise(setImmediate);
   now = Date.parse(end);
   timers[0]();
   await new Promise(setImmediate);
+  assert.equal(statusRequests, 2);
   assert.equal(banner.hidden, true);
   assert.equal(info.hidden, true);
   assert.equal(detail.textContent, 'Promoción finalizada');

@@ -3,6 +3,17 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-23 — Consultas de promociones y cuota de Neon (1.16.2)
+
+- El regalo vencido detiene el refresco en el navegador. Su endpoint devuelve
+  inactivo sin consultar PostgreSQL, también para pestañas antiguas.
+- El estado de envío se consulta solo en páginas que lo usan. Se elimina la
+  recarga inicial redundante del estado incluido en el HTML.
+- La analítica omite la lectura de sesión en respuestas que no registran
+  páginas ni etapas de compra.
+- Se documenta cómo verificar errores de cuota y contrastar actividad de Neon,
+  accesos de Render y ejecuciones internas durante un incidente.
+
 ## 2026-11-14 — Cartel de envío gratis sin fechas (1.16.1)
 
 - El cartel de envío gratis en CABA muestra «Sin mínimo de compra». Las fechas

@@ -44,10 +44,14 @@
   {% if meta_public %}{% include "partials/meta_consent.html" %}{% endif %}
   {% if show_shipping_banner %}{% include "partials/shipping_promotion_banner.html" %}{% endif %}
   {% if show_gift_banner %}{% include "partials/cyber_gift_banner.html" %}{% endif %}
+  {% if show_gift_updates %}
   {{ cyber_gift|json_script:'cyber-gift-state' }}
   <script src="{% static 'js/cyber-gift.js' %}" data-status-url="{% url 'shop:gift_status' %}" defer></script>
+  {% endif %}
+  {% if shipping_promotion_config %}
   {{ shipping_promotion_config|json_script:'shipping-promotion-config' }}
   <script src="{% static 'js/shipping-promotion.js' %}" defer></script>
+  {% endif %}
 
   {% block full_width %}{% endblock %}
 
