@@ -1010,6 +1010,7 @@ producción.
 | --- | --- |
 | Sitio lento o dormido | Confirmar que UptimeRobot consulta `/healthz`; revisar estado y logs de Render. |
 | Sitio responde pero falla checkout | Revisar logs de Render y la conexión `DATABASE_URL` a Neon. `/healthz` no prueba la base. |
+| Inicio o catálogo con 500 y `/healthz` con 200 | Buscar `has exceeded the quota` en los logs de Render. Confirmar en Neon el consumo, el estado del compute y la fecha de reinicio de la cuota. |
 | Imagen faltante | Confirmar el producto en admin, las variables R2 y la existencia del objeto en el bucket; no asumir que `MEDIA_ROOT` local la recuperará. |
 | No llega un email | Revisar `BREVO_API_KEY`, remitente verificado, destinatario y registros de Brevo; buscar la excepción en Render. |
 | Stock incorrecto | Revisar ítems y estado de la orden; cancelar desde admin restaura stock una vez. |
@@ -1028,6 +1029,12 @@ producción.
   **Preview data**. No usar **Restore** directamente sobre producción sin un
   plan de recuperación validado.
 - Los logs de Render son la observabilidad activa. Sentry no está configurado.
+- Para investigar consumo de Neon, registrar el período y el proyecto en
+  **Usage** y consultar **Monitoring → System operations**. Comparar las
+  horas de actividad con los accesos de Render por ruta y agente declarado y
+  con los runs del despacho de Meta. Neon mide capacidad por tiempo activo;
+  un conteo de peticiones no asigna CU-horas por cliente, bot o tarea. En
+  Neon Free hay un día de métricas y en Render Hobby siete días de logs.
 - `ops_kpis --days 7` sigue siendo manual. La conciliación de Mercado Pago
   también es manual hasta incorporar `rasel-mp-reconcile`; registrar cada
   revisión operativa y no asumir que existe una ejecución programada.

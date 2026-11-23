@@ -278,11 +278,14 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   confirmaciones y emails usan snapshots. La página integra la analítica
   existente, sin UTM en enlaces internos.
 - Fechas y estados se evalúan por consulta, sin cron ni servicios nuevos.
-  `/shipping/promotion-status/` permite refrescar avisos al cruzar fechas y
-  volver a una pestaña. Cotización, estado y HTML comercial indican que no se
-  cacheen. Las campañas se configuran por separado en staging y producción y
-  ninguna migración habilita una promoción. No se agregan datos fiscales; sigue
-  vigente la limitación previa del reintento MP ante el primer error 503.
+  El estado de envío se carga en las páginas con avisos o cotización. La
+  navegación inicial usa el estado del HTML. `/shipping/promotion-status/`
+  refresca el estado al cruzar fechas y al volver a una pestaña, y completa
+  el estado inicial del detalle de una campaña. Cotización, estado y HTML
+  comercial indican que no se cacheen. Las campañas se configuran por separado
+  en staging y producción y ninguna migración habilita una promoción. No se
+  agregan datos fiscales y sigue vigente la limitación del reintento MP ante
+  el primer error 503.
 
 ## Regalo Cyber Monday 2026
 
@@ -311,8 +314,11 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   antes de crear órdenes o reservar stock. Si terminó, se suspendió o se activó
   mientras el formulario estaba abierto, conserva los datos y pide confirmar
   el resumen actualizado. El HTML comercial y `/shop/gift-status/` no se
-  cachean. Las pestañas abiertas actualizan los avisos por fecha, al volver del
-  historial y al recuperar visibilidad; el cierre local funciona aun sin red.
+  cachean. Durante la campaña, las pestañas abiertas actualizan los avisos por
+  fecha, al volver del historial y al recuperar visibilidad. Al vencer, el
+  navegador oculta los avisos aun sin red y detiene las consultas. Las páginas
+  nuevas omiten el script y el endpoint devuelve el estado inactivo sin leer
+  PostgreSQL incluso si lo llama una pestaña con código anterior.
 
 ## Cupones de descuento
 

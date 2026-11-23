@@ -62,7 +62,9 @@
       .catch(function () { render(); /* Server confirms shipping even offline. */ })
       .finally(function () { pending = false; });
   }
-  window.addEventListener("pageshow", refresh);
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted || (detail && !state.detail)) refresh();
+  });
   document.addEventListener("visibilitychange", function () { if (!document.hidden) { render(); refresh(); } });
   render();
   schedule();

@@ -236,6 +236,9 @@ class AnalyticsMiddleware:
                 and response.get("Content-Type", "").startswith("text/html")
                 and name in PAGES
             )
+            stages = set(getattr(request, "_analytics_stages", ()))
+            if not pageview and not stages:
+                return response
             reason = exclusion_reason(request)
             if reason:
                 if pageview:
@@ -248,11 +251,8 @@ class AnalyticsMiddleware:
                         )
                     self.maybe_cleanup()
                 return response
-            stages = set(getattr(request, "_analytics_stages", ()))
             if pageview and name == "orders:checkout":
                 stages.add("checkout_opened")
-            if not pageview and not stages:
-                return response
             record(
                 request,
                 pageview=pageview,

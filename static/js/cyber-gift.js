@@ -10,9 +10,11 @@
   let wasActive = state.active;
   const blocks = document.querySelectorAll('[data-cyber-gift]');
   const serverNow = () => Date.parse(state.server_now) + performance.now() - received;
+  const remaining = () => Date.parse(state.ends_at) - serverNow();
 
   function display() {
-    const active = state.active && serverNow() < Date.parse(state.ends_at);
+    const untilEnd = remaining();
+    const active = state.active && untilEnd > 0;
     blocks.forEach(block => { block.hidden = !active; });
     if (active) {
       document.querySelectorAll('img[data-gift-src]').forEach(img => {
@@ -24,19 +26,20 @@
     });
     wasActive = wasActive || active;
     clearTimeout(timer);
-    const untilEnd = Date.parse(state.ends_at) - serverNow();
-    timer = setTimeout(() => { display(); refresh(); },
-      active ? Math.max(1, Math.min(60000, untilEnd)) : 60000);
+    if (untilEnd > 0) {
+      timer = setTimeout(() => { display(); refresh(); }, Math.min(60000, untilEnd));
+    }
   }
 
   async function refresh() {
-    if (pending || document.hidden) return;
+    if (pending || document.hidden || remaining() <= 0) return;
     pending = true;
     try {
       const response = await fetch(script.dataset.statusUrl, {cache: 'no-store', credentials: 'same-origin'});
       if (!response.ok) return;
       const next = await response.json();
       if (typeof next.active !== 'boolean' || !Number.isFinite(Date.parse(next.server_now)) || !Number.isFinite(Date.parse(next.ends_at))) return;
+      if (remaining() <= 0) return;
       state = next;
       received = performance.now();
       display();
@@ -45,5 +48,5 @@
   }
   display();
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { display(); refresh(); } });
-  window.addEventListener('pageshow', () => { display(); refresh(); });
+  window.addEventListener('pageshow', event => { if (event.persisted) { display(); refresh(); } });
 })();

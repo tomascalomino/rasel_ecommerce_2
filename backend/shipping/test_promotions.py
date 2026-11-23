@@ -165,6 +165,10 @@ class CampaignTests(TestCase):
             home, "<span data-promotion-copy>Sin mínimo de compra</span>"
         )
         self.assertIn("no-store", home["Cache-Control"])
+        with patch("config.context_processors.public_state") as load_shipping:
+            contact = self.client.get(reverse("contact"))
+            self.assertNotContains(contact, "shipping-promotion-config")
+            load_shipping.assert_not_called()
         self.assertNotContains(
             self.client.get(reverse("orders:confirmation", args=[999])),
             'id="shipping-promotion-banner"',

@@ -15,12 +15,14 @@ OFFER_SALT = "rasel.cyber-gift.2026"
 
 def gift_state(now=None):
     now = now or timezone.now()
-    config = CommercialSettings.objects.filter(pk=1).values(
-        "cyber_gift_enabled", "cyber_gift_started_at"
-    ).first()
+    config = None
+    if now < GIFT_END:
+        config = CommercialSettings.objects.filter(pk=1).values(
+            "cyber_gift_enabled", "cyber_gift_started_at"
+        ).first()
     start = config["cyber_gift_started_at"] if config else None
     return {
-        "active": bool(config and config["cyber_gift_enabled"] and start and start <= now < GIFT_END),
+        "active": bool(config and config["cyber_gift_enabled"] and start and start <= now),
         "starts_at": start.isoformat() if start else None,
         "ends_at": GIFT_END.isoformat(),
         "server_now": now.isoformat(),

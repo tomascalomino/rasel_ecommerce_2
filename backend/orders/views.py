@@ -30,7 +30,7 @@ from shipping.promotions import (
     sign_quote,
 )
 from shop.models import Variant
-from shop.gifts import GiftOfferChanged, checkout_gift, gift_state, offer_token
+from shop.gifts import GIFT_END, GiftOfferChanged, checkout_gift, gift_state, offer_token
 from shop.coupons import (
     SESSION_KEY as COUPON_SESSION_KEY,
     assign_coupon,
@@ -68,7 +68,8 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
         if form["payment_method"].value() in {"transfer", "cod"}
         else Decimal("0.00")
     )
-    current_gift = gift_state()
+    now = timezone.now()
+    current_gift = gift_state(now)
     selected_coupon_discount = coupon_quote.amount(form["payment_method"].value())
     if form.is_bound:
         form.data = form.data.copy()
@@ -84,6 +85,7 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
         {
             "cart": cart,
             "cyber_gift": current_gift,
+            "show_gift_updates": now < GIFT_END,
             "form": form,
             "coupon_quote": coupon_quote,
             "coupon_discount": selected_coupon_discount,
