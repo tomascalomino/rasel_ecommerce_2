@@ -48,6 +48,16 @@ class BrowserEventReceipt(models.Model):
     created_at = models.DateTimeField(default=timezone.now, db_index=True)
 
 
+class MetaMaintenance(models.Model):
+    """Singleton checkpoint for automatic retention cleanup."""
+
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    cleanup_after = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        default_permissions = ()
+
+
 class MetaPurchase(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pendiente"),

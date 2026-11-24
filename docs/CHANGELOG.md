@@ -3,6 +3,15 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-23 — Menos consultas de navegación y Meta (1.16.5)
+
+- La analítica actualiza los totales diarios juntos, omite nuevas señales de
+  visitas activas y ejecuta la limpieza por lotes cada quince minutos con tráfico.
+- Carrito y checkout reutilizan las variantes cargadas. Volver a una pestaña
+  conserva una cotización reciente mientras la promoción aplicable siga igual.
+- El despachador evita diagnósticos duplicados y limita la limpieza automática
+  a una ejecución cada 24 horas. La limpieza manual sigue disponible.
+
 ## 2026-11-23 — Límites de cómputo de Neon (1.16.4)
 
 - La organización `rasel` pasó a Neon Launch y se activaron avisos de gasto

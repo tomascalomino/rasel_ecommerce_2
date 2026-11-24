@@ -139,8 +139,12 @@ def commerce_data(rows):
 
 
 def checkout_rows(request):
-    cart = Cart(request.session)
-    rows = list(cart.items())
+    rendered = getattr(request, "_rendered_checkout_cart", None)
+    if rendered is None:
+        cart = Cart(request.session)
+        rows = list(cart.items())
+    else:
+        cart, rows = rendered
     if len(rows) != len(cart._cart) or any(
         not row.variant.product.is_active
         or row.qty <= 0

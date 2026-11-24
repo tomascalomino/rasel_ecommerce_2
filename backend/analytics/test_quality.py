@@ -89,6 +89,23 @@ class QualityTests(TestCase):
             (total.visits, total.quality_visits, total.active_visits, total.pageviews),
             (1, 1, 1, 1),
         )
+        next_page = self.browser.get("/")
+        self.assertNotContains(next_page, 'name="rasel-activity"')
+        self.assertEqual(DailyTotal.objects.get().pageviews, 2)
+
+    def test_catalog_uses_at_most_eight_statements_for_a_returning_visit(self):
+        catalog = reverse("shop:product_list")
+        self.browser.get(catalog)
+        with patch("analytics.tracking.AnalyticsMiddleware.maybe_cleanup"):
+            with CaptureQueriesContext(connection) as queries:
+                response = self.browser.get(catalog)
+        self.assertEqual(response.status_code, 200)
+        statements = [
+            query for query in queries
+            if query["sql"].lstrip().split()[0] in {"SELECT", "INSERT", "UPDATE", "DELETE"}
+        ]
+        self.assertLessEqual(len(statements), 8, statements)
+        self.assertEqual(DailyTotal.objects.get().pageviews, 2)
 
     def test_visible_time_stale_pages_and_expiry(self):
         token = self.browser.get("/").context["analytics_activity_token"]

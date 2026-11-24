@@ -16,6 +16,8 @@ from .models import (
     QualityMeasurement,
 )
 
+CLEANUP_INTERVAL = timedelta(minutes=15)
+
 
 def first_retained_day(today):
     """Current calendar month and preceding eleven months."""
@@ -33,7 +35,7 @@ def cleanup_batch(*, now=None, batch_size=100, force=False):
             state = QualityMeasurement.objects.select_for_update().filter(pk=1).first()
         if not state or (not force and state.cleanup_after > now):
             return 0
-        state.cleanup_after = now + timedelta(minutes=1)
+        state.cleanup_after = now + CLEANUP_INTERVAL
         state.save(update_fields=["cleanup_after"])
         count = 0
         expired = [(Visit, {"started_at__lt": now - timedelta(days=90)})]

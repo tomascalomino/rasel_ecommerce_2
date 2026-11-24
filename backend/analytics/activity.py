@@ -25,6 +25,7 @@ def context(request):
     if (
         visit is None
         or visit.quality_version != 2
+        or visit.active
         or request.method != "GET"
         or getattr(request.resolver_match, "view_name", "") not in PAGES
     ):
@@ -63,11 +64,12 @@ def activity(request):
                 .filter(
                     pk=page["visit"],
                     quality_version=2,
+                    active=False,
                     last_seen_at__gt=now - timedelta(minutes=30),
                 )
                 .first()
             )
-            if visit and not visit.active:
+            if visit:
                 visit.active = True
                 visit.save(update_fields=["active"])
                 DailyTotal.objects.filter(day=visit.day).update(

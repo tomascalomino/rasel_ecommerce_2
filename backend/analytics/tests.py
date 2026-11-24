@@ -551,7 +551,11 @@ class ConcurrentTrackingTests(TransactionTestCase):
             close_old_connections()
             try:
                 barrier.wait(timeout=10)
-                record(request_at(session=dict(session)), stages=["checkout_submitted"])
+                record(
+                    request_at(session=dict(session)),
+                    pageview=True,
+                    stages=["checkout_submitted"],
+                )
             except Exception as exc:
                 errors.append(exc)
             finally:
@@ -564,4 +568,5 @@ class ConcurrentTrackingTests(TransactionTestCase):
             thread.join(timeout=20)
             self.assertFalse(thread.is_alive())
         self.assertEqual(errors, [])
-        self.assertEqual(DailyTotal.objects.get().checkout_submitted, 1)
+        total = DailyTotal.objects.get()
+        self.assertEqual((total.pageviews, total.checkout_submitted), (3, 1))
