@@ -122,9 +122,12 @@ class BrowserConsentTests(TestCase):
         )
 
     def checkout(self):
+        from orders.attempts import checkout_token
+
         return self.client.post(
             reverse("orders:checkout"),
             {
+                "checkout_attempt": checkout_token(self.client.session),
                 "full_name": "Comprador",
                 "email": "buyer@example.com",
                 "phone": "+5491112345678",

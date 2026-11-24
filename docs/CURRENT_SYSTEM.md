@@ -33,6 +33,10 @@ UptimeRobot → GET https://rasel.ar/healthz
 - **UptimeRobot** mantiene activo el plan gratuito de Render consultando
   `/healthz`. Ese endpoint confirma que Django responde, pero no verifica Neon,
   R2 ni Brevo.
+- El workflow existente de Meta admite una comprobación HTTP externa del
+  catálogo. Exige el HTML de la tienda y un identificador fresco de respuesta.
+  Corre en la misma ejecución de quince minutos cuando se habilita en
+  `meta-production` y distingue un fallo del catálogo de un fallo de Meta.
 
 ## Aplicaciones Django
 
@@ -155,6 +159,12 @@ UptimeRobot → GET https://rasel.ar/healthz
 El checkout es invitado: recopila contacto y entrega, calcula el envío del lado
 del servidor y nunca confía en el total enviado por el navegador.
 
+Cada ciclo del carrito tiene un comprobante firmado vinculado a la sesión.
+PostgreSQL guarda una única orden o reserva por intento, en la misma transacción
+que descuenta stock o reserva usos del cupón. Volver a enviar el formulario
+recupera ese resultado. Un formulario anterior al cambio pide revisar y
+confirmar el resumen. El botón indica «Procesando…» mientras se envía.
+
 - **Entrega a domicilio:** la zona se resuelve con el código postal y las
   reglas configuradas en admin. Puede ser gratis, tener precio, requerir un
   mínimo de compra o quedar a coordinar con el comprador.
@@ -237,8 +247,11 @@ además con token de prueba, collector esperado y base staging separada. Pagos
 pendientes conservan la reserva. La conciliación manual mediante el admin o el
 comando `reconcile_mp_payments` recupera webhooks perdidos, cancela pendientes
 al cumplir 48 horas y libera stock solamente tras consultar al proveedor.
-Actualmente no existe un Cron Job productivo: hasta incorporarlo, esta
-conciliación requiere la rutina manual definida en `OPERATIONS.md`.
+Un reintento conserva el mismo borrador y la misma clave de preferencia.
+Mientras exista un pago pendiente, el checkout muestra cómo continuar o
+consultar ese pago. Un nuevo intento requiere confirmar el cierre del anterior.
+La conciliación es manual y el lote prioriza reservas vencidas. El comando
+y el admin solo liberan stock tras verificar el resultado con Mercado Pago.
 
 ## Campañas de envío gratis en CABA
 
@@ -675,9 +688,8 @@ ausencia de ejecuciones; el comando manual queda disponible para recuperación.
   de validar una compra real controlada, una única orden, el descuento de stock,
   la firma del webhook y el reintegro total. La prueba no dejó un producto
   activo ni una venta neta pendiente.
-- No existe todavía el Cron Job productivo `rasel-mp-reconcile`. La
-  conciliación se opera manualmente y la automatización cada diez minutos queda
-  registrada como el próximo desarrollo prioritario.
+- La conciliación de Mercado Pago se opera manualmente desde el admin o el
+  comando `reconcile_mp_payments`.
 - Render opera en plan gratuito y puede tardar en responder tras inactividad;
   UptimeRobot reduce ese riesgo, pero no reemplaza monitoreo integral.
 - La versión vigente es siempre el valor de `app_version`; el esquema comenzó

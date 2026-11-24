@@ -23,6 +23,7 @@ from django.urls import resolve, reverse
 from django.utils import timezone
 
 from config.admin import sync_roles
+from orders.attempts import checkout_token
 from orders.models import Order
 from payments.mercadopago import MercadoPagoError
 from payments.models import PaymentDraft
@@ -269,6 +270,13 @@ class CheckoutTrackingTests(TransactionTestCase):
             reverse("cart:add"), dict(variant_id=self.variant.pk, qty=1, **kwargs)
         )
 
+    def checkout_data(self, method="transfer"):
+        return {
+            **self.data,
+            "payment_method": method,
+            "checkout_attempt": checkout_token(self.client.session),
+        }
+
     def test_quick_add_and_cart_updates_deduplicate(self):
         self.assertEqual(self.add(next="/").url, reverse("cart:added"))
         self.add()
@@ -304,7 +312,7 @@ class CheckoutTrackingTests(TransactionTestCase):
         self.client.get(reverse("orders:checkout"))
         self.client.post(reverse("orders:checkout"), {})
         self.assertEqual(DailyTotal.objects.get().checkout_submitted, 0)
-        response = self.client.post(reverse("orders:checkout"), self.data)
+        response = self.client.post(reverse("orders:checkout"), self.checkout_data())
         self.client.get(response.url)
         total = DailyTotal.objects.get()
         self.assertEqual((total.checkout_opened, total.checkout_submitted), (1, 1))
@@ -314,7 +322,7 @@ class CheckoutTrackingTests(TransactionTestCase):
     def test_cash_checkout_is_submitted_not_paid(self):
         self.add()
         response = self.client.post(
-            reverse("orders:checkout"), {**self.data, "payment_method": "cod"}
+            reverse("orders:checkout"), self.checkout_data("cod")
         )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(DailyTotal.objects.get().checkout_submitted, 1)
@@ -326,20 +334,15 @@ class CheckoutTrackingTests(TransactionTestCase):
     ):
         self.add()
         with patch(
-            "orders.views.create_checkout_preference",
+            "payments.views.create_checkout_preference",
             side_effect=MercadoPagoError("unavailable"),
         ):
             response = self.client.post(
-                reverse("orders:checkout"), {**self.data, "payment_method": "mp"}
+                reverse("orders:checkout"), self.checkout_data("mp")
             )
         self.assertEqual(response.status_code, 503)
         draft = PaymentDraft.objects.get()
         self.assertEqual(DailyTotal.objects.get().checkout_submitted, 1)
-        # Django does not save session mutations on 503. Supply an established
-        # draft session to exercise the existing retry endpoint independently.
-        session = self.client.session
-        session["active_payment_draft"] = str(draft.token)
-        session.save()
         with patch(
             "payments.views.create_checkout_preference",
             side_effect=MercadoPagoError("unavailable"),
@@ -358,9 +361,9 @@ class CheckoutTrackingTests(TransactionTestCase):
             draft.mp_init_point = "https://www.mercadopago.com.ar/checkout/v1/redirect"
             return draft
 
-        with patch("orders.views.create_checkout_preference", side_effect=preference):
+        with patch("payments.views.create_checkout_preference", side_effect=preference):
             response = self.client.post(
-                reverse("orders:checkout"), {**self.data, "payment_method": "mp"}
+                reverse("orders:checkout"), self.checkout_data("mp")
             )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(DailyTotal.objects.get().checkout_submitted, 1)
@@ -369,7 +372,7 @@ class CheckoutTrackingTests(TransactionTestCase):
     def test_tracking_failure_does_not_change_order_stock_or_redirect(self):
         self.add()
         with patch("analytics.tracking.record", side_effect=RuntimeError("fail")):
-            response = self.client.post(reverse("orders:checkout"), self.data)
+            response = self.client.post(reverse("orders:checkout"), self.checkout_data())
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Order.objects.count(), 1)
         self.variant.refresh_from_db()

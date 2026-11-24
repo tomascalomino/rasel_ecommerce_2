@@ -3,6 +3,15 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-24 — Checkout, conciliación manual y disponibilidad (1.16.6)
+
+- Cada ciclo del carrito recupera el pedido o la reserva existente al repetir
+  el envío. Mercado Pago conserva la preferencia del mismo borrador.
+- El comando y el admin comparten la conciliación. Los lotes priorizan reservas
+  vencidas y los estados dudosos conservan el stock para revisión.
+- El workflow de Meta admite una comprobación externa de catálogo con
+  validación de frescura. La comprobación programada requiere activación.
+
 ## 2026-11-23 — Menos consultas de navegación y Meta (1.16.5)
 
 - La analítica actualiza los totales diarios juntos, omite nuevas señales de

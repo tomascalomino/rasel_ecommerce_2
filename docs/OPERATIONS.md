@@ -342,8 +342,13 @@ solicita su cancelación y verifica el resultado antes de reponer stock. Si la
 API falla, conserva el stock, registra el error, envía una alerta y termina con
 código distinto de cero.
 
-Producción comienza sin un Cron Job pago. Mientras no exista automatización,
-la operación manual es obligatoria:
+Primero revisa reservas vencidas y pagos pendientes que llegaron a las 48
+horas. En cada grupo procesa primero los borradores que llevan más tiempo sin
+consultarse. El lote continúa incluyendo pagos aprobados y parcialmente
+reintegrados para recuperar movimientos posteriores. Si Mercado Pago confirma
+una aprobación mientras se pide la cancelación, registra la aprobación.
+
+La rutina en producción es manual:
 
 1. Durante las primeras 48 horas del lanzamiento, revisar cada 30 minutos
    mientras haya actividad comercial.
@@ -359,17 +364,10 @@ la operación manual es obligatoria:
    `MP_CHECKOUT_ENABLED=0`, conservar el stock y repetir la conciliación cuando
    el proveedor se recupere. Nunca asumir que no hubo pago.
 
-La próxima mejora operativa prioritaria es crear en Render el Cron Job
-`rasel-mp-reconcile`, rama `main`, schedule UTC `*/10 * * * *` y comando
-`python backend/manage.py reconcile_mp_payments --batch-size 100`. Debe
-incorporarse primero mediante el flujo normal de `bundle_work`, staging, PR y
-aprobación; una vez productivo, nunca debe ejecutar código de staging. Render
-cobra por tiempo de ejecución con un mínimo de USD 1 mensual por Cron Job al
-momento de esta decisión; verificar el precio vigente antes de provisionarlo.
-Cuando se incorpore, deberá recibir por separado `DATABASE_URL`, credenciales
-MP, ambiente, alertas y Brevo, y probarse manualmente antes de sustituir la
-rutina anterior. Hasta entonces no debe agregarse al Blueprint ni asumirse que
-la conciliación ocurre sola.
+Ambas acciones del admin informan revisados, procesados, liberados, fallidos y
+casos para revisión. **Conciliar y liberar reservas vencidas** aplica también
+el límite de 48 horas a pagos pendientes. Usar **Reconciliar con Mercado Pago**
+para consultar un pago ya vinculado o revisar reintegros y contracargos.
 
 ## Salida a producción de Mercado Pago
 
@@ -1052,10 +1050,27 @@ producción.
   diarias y las ejecuciones del despachador durante los primeros siete días
   completos. Usar períodos equivalentes y conservar los valores al menos cada
   tres días para poder contrastarlos con las métricas de Neon.
-- `ops_kpis --days 7` sigue siendo manual. La conciliación de Mercado Pago
-  también es manual hasta incorporar `rasel-mp-reconcile`; registrar cada
-  revisión operativa y no asumir que existe una ejecución programada.
+- `ops_kpis --days 7` y la conciliación de Mercado Pago se ejecutan manualmente.
+  Registrar cada revisión operativa.
 - UptimeRobot es keep-alive, no monitoreo de base de datos, R2, checkout o email.
+
+### Comprobación externa del catálogo
+
+- Conservar `/healthz` en Render y UptimeRobot. Revisar el contacto de email
+  de UptimeRobot y sus notificaciones de caída y recuperación.
+- Con staging actualizado, ejecutar **Meta Purchase dispatch** sobre
+  `bundle_work` con `target=staging`, `storefront=check` y sin orden. El paso
+  **Check public catalogue** debe verificar el HTML y una respuesta fresca.
+  Repetir con `storefront=alert-test` para simular HTTP 503 y comprobar que el
+  correo de Actions llega al operador que ejecutó la prueba. Habilitar email
+  para fallos de Actions y comprobar el usuario asociado a la programación.
+- Al cerrar la medición de siete días, habilitar `STOREFRONT_PROBE_ENABLED=1`
+  en `meta-production`. Confirmar el siguiente ciclo programado en `main`.
+  El parámetro manual `storefront=check` permite comprobar bajo demanda.
+  Una falla del catálogo se identifica al final de la ejecución y permite que
+  Meta procese su cola cuando está habilitado. Poner la variable en `0` pausa
+  solo la comprobación programada. No usar el chequeo de catálogo de cinco
+  minutos, para que Neon pueda suspenderse entre consultas.
 
 ## Checklist de cambio operativo
 

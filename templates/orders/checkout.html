@@ -30,6 +30,7 @@
       <div class="spacer"></div>
       <form method="post" action="{% url 'orders:checkout' %}">
         {% csrf_token %}
+        <input type="hidden" name="checkout_attempt" value="{{ checkout_attempt }}">
         {{ form.shipping_quote_token }}
         {{ form.gift_offer_token }}
         {{ form.coupon_offer_token }}

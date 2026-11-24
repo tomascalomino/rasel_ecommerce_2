@@ -36,6 +36,7 @@ from .admin import (
     mark_dispatched,
     mark_paid,
 )
+from .attempts import checkout_token
 from .models import Order, OrderItem
 from .services import collect_and_complete as collect_and_complete_order
 
@@ -43,7 +44,7 @@ from .services import collect_and_complete as collect_and_complete_order
 def _post_checkout(client, data):
     # Normal browser fixtures acknowledge the public quote before submitting.
     # Separate promotion tests exercise missing, stale and forged acceptance.
-    data = dict(data)
+    data = {"checkout_attempt": checkout_token(client.session), **data}
     if data.get("delivery_method") == "ship" and data.get("postal_code"):
         quote = client.get(
             reverse("shipping:quote"),

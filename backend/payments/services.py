@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
+from uuid import uuid4
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -34,6 +35,10 @@ logger = logging.getLogger("payments.services")
 
 
 class PaymentValidationError(ValueError):
+    pass
+
+
+class PreferenceInProgress(MercadoPagoError):
     pass
 
 
@@ -211,57 +216,71 @@ def build_preference_payload(draft: PaymentDraft) -> dict:
 
 
 def create_checkout_preference(draft_token) -> PaymentDraft:
-    draft = PaymentDraft.objects.get(token=draft_token)
-    if draft.order_id:
-        return draft
-    if draft.stock_released_at or not draft.reservation_expires_at:
-        raise PaymentValidationError("La reserva ya no esta disponible.")
-    if draft.reservation_expires_at <= timezone.now():
-        raise PaymentValidationError("La reserva vencio. Volve al carrito.")
-    if draft.mp_init_point:
-        return draft
-
-    preference = create_preference(
-        build_preference_payload(draft),
-        idempotency_key=f"rasel-draft-{draft.token}",
-    )
-    preference_id = str(preference.get("id") or "")
-    init_point = str(preference.get("init_point") or "")
-    collector_id = str(preference.get("collector_id") or "")
-    if not all((preference_id, init_point, collector_id)):
-        raise MercadoPagoError("Mercado Pago devolvio una preferencia incompleta")
-
     with transaction.atomic():
-        locked = PaymentDraft.objects.select_for_update().get(pk=draft.pk)
+        draft = PaymentDraft.objects.select_for_update().get(token=draft_token)
+        now = timezone.now()
+        if draft.order_id or draft.state == "pending":
+            return draft
         if (
-            locked.stock_released_at
-            or locked.order_id
-            or not locked.reservation_expires_at
-            or locked.reservation_expires_at <= timezone.now()
+            draft.stock_released_at
+            or not draft.reservation_expires_at
+            or draft.reservation_expires_at <= now
         ):
-            raise PaymentValidationError("La reserva vencio antes de iniciar el pago.")
-        if not locked.mp_init_point:
+            raise PaymentValidationError("La reserva ya no está disponible para iniciar el pago.")
+        if draft.mp_init_point:
+            return draft
+        if draft.preference_claim_until and draft.preference_claim_until > now:
+            raise PreferenceInProgress("Ya estamos preparando el pago.")
+        claim = uuid4()
+        draft.preference_claim = claim
+        draft.preference_claim_until = now + timedelta(minutes=3)
+        draft.save(update_fields=["preference_claim", "preference_claim_until"])
+
+    try:
+        preference = create_preference(
+            build_preference_payload(draft),
+            idempotency_key=f"rasel-draft-{draft.token}",
+        )
+        preference_id = str(preference.get("id") or "")
+        init_point = str(preference.get("init_point") or "")
+        collector_id = str(preference.get("collector_id") or "")
+        if not all((preference_id, init_point, collector_id)):
+            raise MercadoPagoError("Mercado Pago devolvio una preferencia incompleta")
+
+        with transaction.atomic():
+            locked = PaymentDraft.objects.select_for_update().get(pk=draft.pk)
+            if locked.order_id or locked.state == "pending" or locked.mp_init_point:
+                return locked
+            if locked.preference_claim != claim:
+                raise PreferenceInProgress("Ya estamos preparando el pago.")
+            if locked.stock_released_at or locked.reservation_expires_at <= timezone.now():
+                raise PaymentValidationError("La reserva venció antes de iniciar el pago.")
             locked.mp_preference_id = preference_id
             locked.mp_init_point = init_point
             locked.mp_collector_id = collector_id
             locked.state = "preference_created"
             locked.processing_error = ""
-            locked.save(
-                update_fields=[
-                    "mp_preference_id",
-                    "mp_init_point",
-                    "mp_collector_id",
-                    "state",
-                    "processing_error",
-                ]
-            )
-        return locked
+            locked.save(update_fields=[
+                "mp_preference_id", "mp_init_point", "mp_collector_id", "state", "processing_error",
+            ])
+            return locked
+    finally:
+        PaymentDraft.objects.filter(pk=draft.pk, preference_claim=claim).update(
+            preference_claim=None, preference_claim_until=None,
+        )
 
 
-def release_reserved_stock(draft_token, state="released") -> bool:
+def release_reserved_stock(draft_token, state="released", *, unpaid_expiry=None) -> bool:
     with transaction.atomic():
         draft = PaymentDraft.objects.select_for_update().get(token=draft_token)
         if draft.stock_released_at or draft.order_id:
+            return False
+        if unpaid_expiry is not None and (
+            draft.mp_payment_id
+            or draft.state == "pending"
+            or not draft.reservation_expires_at
+            or draft.reservation_expires_at > unpaid_expiry
+        ):
             return False
         lock_coupon(coupon_id=draft.coupon_id)
         if not draft.stock_reserved_at:

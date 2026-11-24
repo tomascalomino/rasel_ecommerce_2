@@ -20,6 +20,11 @@ on:
         description: Required test order for staging; leave empty for production
         type: string
         default: ''
+      storefront:
+        description: Check catalogue or simulate an alert on staging
+        type: choice
+        options: [off, check, alert-test]
+        default: off
 
 permissions:
   contents: read
@@ -44,7 +49,13 @@ jobs:
         env:
           ENABLED: ${{ vars.META_DISPATCH_ENABLED }}
           DEPLOYED_SHA: ${{ vars.META_DISPATCH_SHA }}
+          PROBE_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.storefront != 'off' }}
         run: |
+          if [ "$PROBE_ONLY" = true ]; then
+            echo "active=false" >> "$GITHUB_OUTPUT"
+            echo "Manual catalogue check; Meta dispatch skipped." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           if [ "$ENABLED" != "1" ]; then
             echo "active=false" >> "$GITHUB_OUTPUT"
             echo "Meta dispatch is paused; no database access." >> "$GITHUB_STEP_SUMMARY"
@@ -57,7 +68,10 @@ jobs:
           echo "active=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout approved workflow tooling
-        if: steps.gate.outputs.active == 'true'
+        if: >-
+          ${{ !cancelled() && (steps.gate.outputs.active == 'true' ||
+              (github.event_name == 'schedule' && vars.STOREFRONT_PROBE_ENABLED == '1') ||
+              (github.event_name == 'workflow_dispatch' && inputs.storefront != 'off')) }}
         uses: actions/checkout@v7
         with:
           path: tooling
@@ -84,6 +98,21 @@ jobs:
         if: steps.gate.outputs.active == 'true'
         run: python -m pip install -r application/requirements.txt
 
+      - name: Check public catalogue
+        id: storefront
+        if: >-
+          ${{ !cancelled() &&
+              ((github.event_name == 'schedule' && vars.STOREFRONT_PROBE_ENABLED == '1') ||
+               (github.event_name == 'workflow_dispatch' && inputs.storefront != 'off')) }}
+        continue-on-error: true
+        env:
+          PROBE_MODE: ${{ inputs.storefront }}
+          PROBE_TARGET: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+        run: |
+          args=(--target "$PROBE_TARGET")
+          if [ "$PROBE_MODE" = alert-test ]; then args+=(--test-alert); fi
+          python3 tooling/scripts/check_storefront.py "${args[@]}"
+
       - name: Diagnose and dispatch existing Purchase events
         if: steps.gate.outputs.active == 'true'
         env:
@@ -107,3 +136,9 @@ jobs:
         run: |
           echo "Meta Purchase dispatch: $OUTCOME. See sanitized counts in the dispatch step." >> "$GITHUB_STEP_SUMMARY"
           echo "Payment confirmation is independent of this job. Failed sends remain for review or retry." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report catalogue failure
+        if: always() && steps.storefront.outcome == 'failure'
+        run: |
+          echo "::error::El catálogo no superó la comprobación. Revisá el paso Check public catalogue."
+          exit 1

@@ -20,6 +20,7 @@ from django.test import (
 from django.urls import reverse
 from django.utils import timezone
 
+from orders.attempts import checkout_token
 from orders.models import Order
 from shipping.models import PickupPoint
 from shop.models import Category, Product, Variant
@@ -186,8 +187,8 @@ class MercadoPagoIntegrationTests(TestCase):
         )
         self.assertNotIn("binary_mode", payload)
 
-    @patch("payments.admin.messages.success")
-    @patch("payments.admin.search_payments", return_value=[])
+    @patch("payments.admin.messages.add_message")
+    @patch("payments.reconciliation.search_payments", return_value=[])
     def test_admin_releases_expired_reservation_only_after_provider_search(
         self, search, success
     ):
@@ -209,9 +210,9 @@ class MercadoPagoIntegrationTests(TestCase):
         self.assertEqual(self.variant.stock_qty, 3)
         success.assert_called_once()
 
-    @patch("payments.admin.messages.warning")
+    @patch("payments.admin.messages.add_message")
     @patch(
-        "payments.admin.search_payments",
+        "payments.reconciliation.search_payments",
         side_effect=MercadoPagoError("temporary"),
     )
     def test_admin_keeps_stock_when_provider_lookup_fails(self, search, warning):
@@ -258,6 +259,7 @@ class MercadoPagoIntegrationTests(TestCase):
             response = self.client.post(
                 reverse("orders:checkout"),
                 {
+                    "checkout_attempt": checkout_token(self.client.session),
                     "full_name": "Checkout MP",
                     "email": "checkout@example.com",
                     "phone": "",
@@ -585,7 +587,7 @@ class ReconciliationTests(TestCase):
             "live_mode": False,
         }
 
-    @patch("payments.management.commands.reconcile_mp_payments.search_payments")
+    @patch("payments.reconciliation.search_payments")
     def test_expired_reservation_is_released_only_after_api_search(self, search):
         search.return_value = []
         call_command("reconcile_mp_payments", batch_size=100)
@@ -595,7 +597,7 @@ class ReconciliationTests(TestCase):
         self.assertEqual(self.draft.state, "expired")
         search.assert_called_once_with(str(self.draft.token))
 
-    @patch("payments.management.commands.reconcile_mp_payments.search_payments")
+    @patch("payments.reconciliation.search_payments")
     def test_provider_failure_keeps_stock_and_fails_cron(self, search):
         search.side_effect = MercadoPagoError("temporary")
         with self.assertRaises(CommandError):
@@ -605,7 +607,7 @@ class ReconciliationTests(TestCase):
         self.assertEqual(self.variant.stock_qty, 2)
         self.assertIsNone(self.draft.stock_released_at)
 
-    @patch("payments.management.commands.reconcile_mp_payments.search_payments")
+    @patch("payments.reconciliation.search_payments")
     def test_lost_approved_webhook_is_finalized(self, search):
         search.return_value = [self.payment()]
         with self.captureOnCommitCallbacks(execute=True):
@@ -613,8 +615,8 @@ class ReconciliationTests(TestCase):
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(Order.objects.get().fulfillment_status, "pending")
 
-    @patch("payments.management.commands.reconcile_mp_payments.get_payment")
-    @patch("payments.management.commands.reconcile_mp_payments.cancel_payment")
+    @patch("payments.reconciliation.get_payment")
+    @patch("payments.reconciliation.cancel_payment")
     def test_old_pending_is_cancelled_before_stock_release(self, cancel, get):
         self.draft.created_at = timezone.now() - timedelta(hours=49)
         self.draft.mp_payment_id = "PAY-CRON"
@@ -630,6 +632,49 @@ class ReconciliationTests(TestCase):
         self.draft.refresh_from_db()
         self.assertEqual(self.draft.state, "cancelled")
         self.assertIsNotNone(self.draft.stock_released_at)
+
+    @patch("payments.reconciliation.search_payments", return_value=[])
+    @patch("payments.reconciliation.get_payment")
+    def test_expired_reservation_takes_priority_over_full_batch_of_approved(self, get, search):
+        earlier = timezone.now() - timedelta(days=3)
+        for i in range(3):
+            order = Order.objects.create(
+                full_name="Prueba", email="buyer@example.invalid",
+                payment_method="mp", payment_status="approved", total_amount=700,
+            )
+            PaymentDraft.objects.create(
+                full_name="Prueba", email="buyer@example.invalid", created_at=earlier,
+                state="approved", total_amount=700, mp_payment_id=f"old-{i}", order=order,
+            )
+        call_command("reconcile_mp_payments", batch_size=1)
+        self.draft.refresh_from_db()
+        self.assertIsNotNone(self.draft.stock_released_at)
+        search.assert_called_once_with(str(self.draft.token))
+        get.assert_not_called()
+
+    @patch("payments.reconciliation.get_payment")
+    @patch("payments.reconciliation.cancel_payment", side_effect=MercadoPagoError("already settled"))
+    def test_payment_approved_during_cancellation_is_finalized(self, cancel, get):
+        PaymentDraft.objects.filter(pk=self.draft.pk).update(
+            created_at=timezone.now() - timedelta(hours=49),
+            state="pending", mp_payment_id="PAY-CRON",
+        )
+        get.side_effect = [self.payment(status="pending"), self.payment(status="approved")]
+        call_command("reconcile_mp_payments", batch_size=1)
+        self.draft.refresh_from_db()
+        self.assertEqual(self.draft.state, "approved")
+        self.assertEqual(self.draft.order.payment_status, "approved")
+        self.assertIsNone(self.draft.stock_released_at)
+        cancel.assert_called_once()
+
+    @patch("payments.reconciliation.search_payments")
+    def test_ambiguous_payment_status_keeps_stock(self, search):
+        search.return_value = [self.payment(status="unknown")]
+        with self.assertRaises(CommandError):
+            call_command("reconcile_mp_payments", batch_size=1)
+        self.draft.refresh_from_db()
+        self.assertEqual(self.draft.processing_error, "unknown_payment_status")
+        self.assertIsNone(self.draft.stock_released_at)
 
 
 class OpsKpiOrderStateTests(TestCase):
