@@ -1029,12 +1029,22 @@ producción.
   **Preview data**. No usar **Restore** directamente sobre producción sin un
   plan de recuperación validado.
 - Los logs de Render son la observabilidad activa. Sentry no está configurado.
+- La organización `rasel` usa Neon Launch. El cómputo de producción de
+  `rasel-ecommerce` autoescala de 0,25 a 1 CU. `rasel-mp-staging` usa 0,25 CU
+  fijos. Los dos cómputos se suspenden tras cinco minutos de inactividad.
+- En Neon, **Billing → Spending notifications** está configurado con un umbral
+  mensual de USD 20 para toda la organización. Los administradores reciben
+  avisos a USD 16 y USD 20. Al alcanzar el umbral, los proyectos siguen
+  funcionando y se sigue facturando el consumo.
+- El respaldo `backup-pre-mp-production-2026-08-07` está archivado. Si una
+  recuperación requiere activarlo, limitar su cómputo a 0,25 CU antes de abrir
+  una conexión.
 - Para investigar consumo de Neon, registrar el período y el proyecto en
   **Usage** y consultar **Monitoring → System operations**. Comparar las
   horas de actividad con los accesos de Render por ruta y agente declarado y
   con los runs del despacho de Meta. Neon mide capacidad por tiempo activo;
-  un conteo de peticiones no asigna CU-horas por cliente, bot o tarea. En
-  Neon Free hay un día de métricas y en Render Hobby siete días de logs.
+  un conteo de peticiones no asigna CU-horas por cliente, bot o tarea. Neon
+  Launch conserva tres días de métricas y Render Hobby siete días de logs.
 - `ops_kpis --days 7` sigue siendo manual. La conciliación de Mercado Pago
   también es manual hasta incorporar `rasel-mp-reconcile`; registrar cada
   revisión operativa y no asumir que existe una ejecución programada.

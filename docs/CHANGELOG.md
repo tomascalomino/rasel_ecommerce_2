@@ -3,6 +3,15 @@
 Este historial registra cambios ya aplicados. El comportamiento vigente se
 documenta en `CURRENT_SYSTEM.md` y los procedimientos en `OPERATIONS.md`.
 
+## 2026-11-23 — Límites de cómputo de Neon (1.16.4)
+
+- La organización `rasel` pasó a Neon Launch y se activaron avisos de gasto
+  mensual a USD 16 y USD 20.
+- Producción autoescala de 0,25 a 1 CU y staging usa 0,25 CU fijos. Ambos
+  se suspenden tras cinco minutos de inactividad.
+- Se verificaron catálogo y checkout móvil en ambos entornos hasta el paso
+  anterior al pago. El respaldo histórico sigue archivado.
+
 ## 2026-11-23 — Consultas de promociones y cuota de Neon (1.16.2)
 
 - El regalo vencido detiene el refresco en el navegador. Su endpoint devuelve
