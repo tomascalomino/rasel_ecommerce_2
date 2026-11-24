@@ -70,7 +70,12 @@ class CouponTests(TestCase):
         self.addCleanup(self.mailer.stop)
 
     def cart(self, qty=2, bottle=True):
+        from uuid import uuid4
+
+        from cart.cart import CHECKOUT_CYCLE
+
         session = self.client.session
+        session[CHECKOUT_CYCLE] = uuid4().hex
         session["cart"] = {str(self.box.pk): {"qty": qty}}
         if bottle:
             session["cart"][str(self.bottle.pk)] = {"qty": 1}
@@ -83,8 +88,9 @@ class CouponTests(TestCase):
         )
 
     def form(self, method="transfer"):
-        response = self.client.get(reverse("orders:checkout"))
+        response = self.client.get(reverse("orders:checkout"), follow=True)
         return {
+            "checkout_attempt": response.context["checkout_attempt"],
             "full_name": "Prueba Cupón",
             "email": "coupon@example.invalid",
             "phone": "1100000000",
@@ -197,14 +203,20 @@ class CouponTests(TestCase):
         self.assertEqual(self.box.stock_qty, 30)
 
     def test_last_coupon_sold_and_changed_conditions_reconfirm_before_stock(self):
+        from django.test import Client
+
         self.coupon.max_uses = 1
         self.coupon.save()
+        first_buyer = Client()
         self.cart()
         self.apply()
         stale = self.form()
-        self.assertEqual(self.submit(stale).status_code, 302)
+        second_buyer = self.client
+        self.client = first_buyer
         self.cart()
         self.apply()
+        self.assertEqual(self.submit().status_code, 302)
+        self.client = second_buyer
         self.assertContains(self.submit(stale), "Se agotaron los usos")
         self.assertEqual(Order.objects.count(), 1)
         self.box.refresh_from_db()
@@ -298,6 +310,7 @@ class CouponTests(TestCase):
         self.coupon.save()
         draft = self.draft()
         release_reserved_stock(draft.token, "expired")
+        self.client.get(reverse("payments:return", args=["status"]))
         self.cart()
         self.apply()
         self.assertEqual(self.submit().status_code, 302)

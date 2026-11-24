@@ -1,103 +1,41 @@
 from django.contrib import admin, messages
 from django.utils import timezone
 
-from .mercadopago import MercadoPagoError, get_payment, search_payments
 from .models import PaymentDraft, PaymentEvent
-from .services import PaymentValidationError, process_payment, release_reserved_stock
+from .reconciliation import reconcile_draft
+
+
+def _reconcile_selection(request, queryset, *, release_expired):
+    now = timezone.now()
+    checked = processed = released = failed = review = 0
+    for draft in queryset:
+        result = reconcile_draft(draft, now, release_expired=release_expired)
+        checked += 1
+        processed += result.processed
+        released += result.released
+        failed += bool(result.error)
+        review += bool(result.review)
+
+    if checked:
+        level = messages.WARNING if failed or review else messages.INFO
+        messages.add_message(
+            request, level,
+            f"{checked} revisados · {processed} procesados · {released} reservas liberadas · "
+            f"{failed} fallidos · {review} para revisión.",
+        )
 
 
 @admin.action(description="Reconciliar con Mercado Pago")
 def reconcile_with_mercadopago(modeladmin, request, queryset):
-    processed = 0
-    failed = 0
-    for draft in queryset:
-        try:
-            if draft.mp_payment_id:
-                payment = get_payment(draft.mp_payment_id)
-            else:
-                candidates = search_payments(str(draft.token))
-                payment = next(
-                    (
-                        row
-                        for row in candidates
-                        if str(row.get("external_reference") or "") == str(draft.token)
-                    ),
-                    None,
-                )
-            if not payment:
-                failed += 1
-                continue
-            process_payment(payment, str(payment.get("id") or ""), reconciled=True)
-            processed += 1
-        except (MercadoPagoError, PaymentValidationError):
-            failed += 1
-    if processed:
-        messages.success(request, f"{processed} pago(s) conciliados.")
-    if failed:
-        messages.warning(request, f"{failed} pago(s) requieren revision o reintento.")
+    _reconcile_selection(request, queryset, release_expired=False)
 
 
 @admin.action(description="Conciliar y liberar reservas vencidas")
 def reconcile_expired_reservations(modeladmin, request, queryset):
-    processed = 0
-    released = 0
-    skipped = 0
-    failed = 0
-    now = timezone.now()
-
-    for draft in queryset:
-        if draft.order_id or draft.stock_released_at:
-            skipped += 1
-            continue
-
-        PaymentDraft.objects.filter(pk=draft.pk).update(last_reconciled_at=now)
-        try:
-            if draft.mp_payment_id:
-                payment = get_payment(draft.mp_payment_id)
-            else:
-                candidates = search_payments(str(draft.token))
-                payment = next(
-                    (
-                        row
-                        for row in candidates
-                        if str(row.get("external_reference") or "") == str(draft.token)
-                    ),
-                    None,
-                )
-
-            if payment:
-                process_payment(
-                    payment,
-                    str(payment.get("id") or ""),
-                    reconciled=True,
-                )
-                processed += 1
-            elif (
-                draft.reservation_expires_at
-                and draft.reservation_expires_at <= now
-                and release_reserved_stock(draft.token, "expired")
-            ):
-                released += 1
-            else:
-                skipped += 1
-        except (MercadoPagoError, PaymentValidationError, OSError) as exc:
-            failed += 1
-            PaymentDraft.objects.filter(pk=draft.pk).update(
-                processing_error=str(exc)[:1000],
-            )
-
-    if processed or released:
-        messages.success(
-            request,
-            f"{processed} pago(s) conciliados; {released} reserva(s) liberadas.",
-        )
-    if skipped:
-        messages.info(request, f"{skipped} borrador(es) no requerian cambios.")
-    if failed:
-        messages.warning(
-            request,
-            f"{failed} borrador(es) conservaron stock por error de conciliacion.",
-        )
+    _reconcile_selection(
+        request, queryset.filter(order__isnull=True, stock_released_at__isnull=True),
+        release_expired=True,
+    )
 
 
 @admin.register(PaymentEvent)

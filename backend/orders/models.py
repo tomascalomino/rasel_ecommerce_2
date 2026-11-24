@@ -225,6 +225,31 @@ class Order(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot, CouponSn
         return "pending"
 
 
+class CheckoutAttempt(models.Model):
+    key = models.CharField(max_length=64, primary_key=True)
+    session_digest = models.CharField(max_length=64, db_index=True)
+    order = models.OneToOneField(
+        Order, null=True, on_delete=models.CASCADE, related_name="checkout_attempt"
+    )
+    draft = models.OneToOneField(
+        "payments.PaymentDraft",
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="checkout_attempt",
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(order__isnull=False, draft__isnull=True)
+                    | models.Q(order__isnull=True, draft__isnull=False)
+                ),
+                name="checkout_attempt_one_result",
+            )
+        ]
+
+
 class OrderItem(models.Model):
     variant_id_snapshot = models.PositiveBigIntegerField(
         null=True, blank=True, editable=False

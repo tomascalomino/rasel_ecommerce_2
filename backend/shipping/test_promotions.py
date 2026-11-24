@@ -250,6 +250,9 @@ class PromotionCheckoutTests(TestCase):
         ).json()["quote_token"]
 
     def submit(self, **changes):
+        from orders.attempts import checkout_token
+
+        changes.setdefault("checkout_attempt", checkout_token(self.client.session))
         return self.client.post(reverse("orders:checkout"), {**self.data, **changes})
 
     def test_no_javascript_review_then_confirm_preserves_values(self):

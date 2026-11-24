@@ -84,7 +84,15 @@ def search_payments(external_reference: str) -> list[dict]:
             }
         ),
     )
-    return payload.get("results", []) if isinstance(payload.get("results"), list) else []
+    results = payload.get("results")
+    if not isinstance(results, list) or any(not isinstance(row, dict) for row in results):
+        raise MercadoPagoError("Mercado Pago devolvió una búsqueda de pagos incompleta")
+    paging = payload.get("paging")
+    if isinstance(paging, dict):
+        total = paging.get("total")
+        if isinstance(total, int) and total > len(results):
+            raise MercadoPagoError("Mercado Pago devolvió más pagos de los que se pudieron verificar")
+    return results
 
 
 def cancel_payment(payment_id: str, idempotency_key: str) -> dict:

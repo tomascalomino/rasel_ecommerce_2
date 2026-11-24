@@ -55,6 +55,7 @@ jobs:
         run: |
           python backend/manage.py check
           python backend/manage.py test config shop cart orders payments shipping analytics marketing
+          python scripts/test_check_storefront.py
 
       - name: Validate browser activity logic
         run: |

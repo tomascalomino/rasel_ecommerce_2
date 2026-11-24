@@ -16,6 +16,9 @@
     {% elif display_state == "rejected" or display_state == "cancelled" or display_state == "expired" or display_state == "released" %}
       <h1 class="h1 page-intro">El pago no se completo</h1>
       <p class="muted">La operacion fue rechazada, cancelada o vencio. Podes volver al carrito y elegir como pagar.</p>
+    {% elif can_resume %}
+      <h1 class="h1 page-intro">Tu reserva está lista</h1>
+      <p class="muted">Podés continuar el pago con el stock ya reservado.</p>
     {% else %}
       <span class="confirm-ic" style="background:#fff7e6;color:#a9770f;border-color:#f0e0b8;">
         <span class="icon">{% include "partials/icons/credit.svg" %}</span>
@@ -37,6 +40,12 @@
 
     <div class="spacer"></div>
     <div class="stack-row" style="justify-content:center;">
+      {% if can_resume %}
+        <form method="post" action="{% url 'payments:start' draft_id=draft.token %}">
+          {% csrf_token %}
+          <button class="btn btn-gold" type="submit">Continuar a Mercado Pago</button>
+        </form>
+      {% endif %}
       <a class="btn" href="{% url 'shop:product_list' %}">Volver a la tienda</a>
       {% if display_state == "rejected" or display_state == "cancelled" or display_state == "expired" or display_state == "released" %}
         <a class="btn btn-gold" href="{% url 'orders:checkout' %}">Volver al checkout</a>

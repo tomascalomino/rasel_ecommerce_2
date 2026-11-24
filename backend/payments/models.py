@@ -102,6 +102,8 @@ class PaymentDraft(ShippingPromotionSnapshot, MarketingSnapshot, GiftSnapshot, C
     mp_status = models.CharField(max_length=60, blank=True, default="")
     mp_status_detail = models.CharField(max_length=120, blank=True, default="")
     mp_init_point = models.URLField(max_length=500, blank=True, default="")
+    preference_claim = models.UUIDField(null=True, blank=True, editable=False)
+    preference_claim_until = models.DateTimeField(null=True, blank=True, editable=False)
     mp_collector_id = models.CharField(max_length=120, blank=True, default="")
     mp_live_mode = models.BooleanField(null=True, blank=True)
     last_reconciled_at = models.DateTimeField(null=True, blank=True)

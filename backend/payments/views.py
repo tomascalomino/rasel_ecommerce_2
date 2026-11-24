@@ -4,17 +4,20 @@ import logging
 from django.conf import settings
 from django.db import DatabaseError, IntegrityError
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from cart.cart import Cart
+from orders.attempts import closed_draft, current_key, owns_draft, restart_checkout
 from orders.emails import send_payment_alert
 
 from .mercadopago import MercadoPagoError, get_payment, validate_webhook_signature
 from .models import PaymentDraft, PaymentEvent
 from .services import (
     PaymentValidationError,
+    PreferenceInProgress,
     create_checkout_preference,
     process_payment,
 )
@@ -35,27 +38,42 @@ def _session_draft(request):
 @require_POST
 def start(request, draft_id):
     """Retry preference creation; the initial attempt happens in checkout POST."""
-    if not settings.MP_CHECKOUT_ENABLED:
-        return HttpResponse(
-            "Mercado Pago no esta disponible para pagos nuevos.", status=503
-        )
-    if str(request.session.get("active_payment_draft") or "") != str(draft_id):
+    draft = PaymentDraft.objects.filter(token=draft_id).first()
+    if draft is None or not owns_draft(request.session, draft):
         return HttpResponse(status=403)
+    return continue_payment(request, draft)
 
-    draft = get_object_or_404(PaymentDraft, token=draft_id)
-    if draft.order_id:
-        return redirect("orders:confirmation", order_id=draft.order_id)
+
+def continue_payment(request, draft):
+    if draft.order_id or closed_draft(draft):
+        return render_payment_status(request, draft)
+    request.session["active_payment_draft"] = str(draft.token)
+    if draft.state == "pending":
+        return redirect("payments:return", result="status")
+    if not settings.MP_CHECKOUT_ENABLED:
+        return HttpResponse("Mercado Pago no está disponible para pagos nuevos.", status=503)
     try:
         draft = create_checkout_preference(draft.token)
+    except PreferenceInProgress:
+        return render(
+            request, "payments/payment_retry.html",
+            {"draft": draft, "preparing": True}, status=202,
+        )
     except PaymentValidationError as exc:
         logger.warning("No se pudo reintentar draft=%s: %s", draft.token, exc)
+        draft.refresh_from_db()
+        if draft.order_id or closed_draft(draft):
+            return render_payment_status(request, draft)
         return render(
             request,
             "payments/payment_result.html",
-            {"display_state": "expired", "draft": draft},
+            {"display_state": "verifying", "draft": draft},
             status=409,
         )
     except MercadoPagoError:
+        PaymentDraft.objects.filter(pk=draft.pk, state="reserved", mp_init_point="").update(
+            processing_error="preference_api_unavailable"
+        )
         logger.exception(
             "Mercado Pago no disponible al reintentar draft=%s", draft.token
         )
@@ -65,13 +83,16 @@ def start(request, draft_id):
             {"draft": draft},
             status=503,
         )
+    if draft.order_id:
+        return render_payment_status(request, draft)
+    if draft.state == "pending":
+        return redirect("payments:return", result="status")
     return redirect(draft.mp_init_point)
 
 
 @require_GET
 def payment_return(request, result: str):
     """Never trusts browser status; it only processes a payment read from MP's API."""
-    del result
     payment_id = str(
         request.GET.get("payment_id") or request.GET.get("collection_id") or ""
     )
@@ -94,29 +115,54 @@ def payment_return(request, result: str):
             )
 
     draft = active_draft
-    order = active_draft.order if active_draft else None
     if processed and active_draft and processed.draft:
         if processed.draft.pk == active_draft.pk:
             draft = processed.draft
-            order = processed.order
+    return render_payment_status(request, draft, allow_resume=result == "status")
 
+
+def render_payment_status(request, draft, *, allow_resume=False):
+    order = draft.order if draft else None
+    active = draft and request.session.get("active_payment_draft") == str(draft.token)
     display_state = "verifying"
     if order and order.payment_status == "review":
         display_state = "review"
     elif order and order.payment_status == "approved":
         display_state = "approved"
-        Cart(request.session).clear()
-        request.session.pop("active_payment_draft", None)
-        request.session.modified = True
-    elif draft and draft.state in {"rejected", "cancelled", "expired", "released"}:
+        attempt = getattr(draft, "checkout_attempt", None)
+        if attempt is None or attempt.key == current_key(request.session):
+            Cart(request.session).clear()
+        if active:
+            request.session.pop("active_payment_draft", None)
+            request.session.modified = True
+    elif draft and closed_draft(draft):
         display_state = draft.state
+        attempt = getattr(draft, "checkout_attempt", None)
+        if (attempt and attempt.key == current_key(request.session)) or (not attempt and active):
+            restart_checkout(request.session)
+        elif active:
+            request.session.pop("active_payment_draft", None)
+            request.session.modified = True
     elif draft and draft.state in {"pending", "preference_created", "reserved"}:
         display_state = "pending"
 
     return render(
         request,
         "payments/payment_result.html",
-        {"display_state": display_state, "order": order, "draft": draft},
+        {
+            "display_state": display_state,
+            "order": order,
+            "draft": draft,
+            "can_resume": (
+                allow_resume
+                and settings.MP_CHECKOUT_ENABLED
+                and draft
+                and not order
+                and draft.state in {"reserved", "preference_created"}
+                and draft.reservation_expires_at
+                and draft.reservation_expires_at > timezone.now()
+            ),
+        },
     )
 
 

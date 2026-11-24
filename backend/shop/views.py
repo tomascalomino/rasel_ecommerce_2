@@ -151,7 +151,7 @@ def product_list(request):
     query_params.pop("page", None)
     query_string = query_params.urlencode()
 
-    return render(
+    response = render(
         request,
         "shop/product_list.html",
         {
@@ -163,6 +163,12 @@ def product_list(request):
             "total_products": len(all_products),
         },
     )
+    if request.headers.get("User-Agent") == "RaSel Storefront Monitor/1.0":
+        nonce = request.GET.get("_rasel_probe", "")
+        if len(nonce) == 32 and all(char in "0123456789abcdef" for char in nonce):
+            response["X-RaSel-Probe"] = nonce
+            response["Cache-Control"] = "private, no-store"
+    return response
 
 
 

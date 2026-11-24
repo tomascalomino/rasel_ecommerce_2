@@ -17,6 +17,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
+from orders.attempts import checkout_token
 from orders.models import Order
 from payments.models import PaymentDraft
 from shipping.models import PickupPoint
@@ -260,10 +261,17 @@ class CheckoutAttributionTests(TransactionTestCase):
             reverse("cart:add"), {"variant_id": self.variant.pk, "qty": 1}
         )
 
+    def checkout_data(self, method="transfer"):
+        return {
+            **self.data,
+            "payment_method": method,
+            "checkout_attempt": checkout_token(self.browser.session),
+        }
+
     def test_offline_snapshot_survives_cookie_changes_and_refunds(self):
         self.browser.get("/?utm_source=instagram&utm_campaign=launch")
         self.add()
-        self.browser.post(reverse("orders:checkout"), self.data)
+        self.browser.post(reverse("orders:checkout"), self.checkout_data())
         order = Order.objects.get()
         self.assertEqual(order.analytics_attribution["source"], "instagram")
         self.assertEqual(
@@ -286,14 +294,14 @@ class CheckoutAttributionTests(TransactionTestCase):
     def test_cash_direct_and_attribution_failure_do_not_block_purchase(self):
         self.add()
         self.browser.post(
-            reverse("orders:checkout"), {**self.data, "payment_method": "cod"}
+            reverse("orders:checkout"), self.checkout_data("cod")
         )
         self.assertEqual(Order.objects.get().analytics_attribution["source"], "directo")
         self.add()
         with patch(
             "analytics.attribution.current_contact", side_effect=RuntimeError("failure")
         ):
-            response = self.browser.post(reverse("orders:checkout"), self.data)
+            response = self.browser.post(reverse("orders:checkout"), self.checkout_data())
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Order.objects.latest("pk").analytics_attribution, {})
 
@@ -304,11 +312,11 @@ class CheckoutAttributionTests(TransactionTestCase):
         self.browser.get("/?utm_source=instagram")
         self.add()
         with patch(
-            "orders.views.create_checkout_preference",
+            "payments.views.create_checkout_preference",
             side_effect=MercadoPagoError("unavailable"),
         ):
             response = self.browser.post(
-                reverse("orders:checkout"), {**self.data, "payment_method": "mp"}
+                reverse("orders:checkout"), self.checkout_data("mp")
             )
         self.assertEqual(response.status_code, 503)
         self.assertEqual(

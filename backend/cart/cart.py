@@ -9,6 +9,7 @@ from shop.models import Variant
 
 
 SESSION_KEY = "cart"
+CHECKOUT_CYCLE = "rasel_checkout_cycle"
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class Cart:
         self.session.pop(SESSION_KEY, None)
         self.session.pop("rasel_coupon_code", None)
         self.session.pop("rasel_meta_checkout_cycle", None)
+        self.session.pop(CHECKOUT_CYCLE, None)
         self.session.modified = True
 
     def add(self, variant_id: int, qty: int = 1, override: bool = False) -> None:
@@ -49,6 +51,7 @@ class Cart:
         if key not in self._cart:
             if not self._cart:
                 self.session["rasel_meta_checkout_cycle"] = str(uuid.uuid4())
+                self.session[CHECKOUT_CYCLE] = uuid.uuid4().hex
             self._cart[key] = {"qty": 0}
 
         if override:
@@ -64,6 +67,7 @@ class Cart:
             del self._cart[key]
             if not self._cart:
                 self.session.pop("rasel_meta_checkout_cycle", None)
+                self.session.pop(CHECKOUT_CYCLE, None)
             self.save()
 
     def set_qty(self, variant_id: int, qty: int) -> None:

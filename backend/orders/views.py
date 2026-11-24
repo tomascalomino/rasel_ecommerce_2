@@ -2,9 +2,11 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.sessions.models import Session
 from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from cart.cart import Cart, CartItem
@@ -14,12 +16,8 @@ from marketing.tracking import checkout_snapshot as marketing_snapshot
 from config.pricing import (
     get_offline_payment_discount_percent,
 )
-from payments.mercadopago import MercadoPagoError
-from payments.services import (
-    PaymentValidationError,
-    create_checkout_preference,
-    reserve_payment_draft,
-)
+from payments.services import reserve_payment_draft
+from payments.views import continue_payment
 from shipping.models import PickupPoint
 from shipping.services import resolve_shipping
 from shipping.promotions import (
@@ -30,7 +28,7 @@ from shipping.promotions import (
     sign_quote,
 )
 from shop.models import Variant
-from shop.gifts import GIFT_END, GiftOfferChanged, checkout_gift, gift_state, offer_token
+from shop.gifts import GIFT_END, checkout_gift, gift_state, offer_token
 from shop.coupons import (
     SESSION_KEY as COUPON_SESSION_KEY,
     assign_coupon,
@@ -40,9 +38,13 @@ from shop.coupons import (
     quote_coupon,
 )
 
+from .attempts import (
+    checkout_token, current_key, existing_payment, result_for_key, session_digest,
+    submitted_key,
+)
 from .emails import send_order_confirmation
 from .forms import CheckoutForm
-from .models import Order, OrderItem
+from .models import CheckoutAttempt, Order, OrderItem
 
 
 def _render_checkout(request, cart, form, discount_percent, review_quote=None):
@@ -90,6 +92,7 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
             "cyber_gift": current_gift,
             "show_gift_updates": now < GIFT_END,
             "form": form,
+            "checkout_attempt": checkout_token(request.session),
             "coupon_quote": coupon_quote,
             "coupon_discount": selected_coupon_discount,
             "mp_enabled": settings.MP_CHECKOUT_ENABLED,
@@ -259,14 +262,22 @@ def _create_offline_order(
 
 
 @require_http_methods(["GET", "POST"])
+@never_cache
 def checkout(request):
     cart = Cart(request.session)
+    key = None
+    if request.method == "POST":
+        key = submitted_key(request.session, request.POST.get("checkout_attempt"))
+        if key and (attempt := result_for_key(request.session, key)):
+            return _checkout_result(request, cart, attempt)
     if len(cart) == 0:
         return redirect("shop:product_list")
 
     discount_percent = get_offline_payment_discount_percent(request)
 
     if request.method != "POST":
+        if request.session.get("active_payment_draft"):
+            return redirect("payments:return", result="status")
         return _render_checkout(
             request,
             cart,
@@ -275,6 +286,9 @@ def checkout(request):
         )
 
     form = CheckoutForm(request.POST, discount_percent=discount_percent)
+    if key != current_key(request.session):
+        form.add_error(None, "Revisá el resumen del carrito y confirmá para continuar.")
+        return _render_checkout(request, cart, form, discount_percent)
     if not form.is_valid():
         return _render_checkout(request, cart, form, discount_percent)
     if normalize_code(form.cleaned_data["coupon_code"]) != request.session.get(
@@ -315,79 +329,13 @@ def checkout(request):
         )
         return _render_checkout(request, cart, form, discount_percent)
 
-    if payment_method in {"transfer", "cod"}:
-        try:
-            order = _create_offline_order(
-                customer,
-                delivery,
-                cart_rows,
-                payment_method,
-                discount_percent,
-                analytics_attribution=checkout_snapshot(request),
-                marketing=marketing_snapshot(request),
-                shipping_quote_token=form.cleaned_data["shipping_quote_token"],
-                gift_offer_token=form.cleaned_data["gift_offer_token"],
-                coupon_code=request.session.get(COUPON_SESSION_KEY),
-                coupon_offer_token=form.cleaned_data["coupon_offer_token"],
-            )
-        except ShippingQuoteChanged as exc:
-            return _render_checkout(request, cart, form, discount_percent, exc.quote)
-        except (ValueError, Variant.DoesNotExist) as exc:
-            messages.error(
-                request,
-                (
-                    str(exc)
-                    if isinstance(exc, ValueError)
-                    else "Uno de los productos ya no esta disponible."
-                ),
-            )
-            return _render_checkout(request, cart, form, discount_percent)
-        mark_stage(request, "checkout_submitted")
-        cart.clear()
-        send_order_confirmation(order.id)
-        destination = (
-            "orders:cod_info" if payment_method == "cod" else "orders:transfer_info"
-        )
-        return redirect(destination, order_id=order.id)
-
-    if not settings.MP_CHECKOUT_ENABLED:
-        form.add_error(
-            "payment_method", "Mercado Pago no esta disponible en este momento."
-        )
-        return _render_checkout(request, cart, form, discount_percent)
-
-    draft_delivery = {
-        key: delivery[key]
-        for key in (
-            "delivery_method",
-            "pickup_point",
-            "pickup_point_label",
-            "shipping_cost",
-            "shipping_zone",
-            "shipping_carrier_arranged",
-        )
-    }
     try:
-        draft = reserve_payment_draft(
-            customer=customer,
-            delivery=draft_delivery,
-            cart_rows=cart_rows,
-            total_amount=delivery["grand_total"],
-            analytics_attribution=checkout_snapshot(request),
-            marketing=marketing_snapshot(request),
-            shipping_quote_token=form.cleaned_data["shipping_quote_token"],
-            gift_offer_token=form.cleaned_data["gift_offer_token"],
-            coupon_code=request.session.get(COUPON_SESSION_KEY),
-            coupon_offer_token=form.cleaned_data["coupon_offer_token"],
+        attempt, resume_draft, created = _submit_checkout(
+            request, key, form, customer, delivery, cart_rows, payment_method, discount_percent
         )
     except ShippingQuoteChanged as exc:
         return _render_checkout(request, cart, form, discount_percent, exc.quote)
-    except (
-        PaymentValidationError,
-        GiftOfferChanged,
-        ValueError,
-        Variant.DoesNotExist,
-    ) as exc:
+    except (ValueError, Variant.DoesNotExist) as exc:
         messages.error(
             request,
             (
@@ -397,25 +345,69 @@ def checkout(request):
             ),
         )
         return _render_checkout(request, cart, form, discount_percent)
+    if resume_draft:
+        return continue_payment(request, resume_draft)
+    if created:
+        mark_stage(request, "checkout_submitted")
+        if attempt.order_id:
+            send_order_confirmation(attempt.order_id)
+    return _checkout_result(request, cart, attempt)
 
-    mark_stage(request, "checkout_submitted")
-    request.session["active_payment_draft"] = str(draft.token)
-    request.session.modified = True
-    try:
-        draft = create_checkout_preference(draft.token)
-    except MercadoPagoError:
-        draft.processing_error = "preference_api_unavailable"
-        draft.save(update_fields=["processing_error"])
-        return render(
-            request,
-            "payments/payment_retry.html",
-            {"draft": draft},
-            status=503,
+
+def _submit_checkout(
+    request, key, form, customer, delivery, cart_rows, payment_method, discount_percent
+):
+    with transaction.atomic():
+        # Every guest cart already has a database session. This also serializes
+        # two POSTs with different cycle keys while a payment is still open.
+        if not Session.objects.select_for_update().filter(pk=request.session.session_key).exists():
+            raise ValueError("Tu sesión venció. Volvé al carrito para continuar.")
+        if attempt := result_for_key(request.session, key):
+            return attempt, None, False
+        if draft := existing_payment(request.session, check_attempts=True):
+            return None, draft, False
+
+        options = {
+            "analytics_attribution": checkout_snapshot(request),
+            "marketing": marketing_snapshot(request),
+            "shipping_quote_token": form.cleaned_data["shipping_quote_token"],
+            "gift_offer_token": form.cleaned_data["gift_offer_token"],
+            "coupon_code": request.session.get(COUPON_SESSION_KEY),
+            "coupon_offer_token": form.cleaned_data["coupon_offer_token"],
+        }
+        attempt = CheckoutAttempt(key=key, session_digest=session_digest(request.session))
+        if payment_method == "mp":
+            draft_delivery = {
+                field: delivery[field]
+                for field in (
+                    "delivery_method", "pickup_point", "pickup_point_label",
+                    "shipping_cost", "shipping_zone", "shipping_carrier_arranged",
+                )
+            }
+            attempt.draft = reserve_payment_draft(
+                customer=customer,
+                delivery=draft_delivery,
+                cart_rows=cart_rows,
+                total_amount=delivery["grand_total"],
+                **options,
+            )
+        else:
+            attempt.order = _create_offline_order(
+                customer, delivery, cart_rows, payment_method, discount_percent, **options
+            )
+        attempt.save(force_insert=True)
+        return attempt, None, True
+
+
+def _checkout_result(request, cart, attempt):
+    if attempt.order_id:
+        if current_key(request.session) == attempt.key and len(cart):
+            cart.clear()
+        destination = (
+            "orders:cod_info" if attempt.order.payment_method == "cod" else "orders:transfer_info"
         )
-    except PaymentValidationError as exc:
-        messages.error(request, str(exc))
-        return _render_checkout(request, cart, form, discount_percent)
-    return redirect(draft.mp_init_point)
+        return redirect(destination, order_id=attempt.order_id)
+    return continue_payment(request, attempt.draft)
 
 
 def confirmation(request, order_id):

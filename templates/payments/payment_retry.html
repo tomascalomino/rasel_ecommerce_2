@@ -5,12 +5,17 @@
 {% block content %}
 <div class="card confirm-card">
   <div class="card-inner">
-    <h1 class="h1 page-intro">Mercado Pago no respondio</h1>
-    <p class="muted">Tu stock sigue reservado por unos minutos. Podes reintentar de forma segura; no se generara un cobro duplicado.</p>
+    {% if preparing %}
+      <h1 class="h1 page-intro">Estamos preparando tu pago</h1>
+      <p class="muted">Esperá unos segundos y continuá con la misma reserva.</p>
+    {% else %}
+      <h1 class="h1 page-intro">Mercado Pago no respondió</h1>
+      <p class="muted">Tu stock sigue reservado. Podés reintentar el pago con la misma reserva.</p>
+    {% endif %}
     <div class="spacer"></div>
     <form method="post" action="{% url 'payments:start' draft_id=draft.token %}">
       {% csrf_token %}
-      <button class="btn btn-gold" type="submit">Reintentar Mercado Pago</button>
+      <button class="btn btn-gold" type="submit">Continuar a Mercado Pago</button>
     </form>
     <div class="spacer"></div>
     <a class="btn" href="{% url 'shop:product_list' %}">Volver a la tienda</a>

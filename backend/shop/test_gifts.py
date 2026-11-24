@@ -38,7 +38,12 @@ class CyberGiftTests(TestCase):
         self.config.save()
 
     def cart(self, qty=1):
+        from uuid import uuid4
+
+        from cart.cart import CHECKOUT_CYCLE
+
         session = self.client.session
+        session[CHECKOUT_CYCLE] = uuid4().hex
         session["cart"] = {str(self.variant.pk): {"qty": qty}}
         session.save()
 
@@ -48,6 +53,9 @@ class CyberGiftTests(TestCase):
                 "payment_method": method, "gift_offer_token": offer_token(gift_state())}
 
     def submit(self, data):
+        from orders.attempts import checkout_token
+
+        data = {"checkout_attempt": checkout_token(self.client.session), **data}
         if data["delivery_method"] == "ship":
             quote = self.client.get(reverse("shipping:quote"), {"postal_code": data["postal_code"], "subtotal": str(self.variant.price_ars)}).json()
             data["shipping_quote_token"] = quote["quote_token"]

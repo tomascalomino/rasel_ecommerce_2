@@ -30,6 +30,21 @@
   var timer;
   var couponInput = document.getElementById("id_coupon_code");
   var checkoutSubmit = document.querySelector("[data-checkout-submit]");
+  if (checkoutSubmit && checkoutSubmit.form) {
+    var submitLabel = checkoutSubmit.textContent;
+    checkoutSubmit.form.addEventListener("submit", function (event) {
+      if (checkoutSubmit.disabled) {
+        event.preventDefault();
+      } else if (event.submitter === checkoutSubmit && !event.defaultPrevented) {
+        checkoutSubmit.disabled = true;
+        checkoutSubmit.textContent = "Procesando…";
+      }
+    });
+    window.addEventListener("pageshow", function () {
+      checkoutSubmit.disabled = false;
+      checkoutSubmit.textContent = submitLabel;
+    });
+  }
   if (couponInput && couponInput.form && checkoutSubmit && couponInput.form.requestSubmit) {
     couponInput.form.addEventListener("keydown", function (event) {
       if (event.key !== "Enter" || event.target.tagName !== "INPUT" || /^(radio|checkbox|button|submit)$/.test(event.target.type)) return;
