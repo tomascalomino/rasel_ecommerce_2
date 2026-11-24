@@ -18,11 +18,12 @@ from shop.models import Product, Variant
 
 
 def checkout_cart(client):
+    reference = uuid4().hex
     variant = Variant.objects.create(
-        product=Product.objects.create(name="Prueba"), name="250 ml",
-        sku=f"TEST-{uuid4().hex}", price_ars=1000, stock_qty=5,
+        product=Product.objects.create(name=f"Prueba {reference}"), name="250 ml",
+        sku=f"TEST-{reference}", price_ars=1000, stock_qty=5,
     )
-    point = PickupPoint.objects.create(name="Prueba", address="Calle de prueba")
+    point = PickupPoint.objects.create(name=f"Prueba {reference}", address="Calle de prueba")
     client.post(reverse("cart:add"), {"variant_id": variant.pk, "qty": 1})
     page = client.get(reverse("orders:checkout"))
     return variant, {
@@ -110,7 +111,7 @@ class CheckoutReplayTests(TestCase):
 @override_settings(ANALYTICS_ENABLED=False, MP_CHECKOUT_ENABLED=True)
 class CheckoutOverlapTests(TransactionTestCase):
     @skipUnlessDBFeature("has_select_for_update")
-    def test_overlapping_posts_commit_one_order_per_payment_method(self):
+    def test_overlapping_posts_commit_one_attempt_per_payment_method(self):
         for method in ("transfer", "cod", "mp"):
             with self.subTest(method=method):
                 client = Client()
