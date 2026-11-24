@@ -631,7 +631,10 @@ es 24 horas desde su registro. No se configuró ningún cron ni worker.
   ```
 
 - `--send` autoriza envío y limpieza. Sin esa opción el comando no escribe ni
-  envía. Incluso con envío desactivado, `--send` ejecuta la limpieza. Si falta
+  envía. El uso manual de `--send` sin `--fail-on-problems` ejecuta la limpieza
+  en el momento, incluso si el envío está desactivado. En Actions, el comando
+  valida la configuración antes de trabajar y hace la limpieza solo cuando el
+  registro de mantenimiento está vencido, como máximo cada 24 horas. Si falta
   token o la configuración no es válida, lo informa y conserva pendientes.
   Sin ejecuciones del comando, automáticas o manuales, no hay envío ni reintentos.
 - Timeouts, HTTP 429/5xx y errores transitorios vuelven a pendientes con espera
@@ -757,7 +760,7 @@ de sesión autenticada; el código excluye esa ruta y los agentes reconocibles,
 pero esto no certifica la configuración operativa. Mantener esta comprobación
 pendiente hasta acceder a los paneles; no afirmar que los contadores son personas.
 
-La limpieza automática intenta un lote como máximo por minuto al llegar
+La limpieza automática intenta un lote como máximo cada quince minutos al llegar
 actividad medible, con exclusión mutua en la base entre workers. Elimina hasta
 100 filas por tabla: visitas iniciadas hace más de 90 días, sesiones Django ya
 vencidas y resúmenes (incluidos descartes) anteriores al mes actual y sus 11 meses previos.
@@ -1029,12 +1032,26 @@ producción.
   **Preview data**. No usar **Restore** directamente sobre producción sin un
   plan de recuperación validado.
 - Los logs de Render son la observabilidad activa. Sentry no está configurado.
+- La organización `rasel` usa Neon Launch. El cómputo de producción de
+  `rasel-ecommerce` autoescala de 0,25 a 1 CU. `rasel-mp-staging` usa 0,25 CU
+  fijos. Los dos cómputos se suspenden tras cinco minutos de inactividad.
+- En Neon, **Billing → Spending notifications** está configurado con un umbral
+  mensual de USD 20 para toda la organización. Los administradores reciben
+  avisos a USD 16 y USD 20. Al alcanzar el umbral, los proyectos siguen
+  funcionando y se sigue facturando el consumo.
+- El respaldo `backup-pre-mp-production-2026-08-07` está archivado. Si una
+  recuperación requiere activarlo, limitar su cómputo a 0,25 CU antes de abrir
+  una conexión.
 - Para investigar consumo de Neon, registrar el período y el proyecto en
   **Usage** y consultar **Monitoring → System operations**. Comparar las
   horas de actividad con los accesos de Render por ruta y agente declarado y
   con los runs del despacho de Meta. Neon mide capacidad por tiempo activo;
-  un conteo de peticiones no asigna CU-horas por cliente, bot o tarea. En
-  Neon Free hay un día de métricas y en Render Hobby siete días de logs.
+  un conteo de peticiones no asigna CU-horas por cliente, bot o tarea. Neon
+  Launch conserva tres días de métricas y Render Hobby siete días de logs.
+- Tras publicar una mejora de consultas, registrar las CU-horas, las visitas
+  diarias y las ejecuciones del despachador durante los primeros siete días
+  completos. Usar períodos equivalentes y conservar los valores al menos cada
+  tres días para poder contrastarlos con las métricas de Neon.
 - `ops_kpis --days 7` sigue siendo manual. La conciliación de Mercado Pago
   también es manual hasta incorporar `rasel-mp-reconcile`; registrar cada
   revisión operativa y no asumir que existe una ejecución programada.

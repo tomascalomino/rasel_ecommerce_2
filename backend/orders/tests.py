@@ -5,13 +5,15 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core import mail
-from django.db import close_old_connections, connections
+from django.db import close_old_connections, connection, connections
 from django.test import (
     RequestFactory,
     TestCase,
     TransactionTestCase,
+    override_settings,
     skipUnlessDBFeature,
 )
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from shipping.models import PickupPoint
@@ -135,6 +137,22 @@ class TransferCheckoutTests(TestCase):
             "postal_code": "1000",
             "payment_method": "transfer",
         }
+
+    @override_settings(META_PIXEL_ENABLED=True, META_PIXEL_ID="123456")
+    def test_checkout_reads_variants_once_for_summary_and_meta(self):
+        self._add_to_cart(2)
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(
+                reverse("orders:checkout"), HTTP_USER_AGENT="Mozilla/5.0 Mobile"
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["cart_subtotal"], Decimal("200.00"))
+        self.assertEqual(len(response.context["meta_config"]["events"]), 1)
+        reads = [
+            query for query in queries
+            if query["sql"].startswith("SELECT") and '"shop_variant"' in query["sql"]
+        ]
+        self.assertEqual(len(reads), 1, reads)
 
     def test_transfer_creates_order_decrements_stock_and_emails(self):
         self._add_to_cart(2)

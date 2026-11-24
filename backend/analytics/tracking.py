@@ -10,11 +10,12 @@ from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Value
+from django.db.models.functions import Greatest
 from django.utils import timezone
 
-from .maintenance import cleanup_batch
-from .classification import BOT, PAGES, eligible, exclusion_reason
+from .maintenance import CLEANUP_INTERVAL, cleanup_batch
+from .classification import PAGES, eligible, exclusion_reason
 from .models import (
     DailyDevice,
     DailyProduct,
@@ -31,12 +32,16 @@ SESSION_KEY = "rasel_analytics_visit"
 STAGES = {"cart_added", "checkout_opened", "checkout_submitted"}
 
 
+def _session_visit_id(request):
+    try:
+        return uuid.UUID(str(request.session.get(SESSION_KEY, "")))
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
 def prepare_visit(request):
     now = timezone.now()
-    try:
-        visit_id = uuid.UUID(str(request.session.get(SESSION_KEY, "")))
-    except (ValueError, TypeError, AttributeError):
-        visit_id = None
+    visit_id = _session_visit_id(request)
     visit = (
         Visit.objects.filter(
             pk=visit_id, last_seen_at__gt=now - timedelta(minutes=30)
@@ -62,15 +67,10 @@ def mark_stage(request, stage):
     transaction.on_commit(enqueue, robust=True)
 
 
-def mark_cart_increase(request, variant_id, previous_qty, current_qty):
+def mark_cart_increase(request, previous_qty, current_qty):
+    """Record an increase after the cart view validates the variant."""
     try:
-        if current_qty <= previous_qty or not eligible(request):
-            return
-        from shop.models import Variant
-
-        if Variant.objects.filter(
-            pk=variant_id, is_active=True, product__is_active=True
-        ).exists():
+        if current_qty > previous_qty and eligible(request):
             mark_stage(request, "cart_added")
     except Exception:
         logger.warning("No se pudo registrar la etapa de carrito.")
@@ -119,29 +119,64 @@ def device_for(request):
     return "unknown"
 
 
-def _increment(model, keys, field, defaults=None):
-    obj, _ = model.objects.get_or_create(**keys, defaults=defaults or {})
-    model.objects.filter(pk=obj.pk).update(**{field: F(field) + 1})
+def _increment(model, keys, counts, defaults=None):
+    rows = model.objects.filter(**keys)
+    updates = {field: F(field) + count for field, count in counts.items()}
+    if rows.update(**updates):
+        return False
+    _, created = model.objects.get_or_create(
+        **keys, defaults={**(defaults or {}), **counts}
+    )
+    if not created:
+        rows.update(**updates)
+    return created
+
+
+def _count_product(day, product):
+    if product:
+        _increment(
+            DailyProduct,
+            {"day": day, "product_id": product[0]},
+            {"pageviews": 1},
+            defaults={"product_name": product[1][:200]},
+        )
+
+
+def _count_source(request, day):
+    # The DailyTotal write for a new visit serializes the per-day source cap.
+    source, medium, campaign = source_for(request)
+    keys = dict(day=day, source=source, medium=medium, campaign=campaign)
+    if DailySource.objects.filter(**keys).update(visits=F("visits") + 1):
+        return
+    if DailySource.objects.filter(day=day).count() >= 100:
+        keys = dict(day=day, source="otros", medium="", campaign="")
+    _increment(DailySource, keys, {"visits": 1})
 
 
 def record(request, *, pageview=False, stages=(), product=None):
     now = timezone.now()
     today = timezone.localdate(now)
-    try:
-        visit_id = uuid.UUID(str(request.session.get(SESSION_KEY, "")))
-    except (ValueError, TypeError, AttributeError):
-        visit_id = None
+    visit_id = _session_visit_id(request)
+    current_visits = Visit.objects.filter(
+        pk=visit_id, last_seen_at__gt=now - timedelta(minutes=30)
+    )
+    stages = set(stages)
     with transaction.atomic():
-        visit = (
-            Visit.objects.select_for_update()
-            .filter(pk=visit_id, last_seen_at__gt=now - timedelta(minutes=30))
-            .first()
-            if visit_id
-            else None
-        )
+        if (
+            visit_id and pageview and not stages
+            and current_visits.update(last_seen_at=Greatest("last_seen_at", Value(now)))
+        ):
+            _increment(DailyTotal, {"day": today}, {"pageviews": 1})
+            _count_product(today, product)
+            return
+
+        visit = current_visits.select_for_update().first() if visit_id else None
         new_visit = visit is None
+        has_activity = bool(stages & {"cart_added", "checkout_submitted"})
         if new_visit:
             candidate = getattr(request, "_analytics_candidate", None)
+            new_stages = stages
+            became_active = has_activity
             visit = Visit.objects.create(
                 **(
                     {"id": candidate.id}
@@ -152,55 +187,43 @@ def record(request, *, pageview=False, stages=(), product=None):
                 last_seen_at=now,
                 day=today,
                 quality_version=2,
+                active=became_active,
+                **dict.fromkeys(new_stages, True),
             )
             Measurement.objects.get_or_create(pk=1, defaults={"started_at": now})
             QualityMeasurement.objects.get_or_create(pk=1, defaults={"started_at": now})
-        new_stages = {stage for stage in stages if not getattr(visit, stage)}
-        visit.last_seen_at = now
-        for stage in new_stages:
-            setattr(visit, stage, True)
-        became_active = (
-            visit.quality_version == 2
-            and not visit.active
-            and bool(set(stages) & {"cart_added", "checkout_submitted"})
-        )
-        if became_active:
-            visit.active = True
-        visit.save(update_fields=["last_seen_at", "active", *sorted(new_stages)])
+        else:
+            new_stages = {stage for stage in stages if not getattr(visit, stage)}
+            became_active = (
+                visit.quality_version == 2 and not visit.active and has_activity
+            )
+            visit.last_seen_at = max(visit.last_seen_at, now)
+            for stage in new_stages:
+                setattr(visit, stage, True)
+            fields = ["last_seen_at", *sorted(new_stages)]
+            if became_active:
+                visit.active = True
+                fields.append("active")
+            visit.save(update_fields=fields)
 
-        # Lock days in the same order, including visits spanning midnight.
-        for day in sorted({today, visit.day}):
-            DailyTotal.objects.get_or_create(day=day)
-            DailyTotal.objects.select_for_update().get(day=day)
-        if pageview:
-            DailyTotal.objects.filter(day=today).update(pageviews=F("pageviews") + 1)
-        increments = {stage: F(stage) + 1 for stage in new_stages}
+        increments = dict.fromkeys(new_stages, 1)
         if new_visit:
-            increments["visits"] = F("visits") + 1
-            increments["quality_visits"] = F("quality_visits") + 1
+            increments.update(visits=1, quality_visits=1)
         if became_active:
-            increments["active_visits"] = F("active_visits") + 1
-        if increments:
-            DailyTotal.objects.filter(day=visit.day).update(**increments)
+            increments["active_visits"] = 1
+        counts_by_day = {visit.day: increments} if increments else {}
+        if pageview:
+            counts_by_day.setdefault(today, {})["pageviews"] = 1
+        # Updates lock only affected days, in the same order across midnight.
+        for day, counts in sorted(counts_by_day.items()):
+            _increment(DailyTotal, {"day": day}, counts)
         if new_visit:
-            source, medium, campaign = source_for(request)
-            keys = dict(day=today, source=source, medium=medium, campaign=campaign)
-            if (
-                not DailySource.objects.filter(**keys).exists()
-                and DailySource.objects.filter(day=today).count() >= 100
-            ):
-                keys = dict(day=today, source="otros", medium="", campaign="")
-            _increment(DailySource, keys, "visits")
+            _count_source(request, today)
             _increment(
-                DailyDevice, dict(day=today, device=device_for(request)), "visits"
+                DailyDevice, dict(day=today, device=device_for(request)), {"visits": 1}
             )
-        if pageview and product:
-            _increment(
-                DailyProduct,
-                dict(day=today, product_id=product[0]),
-                "pageviews",
-                defaults={"product_name": product[1][:200]},
-            )
+        if pageview:
+            _count_product(today, product)
     if new_visit:
         request.session[SESSION_KEY] = str(visit.id)
 
@@ -212,12 +235,12 @@ class AnalyticsMiddleware:
 
     def maybe_cleanup(self):
         if time.monotonic() >= self.next_cleanup_check:
-            self.next_cleanup_check = time.monotonic() + 60
+            self.next_cleanup_check = time.monotonic() + CLEANUP_INTERVAL.total_seconds()
             cleanup_batch()
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         name = getattr(request.resolver_match, "view_name", "")
-        if name in PAGES | {"cart:add", "cart:update"}:
+        if request.method == "GET" and name in PAGES:
             try:
                 if eligible(request):
                     prepare_visit(request)
@@ -243,12 +266,13 @@ class AnalyticsMiddleware:
             if reason:
                 if pageview:
                     with transaction.atomic():
-                        QualityMeasurement.objects.get_or_create(pk=1)
-                        _increment(
+                        created = _increment(
                             DailyExclusion,
                             dict(day=timezone.localdate(), reason=reason),
-                            "requests",
+                            {"requests": 1},
                         )
+                        if created:
+                            QualityMeasurement.objects.get_or_create(pk=1)
                     self.maybe_cleanup()
                 return response
             if pageview and name == "orders:checkout":

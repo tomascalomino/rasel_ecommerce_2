@@ -160,7 +160,7 @@
       <h2 class="h2">Tu pedido</h2>
       <div class="spacer"></div>
       <div class="result-list">
-        {% for item in cart.items %}
+        {% for item in cart_rows %}
         <div class="row">
           <div>
             <div>{{ item.variant.product.name }}</div>
@@ -177,7 +177,7 @@
 
       <div
         class="ship-summary"
-        data-subtotal="{{ cart.total|unlocalize }}"
+        data-subtotal="{{ cart_subtotal|unlocalize }}"
         data-offline-discount="{{ offline_discount_amount|unlocalize }}"
         data-discount-percent="{{ offline_discount_percent }}"
         data-coupon-mp="{{ coupon_quote.mp_amount|unlocalize }}"
@@ -187,7 +187,7 @@
       >
         <div class="row">
           <span class="label-sm">Subtotal</span>
-          <span id="sum-subtotal">{{ cart.total|ars }}</span>
+          <span id="sum-subtotal">{{ cart_subtotal|ars }}</span>
         </div>
         <div class="row payment-discount-row" id="payment-discount-row" {% if not review_discount %}hidden{% endif %}>
           <span class="label-sm">Descuento por transferencia/efectivo</span>

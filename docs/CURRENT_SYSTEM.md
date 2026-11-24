@@ -279,9 +279,12 @@ conciliación requiere la rutina manual definida en `OPERATIONS.md`.
   existente, sin UTM en enlaces internos.
 - Fechas y estados se evalúan por consulta, sin cron ni servicios nuevos.
   El estado de envío se carga en las páginas con avisos o cotización. La
-  navegación inicial usa el estado del HTML. `/shipping/promotion-status/`
-  refresca el estado al cruzar fechas y al volver a una pestaña, y completa
-  el estado inicial del detalle de una campaña. Cotización, estado y HTML
+  navegación inicial usa el estado del HTML, incluido el detalle de una campaña.
+  Al volver a una pestaña, el navegador reutiliza el estado de envío durante
+  60 segundos y lo consulta al cruzar fechas de campaña. En checkout se vuelve
+  a cotizar si cambian la entrega, el código postal o la campaña aplicable,
+  o si la última cotización tiene cinco minutos al volver a la pestaña.
+  Cotización, estado y HTML
   comercial indican que no se cacheen. Las campañas se configuran por separado
   en staging y producción y ninguna migración habilita una promoción. No se
   agregan datos fiscales y sigue vigente la limitación del reintento MP ante
@@ -480,8 +483,9 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
   acumulados con la página visible, un aumento válido de carrito o un checkout
   enviado. No certifica humanidad. Un endpoint POST propio protegido por CSRF
   valida un token firmado por página contra la visita de la sesión; no crea
-  visitas ni prolonga su duración. Pestañas de visitas anteriores no activan la
-  visita actual. Sin JavaScript o ante errores, la compra sigue funcionando.
+  visitas ni prolonga su duración. Una página de una visita ya activa omite la
+  señal. Pestañas de visitas anteriores no activan la visita actual. Sin
+  JavaScript o ante errores, la compra sigue funcionando.
 - El porcentaje con actividad usa solamente visitas iniciadas con la nueva
   metodología. La evolución muestra **Sin registro** antes de su primera
   medición y avisa que el día inicial es parcial. No se recalculan históricos.
@@ -528,8 +532,9 @@ mensual del mes actual y los 11 anteriores, con fechas de Argentina.
   de visitas dura 90 días; los resúmenes, el mes actual y 11 meses anteriores.
   Los snapshots técnicos de atribución en órdenes y borradores conservan el mes
   actual y los once anteriores, sin modificar el resto de sus datos comerciales.
-  La limpieza se hace por lotes al llegar actividad y también admite ejecución
-  manual. Sin actividad puede demorarse hasta la próxima ejecución.
+  La limpieza automática se hace por lotes al llegar actividad, con al menos
+  quince minutos entre lotes. También admite ejecución manual. Sin actividad
+  puede demorarse hasta la próxima ejecución.
 - La fecha inicial corresponde al primer registro exitoso. No hay visitas
   retroactivas. Antes de esa fecha aparece **Sin registro**; los ceros posteriores
   indican ausencia de actividad registrada, que también puede deberse a pausas
@@ -636,8 +641,10 @@ ausencia de ejecuciones; el comando manual queda disponible para recuperación.
   registrada incluso después de limpiar la auditoría, evitando reconstrucciones.
 - `send_meta_events` diagnostica sin enviar ni limpiar por defecto. Con `--send`
   limpia y despacha lotes mediante reclamos persistentes recuperables. Actions
-  lo ejecuta periódicamente cuando se habilita el entorno; también se puede
-  ejecutar manualmente. `--fail-on-problems` marca fallo ante configuración
+  llama una vez al comando en cada ejecución del entorno habilitado. Con
+  `--fail-on-problems`, un registro en la base limita la limpieza a una vez
+  cada 24 horas. El envío manual sin esa opción ejecuta la limpieza en el
+  momento. `--fail-on-problems` marca fallo ante configuración
   incompleta, fallos de envío, eventos vencidos en el lote, destino/modo de
   prueba bloqueado y pendientes de más de una hora. Timeouts y
   errores temporales tienen espera creciente, con límite de 24 horas desde la

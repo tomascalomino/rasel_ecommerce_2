@@ -30,7 +30,12 @@ def site(request):
         status_url = reverse("shipping:promotion_status")
         if url_name == "shipping_promotion":
             status_url += f"?campaign={request.resolver_match.kwargs['slug']}"
-        shipping_config = {"state": public_state(now), "status_url": status_url}
+        shipping_config = {
+            "state": public_state(
+                now, detail=getattr(request, "_shipping_promotion_detail", None)
+            ),
+            "status_url": status_url,
+        }
     if digits and not digits.startswith("54"):
         digits = f"549{digits}"
     return {

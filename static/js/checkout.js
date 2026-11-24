@@ -24,6 +24,9 @@
   var shippingKnown = false;
   var quoteToken = document.getElementById("id_shipping_quote_token");
   var quoteVersion = 0;
+  var pendingQuoteVersion = null;
+  var quoteRequestedAt = null;
+  var quoteMaxAge = 5 * 60 * 1000;
   var timer;
   var couponInput = document.getElementById("id_coupon_code");
   var checkoutSubmit = document.querySelector("[data-checkout-submit]");
@@ -231,7 +234,8 @@
   }
 
   function fetchQuote() {
-    if (deliveryMode() === "pickup") return;
+    if (deliveryMode() === "pickup" || pendingQuoteVersion === quoteVersion) return;
+    clearTimeout(timer);
     var cp = cpInput.value.trim();
     var version = ++quoteVersion;
     quoteToken.value = "";
@@ -239,6 +243,8 @@
       reset();
       return;
     }
+    quoteRequestedAt = Date.now();
+    pendingQuoteVersion = version;
     fetch(
       quoteUrl + "?postal_code=" + encodeURIComponent(cp) +
         "&subtotal=" + encodeURIComponent(subtotal),
@@ -248,7 +254,8 @@
       .then(function (data) {
         if (version === quoteVersion && cp === cpInput.value.trim() && deliveryMode() === "ship") render(data);
       })
-      .catch(function () { if (version === quoteVersion && deliveryMode() === "ship") reset("Revisamos el envío al confirmar"); });
+      .catch(function () { if (version === quoteVersion && deliveryMode() === "ship") reset("Revisamos el envío al confirmar"); })
+      .finally(function () { if (pendingQuoteVersion === version) pendingQuoteVersion = null; });
   }
 
   cpInput.addEventListener("input", function () {
@@ -288,5 +295,15 @@
   // en envío re-cotiza si el CP ya viene cargado; en retiro aplica el modo.
   // Corre después de la restauración para que un CP restaurado re-cotice solo.
   applyDelivery(deliveryMode());
-  document.addEventListener("rasel:shipping-promotion-change", fetchQuote);
+  document.addEventListener("rasel:shipping-promotion-change", function () {
+    // Match the CP shape of a CABA promotion. The server still verifies the zone.
+    var cp = cpInput.value.replace(/[\s-]/g, "").toUpperCase();
+    if (deliveryMode() === "ship" && /^(?:1[0-4]\d{2}|C1[0-4]\d{2}(?:[A-Z]{3})?)$/.test(cp)) {
+      quoteVersion++;
+      fetchQuote();
+    }
+  });
+  document.addEventListener("rasel:shipping-promotion-resume", function () {
+    if (quoteRequestedAt === null || Date.now() - quoteRequestedAt >= quoteMaxAge) fetchQuote();
+  });
 })();

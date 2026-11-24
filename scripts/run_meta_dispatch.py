@@ -136,7 +136,6 @@ def execute(target, app_dir):
     print(
         f"Entorno: {target}. Código desplegado verificado. Diagnóstico sin datos personales."
     )
-    call_command("send_meta_events", order=order)
     call_command(
         "send_meta_events", send=True, limit=100, order=order, fail_on_problems=True
     )

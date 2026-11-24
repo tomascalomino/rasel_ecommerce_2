@@ -45,6 +45,7 @@ def cart_detail(request):
         "cart/cart_detail.html",
         {
             "cart": cart,
+            "cart_rows": rows,
             "coupon_quote": quote,
             "coupon_total": subtotal - quote.mp_amount,
             "cart_offline_total": subtotal
@@ -75,7 +76,7 @@ def cart_add(request):
         messages.error(request, error)
         return redirect("cart:detail")
     cart.add(variant_id=variant_id, qty=qty, override=False)
-    mark_cart_increase(request, variant_id, 0, qty)
+    mark_cart_increase(request, previous_qty, previous_qty + qty)
     meta_event = queue_cart_event(request, variant, qty)
     next_url = (request.POST.get("next") or "").strip()
     if not next_url or not url_has_allowed_host_and_scheme(
@@ -132,7 +133,7 @@ def cart_update(request):
     previous_qty = cart._cart.get(str(variant_id), {}).get("qty", 0)
     cart.set_qty(variant_id=variant_id, qty=qty)
     if previous_qty > 0:
-        mark_cart_increase(request, variant_id, previous_qty, qty)
+        mark_cart_increase(request, previous_qty, qty)
         queue_cart_event(request, variant, qty - previous_qty)
     if qty <= 0:
         messages.info(request, "Producto eliminado del carrito.")

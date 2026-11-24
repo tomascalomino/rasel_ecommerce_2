@@ -12,7 +12,7 @@ from django.contrib.auth.models import Group
 from django.core import signing
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.db import close_old_connections, connections, transaction
+from django.db import close_old_connections, connection, connections, transaction
 from django.test import (
     Client,
     TestCase,
@@ -20,6 +20,7 @@ from django.test import (
     override_settings,
     skipUnlessDBFeature,
 )
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
@@ -32,8 +33,8 @@ from shop.models import Product, Variant
 
 from .consent import COOKIE, SALT, expiry
 from .delivery import claim_event, send_event
-from .maintenance import cleanup
-from .models import BrowserEventReceipt, Consent, MetaPurchase
+from .maintenance import cleanup, cleanup_if_due
+from .models import BrowserEventReceipt, Consent, MetaMaintenance, MetaPurchase
 from .purchases import hashed, record_purchase
 from .tracking import ACTIONS, CONTACT, CYCLE
 
@@ -653,6 +654,31 @@ class PurchaseTests(TestCase):
                         stdout=StringIO(),
                     )
                 clean.assert_not_called()
+
+    def test_empty_automated_sender_skips_recent_cleanup_and_uses_five_statements(self):
+        options = {"send": True, "fail_on_problems": True, "stdout": StringIO()}
+        with patch("marketing.maintenance.cleanup") as clean:
+            call_command("send_meta_events", **options)
+            with CaptureQueriesContext(connection) as queries:
+                call_command("send_meta_events", **options)
+            clean.assert_called_once()
+        statements = [
+            query for query in queries
+            if query["sql"].lstrip().split()[0] in {"SELECT", "INSERT", "UPDATE", "DELETE"}
+        ]
+        self.assertLessEqual(len(statements), 5, statements)
+        MetaMaintenance.objects.update(cleanup_after=timezone.now())
+        with patch("marketing.maintenance.cleanup") as clean:
+            cleanup_if_due()
+        clean.assert_called_once()
+
+    def test_cleanup_failure_leaves_checkpoint_due(self):
+        deadline = timezone.now() - timedelta(minutes=1)
+        MetaMaintenance.objects.create(cleanup_after=deadline)
+        with patch("marketing.maintenance.cleanup", side_effect=RuntimeError("cleanup")):
+            with self.assertRaisesMessage(RuntimeError, "cleanup"):
+                cleanup_if_due()
+        self.assertEqual(MetaMaintenance.objects.get().cleanup_after, deadline)
 
     def test_automated_sender_reports_temporary_failure_and_keeps_payment_approved(
         self,

@@ -102,6 +102,14 @@ def checkout_snapshot(request):
         }
         snapshot = {**snapshot, "captured_at": now.isoformat()}
         visit = getattr(request, "_analytics_candidate", None)
+        if visit is None:
+            from .tracking import prepare_visit
+
+            try:
+                prepare_visit(request)
+                visit = request._analytics_candidate
+            except Exception:
+                logger.warning("No se pudo preparar la visita para atribuir el checkout.")
         if visit is not None:
             snapshot.update(
                 visit=str(uuid.UUID(str(visit.id))),

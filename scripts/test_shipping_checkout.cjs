@@ -4,8 +4,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '../static/js/checkout.js'), 'utf8');
+class CustomEvent {constructor(type) {this.type = type;}}
 
-function browser(overrides = {}) {
+function browser(overrides = {}, clock = Date) {
   function element(value = '') {
     return {value, textContent: '', hidden: false, children: [], events: {},
       classList: {toggle() {}}, closest() {return this;},
@@ -38,7 +39,7 @@ function browser(overrides = {}) {
       return payment.find(r => !r.disabled);
     },
   };
-  vm.runInNewContext(source, {document, Intl, Number, sessionStorage: {getItem: () => '{}', setItem() {}},
+  vm.runInNewContext(source, {document, Intl, Number, Date: clock, sessionStorage: {getItem: () => '{}', setItem() {}},
     setTimeout(fn) {timers.set(++timerId, fn); return timerId;}, clearTimeout(id) {timers.delete(id);},
     fetch(url) {return new Promise((resolve, reject) => calls.push({url, resolve, reject}));},
   });
@@ -55,7 +56,7 @@ async function reply(call, data) {call.resolve({ok: true, json: () => Promise.re
 async function promotionBoundary() {
   let now = Date.parse('2026-10-04T12:00:00Z');
   const end = '2026-10-04T12:01:00Z';
-  const campaign = {url: '/promociones/demo/', state: 'active', dates: 'Del 04/10 al 04/10', ends_at: end};
+  const campaign = {id: 1, url: '/promociones/demo/', state: 'active', dates: 'Del 04/10 al 04/10', ends_at: end};
   const parts = {'a': {}, '[data-promotion-heading]': {}, '[data-promotion-copy]': {}};
   const banner = {hidden: false, querySelector: key => parts[key]};
   const infoParts = {'a': {}, '[data-promotion-heading]': {}, '[data-promotion-copy]': {}};
@@ -66,7 +67,7 @@ async function promotionBoundary() {
   class Clock extends Date {static now() {return now;}}
   const config = {textContent: JSON.stringify({status_url: '/shipping/promotion-status/', state: {server_now: new Date(now).toISOString(), campaign, detail: campaign, next_change_at: end}})};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../static/js/shipping-promotion.js'), 'utf8'), {
-    Date: Clock,
+    Date: Clock, CustomEvent,
     document: {hidden: false, getElementById: id => ({'shipping-promotion-config': config, 'shipping-promotion-banner': banner, 'shipping-promotion-info': info})[id], querySelector: () => detail, addEventListener: (name, fn) => {events[name] = fn;}, dispatchEvent() {}},
     window: {addEventListener: (name, fn) => {events[name] = fn;}},
     setTimeout: fn => {timers.push(fn); return timers.length;}, clearTimeout() {},
@@ -77,15 +78,83 @@ async function promotionBoundary() {
   events.pageshow({persisted: false});
   assert.equal(statusRequests, 0);
   events.pageshow({persisted: true});
-  assert.equal(statusRequests, 1);
-  await new Promise(setImmediate);
+  assert.equal(statusRequests, 0);
   now = Date.parse(end);
   timers[0]();
   await new Promise(setImmediate);
-  assert.equal(statusRequests, 2);
+  assert.equal(statusRequests, 1);
   assert.equal(banner.hidden, true);
   assert.equal(info.hidden, true);
   assert.equal(detail.textContent, 'Promoción finalizada');
+}
+
+async function promotionAndQuoteRefresh() {
+  let now = Date.parse('2026-10-04T12:00:00Z');
+  class Clock extends Date {static now() {return now;}}
+  const start = new Date(now + 30000).toISOString();
+  const end = new Date(now + 240000).toISOString();
+  const active = {id: 7, url: '/promociones/demo/', state: 'active', ends_at: end};
+  const state = (campaign, next = null) => ({server_now: new Date(now).toISOString(), campaign, next_change_at: next});
+  const config = {textContent: JSON.stringify({status_url: '/shipping/promotion-status/', state: state(null, start)})};
+  const checkout = browser({}, Clock);
+  checkout.cp('1425');
+  await reply(checkout.calls[0], quote('normal', '3000', null));
+  const events = {}, status = [], timers = new Map();
+  let nextTimer = 0;
+  const document = {
+    hidden: false, getElementById: id => id === 'shipping-promotion-config' ? config : null,
+    querySelector: () => null, addEventListener: (name, callback) => {events[name] = callback;},
+    dispatchEvent: event => checkout.events[event.type]?.(),
+  };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../static/js/shipping-promotion.js'), 'utf8'), {
+    Date: Clock, document, CustomEvent,
+    window: {addEventListener: (name, callback) => {events[name] = callback;}},
+    setTimeout(fn) {timers.set(++nextTimer, fn); return nextTimer;},
+    clearTimeout(id) {timers.delete(id);},
+    fetch(url) {return new Promise((resolve, reject) => status.push({url, resolve, reject}));},
+  });
+  function resume() {
+    events.visibilitychange();
+    events.pageshow({persisted: true});
+  }
+
+  resume();
+  assert.equal(status.length, 0);
+  assert.equal(checkout.calls.length, 1);
+
+  now = Date.parse(start) + 100;
+  timers.values().next().value();
+  resume();
+  assert.equal(status.length, 1);
+  await reply(status[0], state(active, end));
+  assert.equal(checkout.calls.length, 2);
+  await reply(checkout.calls[1], quote('starts'));
+
+  now += 60000;
+  resume();
+  assert.equal(status.length, 2);
+  await reply(status[1], state(active, end));
+  assert.equal(checkout.calls.length, 2);
+
+  now += 60000;
+  resume();
+  await reply(status[2], state({...active, state: 'suspended'}, end));
+  assert.equal(checkout.calls.length, 3);
+  await reply(checkout.calls[2], quote('suspended', '3000', null));
+
+  now = Date.parse(end) + 100;
+  timers.values().next().value();
+  await reply(status[3], state(null));
+  assert.equal(checkout.calls.length, 3);
+
+  now += 5 * 60000;
+  resume();
+  await reply(status[4], state(null));
+  assert.equal(checkout.calls.length, 4);
+  await reply(checkout.calls[3], quote('renewed', '3000', null));
+  resume();
+  assert.equal(status.length, 5);
+  assert.equal(checkout.calls.length, 4);
 }
 
 (async () => {
@@ -117,6 +186,7 @@ async function promotionBoundary() {
   assert.equal(safe.ids.id_shipping_quote_token.value, '');
   assert.equal(safe.ids['sum-total-label'].textContent, 'Total estimado');
   await promotionBoundary();
+  await promotionAndQuoteRefresh();
   const combined = browser({'data-subtotal':'21000', 'data-offline-discount':'2100', 'data-coupon-mp':'4000', 'data-coupon-offline':'3600'});
   combined.pickup();
   assert.equal(combined.ids['sum-total'].textContent, '$ 15.300');

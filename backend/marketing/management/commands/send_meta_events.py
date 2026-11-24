@@ -2,11 +2,11 @@ from collections import Counter
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from marketing.delivery import configuration_problem, due_events, send_event
-from marketing.maintenance import cleanup
+from marketing.maintenance import cleanup, cleanup_if_due
 from marketing.models import MetaPurchase
 
 
@@ -55,7 +55,10 @@ class Command(BaseCommand):
             return
         if problem and options["fail_on_problems"]:
             raise CommandError(problem)
-        cleanup()
+        if options["fail_on_problems"]:
+            cleanup_if_due()
+        else:
+            cleanup()
         if problem:
             return
         if options["retry_failed"]:
@@ -79,17 +82,19 @@ class Command(BaseCommand):
             problems = {
                 "temporales_en_este_lote": results["pending"],
                 "configuracion_desactivada": results["disabled"],
-                "errores_por_revisar": queryset.filter(status="failed").count(),
-                "destino_o_prueba_no_coincide": queryset.filter(
-                    status="pending", diagnostic="destination_or_test_mode_mismatch"
-                ).count(),
-                "pendientes_mayores_a_una_hora": queryset.filter(
-                    status__in=["pending", "sending"],
-                    created_at__lt=timezone.now() - timedelta(hours=1),
-                ).count(),
-                "vencidos_en_este_lote": queryset.filter(
-                    pk__in=ids, status="expired"
-                ).count(),
+                **queryset.aggregate(
+                    errores_por_revisar=Count("pk", filter=Q(status="failed")),
+                    destino_o_prueba_no_coincide=Count(
+                        "pk", filter=Q(status="pending", diagnostic="destination_or_test_mode_mismatch")
+                    ),
+                    pendientes_mayores_a_una_hora=Count(
+                        "pk", filter=Q(
+                            status__in=["pending", "sending"],
+                            created_at__lt=timezone.now() - timedelta(hours=1),
+                        ),
+                    ),
+                    vencidos_en_este_lote=Count("pk", filter=Q(pk__in=ids, status="expired")),
+                ),
             }
             problems = {key: count for key, count in problems.items() if count}
             if problems:

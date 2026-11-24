@@ -1,15 +1,29 @@
 from datetime import timedelta
 
+from django.db import transaction
 from django.utils import timezone
 
-from .models import BrowserEventReceipt, Consent, MetaPurchase
+from .models import BrowserEventReceipt, Consent, MetaMaintenance, MetaPurchase
 
 
-def cleanup():
+def cleanup_if_due():
+    now = timezone.now()
+    with transaction.atomic():
+        state, _ = MetaMaintenance.objects.get_or_create(
+            pk=1, defaults={"cleanup_after": now}
+        )
+        if state.cleanup_after > now:
+            return
+        due = MetaMaintenance.objects.filter(pk=state.pk, cleanup_after__lte=now)
+        if due.update(cleanup_after=now + timedelta(days=1)):
+            cleanup(now=now)
+
+
+def cleanup(*, now=None):
     from orders.models import Order
     from payments.models import PaymentDraft
 
-    now = timezone.now()
+    now = now or timezone.now()
     cutoff = now - timedelta(days=90)
     for model in (Order, PaymentDraft):
         model.objects.filter(marketing_captured_at__lt=cutoff).exclude(

@@ -48,6 +48,7 @@ from .models import Order, OrderItem
 def _render_checkout(request, cart, form, discount_percent, review_quote=None):
     cart_rows = list(cart.items())
     subtotal = sum((item.line_total for item in cart_rows), Decimal("0.00"))
+    request._rendered_checkout_cart = (cart, cart_rows)
     coupon_quote = quote_coupon(
         request.session.get(COUPON_SESSION_KEY), cart_rows, discount_percent
     )
@@ -84,6 +85,8 @@ def _render_checkout(request, cart, form, discount_percent, review_quote=None):
         "orders/checkout.html",
         {
             "cart": cart,
+            "cart_rows": cart_rows,
+            "cart_subtotal": subtotal,
             "cyber_gift": current_gift,
             "show_gift_updates": now < GIFT_END,
             "form": form,

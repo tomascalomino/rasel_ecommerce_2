@@ -7,13 +7,25 @@
   var receivedAt = Date.now();
   var timer;
   var pending = false;
+  var resumed = false;
+  var statusMaxAge = 60000;
+  var reportedOffer = activeOffer();
   var banner = document.getElementById("shipping-promotion-banner");
   var shippingInfo = document.getElementById("shipping-promotion-info");
   var detail = document.querySelector("[data-promotion-detail-state]");
   var labels = {active: "Promoción vigente", scheduled: "Promoción programada", suspended: "Promoción suspendida", finished: "Promoción finalizada"};
 
+  function serverNow() {
+    return Date.parse(state.server_now) + Date.now() - receivedAt;
+  }
+
+  function activeOffer() {
+    var campaign = state.campaign;
+    return campaign && campaign.state === "active" ? campaign.id : null;
+  }
+
   function render() {
-    var now = new Date(state.server_now).getTime() + Date.now() - receivedAt;
+    var now = serverNow();
     var campaign = state.campaign;
     var visible = campaign && now < new Date(campaign.ends_at).getTime();
     if (banner) {
@@ -42,13 +54,32 @@
   function schedule() {
     clearTimeout(timer);
     if (!state.next_change_at) return;
-    var serverNow = new Date(state.server_now).getTime() + Date.now() - receivedAt;
-    var delay = Math.min(2147483647, Math.max(100, new Date(state.next_change_at).getTime() - serverNow + 100));
-    timer = setTimeout(function () { render(); refresh(); }, delay);
+    var delay = Math.min(2147483647, Math.max(100, Date.parse(state.next_change_at) - serverNow() + 100));
+    timer = setTimeout(function () { render(); refresh(false); }, delay);
   }
 
-  function refresh() {
-    if (document.hidden || pending) return;
+  function reportCheckout() {
+    if (document.hidden) return;
+    var offer = activeOffer();
+    if (offer !== reportedOffer) {
+      reportedOffer = offer;
+      document.dispatchEvent(new CustomEvent("rasel:shipping-promotion-change"));
+    }
+    if (resumed) {
+      resumed = false;
+      document.dispatchEvent(new CustomEvent("rasel:shipping-promotion-resume"));
+    }
+  }
+
+  function refresh(fromResume) {
+    if (document.hidden) return;
+    resumed = resumed || fromResume;
+    if (pending) return;
+    var crossedBoundary = state.next_change_at && serverNow() >= Date.parse(state.next_change_at);
+    if (!crossedBoundary && Date.now() - receivedAt < statusMaxAge && (!detail || state.detail)) {
+      reportCheckout();
+      return;
+    }
     pending = true;
     fetch(config.status_url, {cache: "no-store", headers: {"X-Requested-With": "XMLHttpRequest"}})
       .then(function (r) { if (!r.ok) throw new Error("status"); return r.json(); })
@@ -57,15 +88,14 @@
         receivedAt = Date.now();
         render();
         schedule();
-        document.dispatchEvent(new CustomEvent("rasel:shipping-promotion-change"));
       })
       .catch(function () { render(); /* Server confirms shipping even offline. */ })
-      .finally(function () { pending = false; });
+      .finally(function () { pending = false; reportCheckout(); });
   }
   window.addEventListener("pageshow", function (event) {
-    if (event.persisted || (detail && !state.detail)) refresh();
+    if (event.persisted || (detail && !state.detail)) refresh(event.persisted);
   });
-  document.addEventListener("visibilitychange", function () { if (!document.hidden) { render(); refresh(); } });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) { render(); refresh(true); } });
   render();
   schedule();
 })();

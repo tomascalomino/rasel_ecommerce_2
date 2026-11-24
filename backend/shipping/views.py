@@ -87,6 +87,7 @@ def promotion_detail(request, slug):
     campaign = get_object_or_404(
         ShippingPromotion, slug=slug, published_at__isnull=False
     )
+    request._shipping_promotion_detail = campaign
     return render(
         request, "shipping/promotion_detail.html", {"promotion_detail": campaign}
     )
